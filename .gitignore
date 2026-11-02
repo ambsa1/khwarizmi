@@ -1,0 +1,6 @@
+# ملفات ما بترتفع على جيت هب
+.claude/
+__pycache__/
+*.pyc
+Thumbs.db
+desktop.ini
