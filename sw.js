@@ -1,6 +1,6 @@
 /* يخزّن اللعبة كلها في الجهاز عشان تشتغل بدون إنترنت.
    مهم: عند أي تحديث للعبة غيّر رقم VERSION، عشان الأجهزة تنزّل النسخة الجديدة. */
-const VERSION = 'omran-v3';
+const VERSION = 'omran-v4';
 importScripts('voice/list.js');
 
 const CORE = [
@@ -69,6 +69,8 @@ async function rangeFromCache(req) {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // النسخة الجديدة (v2) والنموذج التجريبي ليهم ملفاتهم، فما نخزّنهم هنا عشان ما تظهر نسخ قديمة
+  if (/\/(v2|prototype)\//.test(new URL(e.request.url).pathname)) return;
   if (e.request.headers.get('range')) { e.respondWith(rangeFromCache(e.request)); return; }
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(hit => hit || fetch(e.request).then(res => {
