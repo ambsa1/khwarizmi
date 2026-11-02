@@ -255,3 +255,130 @@ input { -webkit-user-select: text; user-select: text; }
   .level .controls { grid-row: 3; grid-column: 2; }
   .py { max-height: 30%; }
 }
+
+/* ===== عالم البرمجة الموسّع ===== */
+.level.t-lights .bar { background: linear-gradient(90deg, #b07200, #f0a500); }
+.level.t-vars .bar { background: linear-gradient(90deg, #8a5506, #c27c0e); }
+.level.t-funcs .bar { background: linear-gradient(90deg, #a01e4f, #d6336c); }
+.level.t-bugs .bar { background: linear-gradient(90deg, #1f6e30, #2f9e44); }
+.level.t-pylab .bar { background: linear-gradient(90deg, #24527a, #3776ab); }
+.bar .hintb { opacity: .75; }
+.bar .hintb.pulse { opacity: 1; background: var(--gold); animation: pulse 1s ease-in-out infinite; box-shadow: 0 0 18px rgba(255,197,49,.8); }
+.run.pulse { animation: pulse 1s ease-in-out infinite; }
+.controls .sq { font-size: 24px; }
+@media (max-width: 360px) { .controls .sq { width: 50px; } .controls { gap: 8px; padding-left: 10px; padding-right: 10px; } .run { font-size: 22px; } .level .bar .chip { display: none; } }
+
+/* التلميح: البطاقة المطلوبة تنبض بالبرتقالي */
+.siraj-hint > .blocklyPath { stroke: #ff7a00 !important; stroke-width: 6px !important; animation: hintGlow 0.9s ease-in-out infinite alternate; }
+@keyframes hintGlow { from { filter: drop-shadow(0 0 2px rgba(255,122,0,.6)); } to { filter: drop-shadow(0 0 12px rgba(255,122,0,1)); } }
+.hint-dot { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: #ff9a2e; color: #fff; font: 800 14px/26px var(--head);
+  text-align: center; box-shadow: 0 0 0 3px #fff, 0 0 14px rgba(255,154,46,.9); pointer-events: none; }
+
+/* مسرح الأضواء: شارع ليلي فيه مصابيح ملونة */
+.lights-stage { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 0%, #2b2f7a, #12153a 80%); overflow: hidden; }
+.lt-moon { position: absolute; top: 58px; left: 6%; width: 34px; height: 34px; border-radius: 50%; box-shadow: -8px 6px 0 0 #ffe9a8; transform: rotate(-20deg); opacity: .9; }
+.lt-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 16%; background: linear-gradient(#3a3166, #241d4a); }
+/* سراج على اليمين (بداية القراءة بالعربي)، والمصابيح تشتعل من اليمين لليسار */
+.lt-row { position: absolute; right: 24%; left: 3%; bottom: 14%; top: 60px; display: flex; align-items: flex-end; justify-content: center; gap: 2%; }
+.lt { flex: 1; max-width: 64px; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
+.lt-bulb { width: 82%; aspect-ratio: 1; max-width: 50px; border-radius: 50%; background: color-mix(in srgb, var(--want, #3a3d58) 22%, #3a3d58); border: 3px dashed var(--want, #6d7192); position: relative; z-index: 2; transition: background .2s, box-shadow .2s; }
+.lt-post { width: 12%; min-width: 4px; height: 38%; background: linear-gradient(90deg, #4b4f6e, #6d7192); border-radius: 3px 3px 0 0; }
+.lt-want { width: 34%; max-width: 18px; aspect-ratio: 1; border-radius: 50%; background: var(--want); margin-top: 4px; box-shadow: 0 0 0 2px rgba(255,255,255,.5); }
+.lt-want.off { background: #12153a; box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
+.lt.on .lt-bulb { background: var(--on); border: 3px solid #fff; box-shadow: 0 0 22px 6px var(--on), 0 0 60px 10px var(--on); }
+.lt.dark .lt-bulb { background: #1b1d33; border: 3px solid #555a80; }
+.lt.ok::after, .lt.bad::after { position: absolute; top: -4px; right: 0; width: 20px; height: 20px; border-radius: 50%; font: 800 13px/20px var(--head); text-align: center; color: #fff; z-index: 3; }
+.lt.ok::after { content: "✓"; background: #16a865; }
+.lt.bad::after { content: "✗"; background: #f0533f; }
+.lt.bad .lt-bulb { animation: shake .4s; }
+.lt-siraj { position: absolute; right: 2%; bottom: 6%; height: 58%; aspect-ratio: 200 / 230; z-index: 3; }
+
+/* مسرح صناديق الذاكرة */
+.vars-stage { position: absolute; inset: 0; background: linear-gradient(#fff4dc, #ffe2b0); overflow: hidden; }
+.vars-stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 18%; background: linear-gradient(#d9a35a, #b98143); }
+.vars-stage .plan { top: 50px; }
+.vars-stage .plan i { color: #a0661a; }
+.vboxes { position: absolute; left: 4%; right: 30%; bottom: 10%; top: 96px; display: flex; gap: 12px; align-items: flex-end; justify-content: center; flex-wrap: wrap; z-index: 2; }
+.vars-stage:not(:has(.plan)) .vboxes { top: 60px; }
+.vbox { width: 108px; max-width: 30vw; position: relative; display: flex; flex-direction: column; align-items: center; }
+.vb-items { display: flex; flex-wrap: wrap-reverse; justify-content: center; gap: 1px; width: 100%; min-height: 22px; font-size: 17px; line-height: 1.1; margin-bottom: -6px; position: relative; z-index: 1; }
+.vb-front { width: 100%; height: 58px; background: linear-gradient(#c98a4b, #a86c33); border: 3px solid #7a4d22; border-radius: 8px 8px 14px 14px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2;
+  box-shadow: inset 0 6px 0 rgba(255,255,255,.18); }
+.vb-val { min-width: 44px; height: 40px; padding: 0 6px; border-radius: 12px; background: #fffaf0; color: var(--ink); font: 800 26px/40px var(--code); text-align: center; display: inline-block; }
+.vbox.empty .vb-val { color: #b4a68f; }
+.vbox.match .vb-front { border-color: #16a865; box-shadow: 0 0 0 3px #7be3a8, inset 0 6px 0 rgba(255,255,255,.18); }
+.vb-label { margin-top: 4px; background: #20213a; color: #ffe48a; border-radius: 8px; padding: 1px 8px; font: 700 14px var(--code); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.vb-want { position: absolute; top: -12px; left: -8px; background: #fff; border-radius: 999px; padding: 1px 7px; font: 800 13px var(--head); box-shadow: 0 2px 6px rgba(0,0,0,.2); z-index: 3; }
+.vb-plus { position: absolute; top: 20px; font: 800 24px var(--head); color: #16a865; z-index: 4; pointer-events: none; }
+.vsiraj { position: absolute; right: 3%; bottom: 6%; height: 56%; aspect-ratio: 200 / 230; z-index: 2; }
+.vars-stage .say-bubble { top: auto; bottom: 64%; right: 4%; z-index: 4; }
+
+/* اختيار "ماذا سيحدث؟" */
+.pred { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.pchoice { flex: 1 1 100px; min-height: 90px; max-width: 170px; border-radius: 20px; background: #fff; border: 3px solid #e2d9c6; padding: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0 #e2d9c6; }
+.pchoice:active { transform: translateY(3px); box-shadow: none; }
+.pchoice.right { border-color: #16a865; background: #e5f8ee; box-shadow: 0 0 0 4px #7be3a8; }
+.pchoice.dim { opacity: .4; }
+.pv-talk { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; direction: ltr; }
+.pv-talk .pc { font-size: 18px; padding: 2px 5px; }
+.pv-lights { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; direction: ltr; }
+.pv-lights i { width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #ccc; }
+.pv-num { font: 800 32px var(--head); }
+.pv-draw { width: 72px; height: 72px; }
+
+/* وضع الصغار: أزرار الضوء بلونها */
+.lb.light, .lb.off, .sb[style*="#3a3d58"] { font-size: 36px; }
+.lb.light { box-shadow: 0 7px 0 rgba(0,0,0,.25), inset 0 0 0 4px rgba(255,255,255,.5); }
+.lb.pulse { animation: pulse .9s ease-in-out infinite; box-shadow: 0 0 0 5px #fff, 0 0 26px #ffd23e; }
+
+/* مدينة الخريطة: عمارات بنوافذ تنوّر مع كل مرحلة */
+.city { position: relative; border-radius: 26px; padding: 44px 10px 0; background: linear-gradient(#1b1f55, #2b2f7a); border: 2px solid rgba(255,255,255,.1); overflow: hidden; flex: none; }
+.city .moon { position: absolute; top: 10px; left: 16px; width: 30px; height: 30px; border-radius: 50%; box-shadow: -7px 5px 0 0 #ffe9a8; transform: rotate(-20deg); }
+.skyline { display: flex; align-items: flex-end; gap: 5px; height: 150px; direction: rtl; }
+.bld { flex: 1; min-width: 0; background: linear-gradient(color-mix(in srgb, var(--tc) 55%, #1b1f55), #1b1f55); border-radius: 8px 8px 0 0; padding: 4px 3px 6px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  border: 2px solid color-mix(in srgb, var(--tc) 70%, #fff); border-bottom: 0; }
+.bld:nth-child(3n+1) { height: 86%; } .bld:nth-child(3n+2) { height: 100%; } .bld:nth-child(3n) { height: 74%; }
+.bld .roof { font-size: 18px; line-height: 1; }
+.wins { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; width: 100%; padding: 0 2px; }
+.wins i { aspect-ratio: 1; border-radius: 2px; background: rgba(0,0,0,.4); max-width: 14px; justify-self: center; width: 100%; }
+.wins i.on { background: #ffd23e; box-shadow: 0 0 6px #ffc531; }
+.wins i.pop { animation: winPop 1.6s ease-out .3s 1 both; }
+@keyframes winPop { 0% { background: rgba(0,0,0,.4); transform: scale(1); } 40% { background: #fff6c8; transform: scale(2.2); box-shadow: 0 0 22px #ffd23e; } 100% { background: #ffd23e; transform: scale(1); } }
+.city-count { position: absolute; top: 10px; right: 14px; color: var(--glow); font: 800 15px var(--head); background: rgba(0,0,0,.3); border-radius: 999px; padding: 2px 10px; }
+.track { scroll-margin-top: 8px; }
+
+/* مختبر بايثون: محرّر كود بأرقام أسطر وأزرار كبيرة */
+.editor.pyed { background: #1c1d33; padding: 8px; gap: 6px; }
+.code-ed { flex: 1; min-height: 96px; position: relative; display: flex; background: #24253f; border-radius: 14px; overflow: hidden; }
+.code-ed.locked textarea { opacity: .85; }
+.gutter { margin: 0; padding: 8px 6px; width: 36px; flex: none; text-align: right; color: #5d6191; font: 13px/24px var(--code); overflow: hidden; background: #1f2038; }
+.gutter .cur { color: var(--gold); font-weight: 800; } .gutter .bad { color: #ff8c7a; font-weight: 800; }
+.code-ed textarea { flex: 1; min-width: 0; resize: none; border: 0; outline: 0; background: transparent; color: #e8e7ff; font: 16px/24px var(--code); padding: 8px 10px;
+  white-space: pre; overflow: auto; tab-size: 4; caret-color: var(--gold); position: relative; z-index: 1; -webkit-user-select: text; user-select: text; }
+.ed-hl { position: absolute; left: 0; right: 0; height: 24px; background: rgba(255,197,49,.2); box-shadow: inset 4px 0 0 var(--gold); display: none; pointer-events: none; }
+.ed-hl.bad { background: rgba(240,83,63,.28); box-shadow: inset 4px 0 0 #f0533f; }
+.py-err { background: #ffe3dd; color: #a12a19; border-radius: 12px; padding: 6px 10px; font-size: 15px; line-height: 1.5; flex: none; max-height: 30%; overflow: auto; }
+.py-err.tip { background: #fff4c7; color: #6b4d00; }
+.py-err code { background: rgba(0,0,0,.08); border-radius: 6px; padding: 0 4px; font-family: var(--code); unicode-bidi: isolate; }
+.keys { display: flex; flex-direction: column; gap: 5px; flex: none; }
+.krow { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; padding-bottom: 3px; }
+.krow::-webkit-scrollbar { display: none; }
+.key { flex: none; }
+.key { min-width: 38px; height: 38px; padding: 0 9px; border-radius: 10px; background: #34365c; color: #fff; font: 700 15px var(--code); box-shadow: 0 3px 0 #15162b; }
+.key.w { background: #3776ab; color: #fff; }
+.key.d { min-width: 30px; padding: 0 6px; background: #2b2d4d; }
+.key:active { transform: translateY(2px); box-shadow: none; }
+.level.t-py .stage-wrap { flex-basis: 34%; }
+.vars-stage .pc small { font-size: 16px; }
+.vbox { width: clamp(92px, 16vw, 140px); }
+.lt-want.off, .lt.dark .lt-bulb { --want: #12153a; }
+/* شاشات قصيرة بالطول: نصغّر المسرح والأزرار عشان مساحة البرنامج تكفي */
+@media (orientation: portrait) and (max-height: 640px) {
+  .stage-wrap { flex-basis: 31%; }
+  .level .bar { padding-top: max(6px, env(safe-area-inset-top)); padding-bottom: 6px; }
+  .level .ib { width: 40px; height: 40px; }
+  .controls { padding-top: 6px; padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+  .run, .controls .sq { height: 50px; }
+  .py { max-height: 26%; }
+  .code-ed { min-height: 72px; }
+}

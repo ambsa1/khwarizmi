@@ -1,5 +1,5 @@
 /* بطاقات البرمجة (مبنية على مكتبة بلوكلي من مؤسسة راسبيري باي، رخصة أباتشي 2.0).
-   كل بطاقة مكتوب عليها كود بايثون الحقيقي. لما الطفل يضيف بطاقة، سراج يقول معناها بالعربي. */
+   كل بطاقة مكتوب عليها كود بايثون الحقيقي. لما الطفل يضيف بطاقة، سراج يقول كلمتها بالإنجليزي ثم معناها بالعربي. */
 (function (root) {
   'use strict';
 
@@ -17,10 +17,39 @@
     arrow: d => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><g transform="rotate(${d} 16 16)"><path d="M16 27V7M7 15l9-9 9 9" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`,
     loop: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M7 13a9 9 0 0 1 16-4M25 19a9 9 0 0 1-16 4" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M24 3v8h-8zM8 29v-8h8z" fill="#fff"/></svg>',
     flag: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M8 29V4" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M9 5h16l-4 5 4 5H9z" fill="#fff"/></svg>',
+    bulb: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M16 3a9 9 0 0 0-5 16.5V23h10v-3.5A9 9 0 0 0 16 3z" fill="#fff"/><rect x="11" y="25" width="10" height="4" rx="2" fill="#fff"/></svg>',
+    bulbOff: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M16 3a9 9 0 0 0-5 16.5V23h10v-3.5A9 9 0 0 0 16 3z" fill="none" stroke="#fff" stroke-width="2.5"/><rect x="11" y="25" width="10" height="4" rx="2" fill="#fff"/></svg>',
+    box: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 11l12-6 12 6v13l-12 6-12-6z" fill="#fff"/><path d="M4 11l12 6 12-6M16 17v13" stroke="#b07a2a" stroke-width="2" fill="none"/></svg>',
+    book: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 6c5-1 9 0 12 3 3-3 7-4 12-3v20c-5-1-9 0-12 3-3-3-7-4-12-3z" fill="#fff"/><path d="M16 9v20" stroke="#c2185b" stroke-width="2"/></svg>',
+    call: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M6 8l18 8-18 8 4-8z" fill="#fff"/></svg>',
   };
 
-  const COLORS = { talk: '#e8579a', act: '#f08a24', move: '#3d8bff', pen: '#16a865', loop: '#8b5cf6', start: '#ffb400' };
+  const COLORS = { talk: '#e8579a', act: '#f08a24', move: '#3d8bff', pen: '#16a865', loop: '#8b5cf6', start: '#ffb400', light: '#4b4f6e', box: '#c27c0e', func: '#d6336c' };
+  // ألوان الأضواء: لون المصباح، ولون البطاقة (أغمق قليلاً عشان الكلام الأبيض يبان)
+  const LIGHTS = { red: '#ff4d4f', yellow: '#ffd23e', green: '#3ddc84', blue: '#4fa3ff', purple: '#b07cff' };
+  const LIGHT_CARD = { red: '#d93a3c', yellow: '#c99a00', green: '#1f9d55', blue: '#2f6fe0', purple: '#8b5cf6' };
+  const LIGHT_DOT = { red: '🔴', yellow: '🟡', green: '🟢', blue: '🔵', purple: '🟣' };
+  // صناديق الذاكرة: اسم المتغيّر ورمزه
+  const VARS = { apples: '🍎', stars: '⭐', balloons: '🎈' };
+  const FUNCS = ['dance', 'hello', 'blink', 'square', 'step'];
   const stmt = { previousStatement: null, nextStatement: null };
+  const nums = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => [String(a + i), String(a + i)]);
+
+  // لون بطاقة الضوء يتغيّر مع اللون المختار
+  Blockly.Extensions.register('light_tint', function () {
+    const f = this.getField('C');
+    const upd = v => { this.setColour(LIGHT_CARD[v] || COLORS.light); return v; };
+    upd(f.getValue());
+    f.setValidator(upd);
+  });
+  // apples = apples + 1: الاسم الثاني يتبع الأول
+  Blockly.Extensions.register('var_mirror', function () {
+    const f = this.getField('V'), m = this.getField('V2');
+    f.setValidator(v => { m.setValue(v); return v; });
+    m.setValue(f.getValue());
+  });
+
+  const varField = { type: 'field_dropdown', name: 'V', options: Object.entries(VARS).map(([k, e]) => [e + ' ' + k, k]) };
 
   // تعريف البطاقات: النص المكتوب هو كود بايثون
   const DEFS = [
@@ -30,7 +59,7 @@
     Object.assign({ type: 'siraj_wave', message0: '%1 wave()', args0: [icon(ico.wave)], colour: COLORS.act }, stmt),
     Object.assign({ type: 'siraj_jump', message0: '%1 jump()', args0: [icon(ico.jump)], colour: COLORS.act }, stmt),
     Object.assign({ type: 'pen_forward', message0: '%1 forward( %2 )', args0: [icon(ico.pen),
-      { type: 'field_dropdown', name: 'N', options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']] }], colour: COLORS.pen }, stmt),
+      { type: 'field_dropdown', name: 'N', options: nums(1, 4) }], colour: COLORS.pen }, stmt),
     Object.assign({ type: 'pen_right', message0: '%1 right( %2 )', args0: [icon(ico.right), { type: 'field_dropdown', name: 'A', options: [['90', '90']] }], colour: COLORS.pen }, stmt),
     Object.assign({ type: 'pen_left', message0: '%1 left( %2 )', args0: [icon(ico.left), { type: 'field_dropdown', name: 'A', options: [['90', '90']] }], colour: COLORS.pen }, stmt),
     // التحرك على اللوحة باتجاهات الشاشة: أسماؤها move_ عشان ما تتلخبط مع right و left في الرسم (الاستدارة)
@@ -39,13 +68,32 @@
     Object.assign({ type: 'go_left', message0: '%1 move_left()', args0: [icon(ico.arrow(270))], colour: COLORS.move }, stmt),
     Object.assign({ type: 'go_right', message0: '%1 move_right()', args0: [icon(ico.arrow(90))], colour: COLORS.move }, stmt),
     Object.assign({ type: 'siraj_repeat', message0: '%1 for i in range( %2 ):', args0: [icon(ico.loop),
-      { type: 'field_dropdown', name: 'N', options: [2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [String(n), String(n)]) }],
+      { type: 'field_dropdown', name: 'N', options: nums(2, 10) }],
       message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], colour: COLORS.loop }, stmt),
+    // عرض الأضواء
+    Object.assign({ type: 'light_on', message0: '%1 light(" %2 ")', args0: [icon(ico.bulb),
+      { type: 'field_dropdown', name: 'C', options: Object.keys(LIGHTS).map(c => [LIGHT_DOT[c] + ' ' + c, c]) }], extensions: ['light_tint'] }, stmt),
+    Object.assign({ type: 'light_off', message0: '%1 off()', args0: [icon(ico.bulbOff)], colour: COLORS.light }, stmt),
+    // صناديق الذاكرة (المتغيّرات)
+    Object.assign({ type: 'var_set', message0: '%1 %2 = %3', args0: [icon(ico.box), varField, { type: 'field_dropdown', name: 'N', options: nums(0, 10) }], colour: COLORS.box }, stmt),
+    Object.assign({ type: 'var_add', message0: '%1 %2 = %3 + %4', args0: [icon(ico.box), varField, { type: 'field_label_serializable', name: 'V2', text: 'apples' },
+      { type: 'field_dropdown', name: 'N', options: nums(1, 5) }], colour: COLORS.box, extensions: ['var_mirror'] }, stmt),
+    Object.assign({ type: 'var_sub', message0: '%1 %2 = %3 - %4', args0: [icon(ico.box), varField, { type: 'field_label_serializable', name: 'V2', text: 'apples' },
+      { type: 'field_dropdown', name: 'N', options: nums(1, 5) }], colour: COLORS.box, extensions: ['var_mirror'] }, stmt),
+    Object.assign({ type: 'var_say', message0: '%1 say( %2 )', args0: [icon(ico.say), varField], colour: COLORS.talk }, stmt),
+    // علّم سراج كلمة جديدة (الدوال): الاسم ثابت في كل مرحلة
+    Object.assign({ type: 'func_def', message0: '%1 def %2():', args0: [icon(ico.book), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }],
+      message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], colour: COLORS.func }, stmt),
+    Object.assign({ type: 'func_call', message0: '%1 %2()', args0: [icon(ico.call), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }], colour: COLORS.func }, stmt),
   ];
   Blockly.common.defineBlocks(Blockly.common.createBlockDefinitionsFromJsonArray(DEFS));
 
+  // الحقل الأساسي لكل بطاقة (للكتابة المختصرة 'light_on:red' في المراحل)
+  const MAIN = { siraj_say: 'TEXT', light_on: 'C', var_set: 'V', var_add: 'V', var_sub: 'V', var_say: 'V', func_def: 'NAME', func_call: 'NAME' };
+
   // كود بايثون لكل بطاقة
   const G = PY.forBlock;
+  const body = (b, gen) => gen.statementToCode(b, 'DO') || gen.INDENT + 'pass\n';
   G.siraj_start = () => '';
   G.siraj_say = b => `say(${JSON.stringify(b.getFieldValue('TEXT'))})\n`;
   G.siraj_wave = () => 'wave()\n';
@@ -57,7 +105,15 @@
   G.go_down = () => 'move_down()\n';
   G.go_left = () => 'move_left()\n';
   G.go_right = () => 'move_right()\n';
-  G.siraj_repeat = (b, gen) => `for i in range(${b.getFieldValue('N')}):\n${gen.statementToCode(b, 'DO') || gen.INDENT + 'pass\n'}`;
+  G.siraj_repeat = (b, gen) => `for i in range(${b.getFieldValue('N')}):\n${body(b, gen)}`;
+  G.light_on = b => `light("${b.getFieldValue('C')}")\n`;
+  G.light_off = () => 'off()\n';
+  G.var_set = b => `${b.getFieldValue('V')} = ${b.getFieldValue('N')}\n`;
+  G.var_add = b => `${b.getFieldValue('V')} = ${b.getFieldValue('V')} + ${b.getFieldValue('N')}\n`;
+  G.var_sub = b => `${b.getFieldValue('V')} = ${b.getFieldValue('V')} - ${b.getFieldValue('N')}\n`;
+  G.var_say = b => `say(${b.getFieldValue('V')})\n`;
+  G.func_def = (b, gen) => `def ${b.getFieldValue('NAME')}():\n${body(b, gen)}`;
+  G.func_call = b => `${b.getFieldValue('NAME')}()\n`;
 
   const theme = Blockly.Theme.defineTheme('siraj', {
     base: Blockly.Themes.Classic,
@@ -71,28 +127,57 @@
   const startOf = ws => ws.getTopBlocks(false).find(b => b.type === 'siraj_start');
   const countBlocks = ws => ws.getAllBlocks(false).filter(b => b.type !== 'siraj_start' && b.isEnabled()).length;
   const lastIn = b => { while (b && b.getNextBlock()) b = b.getNextBlock(); return b; };
+  const hasDo = b => !!(b && b.getInput('DO'));
+
+  // بطاقة في القائمة: 'نوع' أو 'نوع:قيمة الحقل الأساسي'
+  const toolItem = s => {
+    const [type, v] = s.split(':');
+    return v ? { kind: 'block', type, fields: { [MAIN[type]]: v } } : { kind: 'block', type };
+  };
 
   // وين تدخل البطاقة الجديدة؟
-  //  - لو بطاقة تكرار مختارة: في آخر ما بداخلها
+  //  - لو بطاقة فيها مكان داخلي (تكرار أو كلمة جديدة) مختارة: في آخر ما بداخلها
   //  - لو بطاقة ثانية مختارة: بعدها مباشرة (حتى لو كانت داخل تكرار)
   //  - غير كده: في آخر البرنامج، وإذا آخر بطاقة تكرار فاضي ندخل جواه
-  function target(ws, sel) {
+  //  - تعريف كلمة جديدة يروح دايماً لآخر البرنامج، ونداء الكلمة ما يدخل جوّا تعريفها
+  function target(ws, sel, type) {
+    if (type === 'func_def') sel = null;
+    if (type === 'func_call' && sel) for (let q = sel; q; q = q.getSurroundParent()) if (q.type === 'func_def') sel = q;
     if (sel && !sel.isDeadOrDying() && sel.type !== 'siraj_start' && sel.isEnabled()) {
-      if (sel.type === 'siraj_repeat') {
+      if (hasDo(sel) && !(type === 'func_call' && sel.type === 'func_def')) {
         const inner = sel.getInputTargetBlock('DO');
         return inner ? lastIn(inner).nextConnection : sel.getInput('DO').connection;
       }
       return sel.nextConnection;
     }
     const last = lastIn(startOf(ws));
-    if (last.type === 'siraj_repeat' && !last.getInputTargetBlock('DO')) return last.getInput('DO').connection;
-    return last.nextConnection;
+    const into = hasDo(last) && !last.getInputTargetBlock('DO') && !(last.type === 'func_def' && /^func_/.test(type || ''));
+    return into ? last.getInput('DO').connection : last.nextConnection;
+  }
+
+  // يبني برنامجاً من صيغة الحل: 'نوع' أو ['نوع', {حقل: قيمة}] أو ['نوع', {..}, [بطاقات داخلية]]
+  // (بدون أحداث، عشان تحميل برنامج جاهز ما يشغّل أصوات تغيير الحقول)
+  function load(ws, list, conn) {
+    Blockly.Events.disable();
+    try { loadIn(ws, list, conn); } finally { Blockly.Events.enable(); }
+    if (ws.rendered) ws.getAllBlocks(false).forEach(b => b.setDisabledReason && b.setDisabledReason(false, 'ORPHANED_BLOCK'));
+  }
+  function loadIn(ws, list, conn) {
+    for (const step of list) {
+      const [type, fields, inner] = Array.isArray(step) ? step : [step];
+      const b = ws.newBlock(type);
+      if (ws.rendered) { b.initSvg(); b.render(); }
+      for (const [f, v] of Object.entries(fields || {})) b.setFieldValue(String(v), f);
+      conn.connect(b.previousConnection);
+      if (inner) loadIn(ws, inner, b.getInput('DO').connection);
+      conn = b.nextConnection;
+    }
   }
 
   // يجهّز مساحة البرمجة لمرحلة معيّنة. on(event) يبلّغ التطبيق بما يحدث
   function makeWorkspace(div, types, max, on) {
     const ws = Blockly.inject(div, {
-      toolbox: { kind: 'flyoutToolbox', contents: types.map(t => ({ kind: 'block', type: t })) },
+      toolbox: { kind: 'flyoutToolbox', contents: types.map(toolItem) },
       renderer: 'zelos', theme, rtl: false, sounds: false, trashcan: true,
       // قائمة البطاقات في الأسفل بالعرض، عشان مساحة البرنامج تاخد كل عرض الشاشة
       horizontalLayout: true, toolboxPosition: 'end',
@@ -143,19 +228,32 @@
       const src = fw.getBlockById(id);
       if (!src) return;
       if (ws.remainingCapacity() < 1) { on({ full: true }); return; }
-      const conn = target(ws, sel);
-      const b = ws.newBlock(src.type);
-      b.initSvg(); b.render();
+      const conn = target(ws, sel, src.type);
+      // البطاقة الجديدة تاخد نفس قيم بطاقة القائمة (لون الضوء، اسم الصندوق، اسم الكلمة...)
+      const fields = {};
+      src.inputList.forEach(inp => inp.fieldRow.forEach(f => { if (f.name && f.isSerializable()) fields[f.name] = src.getFieldValue(f.name); }));
+      const b = Blockly.serialization.blocks.append({ type: src.type, fields }, ws, { recordUndo: true });
       conn.connect(b.previousConnection);
       setCursor(b); // البطاقة الجديدة هي مكان الإضافة التالي (ولو تكرار، الإضافة التالية تدخل جواه)
       Sfx.snap();
-      on({ added: src.type });
+      on({ added: src.type, block: b });
     }, true);
 
     ws.addChangeListener(e => {
-      if (e.type === Blockly.Events.BLOCK_CHANGE && e.element === 'field' && e.name === 'TEXT') on({ phrase: e.newValue });
+      if (e.type === Blockly.Events.BLOCK_CHANGE && e.element === 'field') on({ field: e.name, value: e.newValue });
       if (!e.isUiEvent) on({});
     });
+    // حذف البطاقة المختارة (أو آخر بطاقة) بزر واحد، بدل السحب لسلة المهملات
+    ws.__del = () => {
+      if (ws.isReadOnly && ws.isReadOnly()) return false;
+      let b = cursor && ws.getBlockById(cursor);
+      if (!b) { b = lastIn(startOf(ws)); if (hasDo(b) && b.getInputTargetBlock('DO')) b = lastIn(b.getInputTargetBlock('DO')); }
+      if (!b || b.type === 'siraj_start' || !b.isDeletable()) return false;
+      const prev = b.getPreviousBlock();
+      b.dispose(true, true);
+      setCursor(prev && !prev.isDeadOrDying() ? prev : null);
+      return true;
+    };
     ws.__ro = ro;
     return ws;
   }
@@ -168,25 +266,51 @@
 
   // يحوّل البرنامج المربوط تحت "start" لقائمة أوامر ينفّذها سراج
   function compile(ws) {
-    const ops = [];
+    const ops = [], defs = {};
+    let halt = false, depth = 0;
+    const err = (b, reason) => { ops.push({ id: b.id, op: 'error', reason }); halt = true; };
     const walk = b => {
-      for (; b; b = b.getNextBlock()) {
+      for (; b && !halt; b = b.getNextBlock()) {
         if (!b.isEnabled()) continue;
-        const t = b.type;
+        const t = b.type, f = n => b.getFieldValue(n);
         if (t === 'siraj_repeat') {
-          const n = +b.getFieldValue('N');
-          for (let k = 0; k < n; k++) { ops.push({ id: b.id, op: 'loop' }); walk(b.getInputTargetBlock('DO')); }
-        } else if (t === 'siraj_say') ops.push({ id: b.id, op: 'say', arg: b.getFieldValue('TEXT') });
-        else if (t === 'pen_forward') ops.push({ id: b.id, op: 'forward', arg: +b.getFieldValue('N') });
-        else if (t === 'pen_right') ops.push({ id: b.id, op: 'turn', arg: +b.getFieldValue('A') });
-        else if (t === 'pen_left') ops.push({ id: b.id, op: 'turn', arg: -b.getFieldValue('A') });
+          const n = +f('N');
+          for (let k = 0; k < n && !halt; k++) { ops.push({ id: b.id, op: 'loop' }); walk(b.getInputTargetBlock('DO')); }
+        } else if (t === 'func_def') defs[f('NAME')] = b;
+        else if (t === 'func_call') {
+          const d = defs[f('NAME')];
+          if (!d) err(b, 'func_unknown');
+          else if (!d.getInputTargetBlock('DO')) err(b, 'func_empty');
+          else if (depth > 8) err(b, 'func_loop');
+          else { ops.push({ id: b.id, op: 'call' }); depth++; walk(d.getInputTargetBlock('DO')); depth--; }
+        }
+        else if (t === 'siraj_say') ops.push({ id: b.id, op: 'say', arg: f('TEXT') });
+        else if (t === 'pen_forward') ops.push({ id: b.id, op: 'forward', arg: +f('N') });
+        else if (t === 'pen_right') ops.push({ id: b.id, op: 'turn', arg: +f('A') });
+        else if (t === 'pen_left') ops.push({ id: b.id, op: 'turn', arg: -f('A') });
+        else if (t === 'light_on') ops.push({ id: b.id, op: 'light', arg: f('C') });
+        else if (t === 'light_off') ops.push({ id: b.id, op: 'off' });
+        else if (t === 'var_set') ops.push({ id: b.id, op: 'set', name: f('V'), arg: +f('N') });
+        else if (t === 'var_add') ops.push({ id: b.id, op: 'add', name: f('V'), arg: +f('N') });
+        else if (t === 'var_sub') ops.push({ id: b.id, op: 'add', name: f('V'), arg: -f('N') });
+        else if (t === 'var_say') ops.push({ id: b.id, op: 'sayvar', name: f('V') });
         else ops.push({ id: b.id, op: t.replace(/^(siraj|go)_/, '') });
-        if (ops.length > 2000) break;
+        if (ops.length > 2000) { if (depth) err(b, 'func_loop'); halt = true; }
       }
     };
     walk(startOf(ws).getNextBlock());
     return ops;
   }
+
+  // مساحة مخفية (بدون رسم) لحساب أوامر الحل وكوده
+  function headless(list) {
+    const ws = new Blockly.Workspace();
+    const s = ws.newBlock('siraj_start');
+    load(ws, list, s.nextConnection);
+    return ws;
+  }
+  function opsOf(list) { const ws = headless(list); const ops = compile(ws); ws.dispose(); return ops; }
+  function countOf(list) { return list.reduce((n, s) => n + 1 + (Array.isArray(s) && s[2] ? countOf(s[2]) : 0), 0); }
 
   // كود بايثون مع رقم السطر لكل بطاقة (عشان نلوّن السطر اللي شغّال)
   function toPython(ws) {
@@ -206,6 +330,63 @@
     });
     return { lines, map };
   }
+  // كود بطاقة واحدة من صيغة الحل (لتلميح "جرّب هذه")
+  function lineOf(step) {
+    const [type, fields] = Array.isArray(step) ? step : [step];
+    const ws = headless([[type, fields]]);
+    const l = toPython(ws).lines[0] || '';
+    ws.dispose();
+    return l.trim();
+  }
 
-  root.Blocks = { DEFS, COLORS, makeWorkspace, dispose, compile, python: toPython, countBlocks, startOf };
+  // البرنامج الحالي كقائمة مسطّحة (للمقارنة بالحل في التلميح)
+  function flatWs(ws) {
+    const out = [];
+    const walk = (b, d) => { for (; b; b = b.getNextBlock()) { if (!b.isEnabled()) continue; out.push({ b, type: b.type, d }); if (hasDo(b)) walk(b.getInputTargetBlock('DO'), d + 1); } };
+    walk(startOf(ws).getNextBlock(), 0);
+    return out;
+  }
+  function flatSol(list, d = 0, out = []) {
+    for (const s of list) {
+      const [type, fields, inner] = Array.isArray(s) ? s : [s];
+      out.push({ step: s, type, fields: fields || {}, d });
+      if (inner) flatSol(inner, d + 1, out);
+    }
+    return out;
+  }
+  // أول اختلاف بين برنامج الطفل والحل: {kind: field|wrong|next|extra, block, step, line}
+  function diff(ws, solution) {
+    const a = flatWs(ws), s = flatSol(solution);
+    for (let i = 0; i < s.length; i++) {
+      const x = a[i], w = s[i];
+      if (!x) return { kind: 'next', step: w.step, type: w.type, line: lineOf(w.step), after: a[i - 1] && a[i - 1].b };
+      const sameFields = Object.entries(w.fields).every(([k, v]) => String(x.b.getFieldValue(k)) === String(v));
+      if (x.type === w.type && x.d === w.d && sameFields) continue;
+      if (x.type === w.type && x.d === w.d) return { kind: 'field', block: x.b, line: lineOf(w.step) };
+      return { kind: 'wrong', block: x.b, line: lineOf(w.step) };
+    }
+    if (a.length > s.length) return { kind: 'extra', block: a[s.length].b };
+    return null;
+  }
+  // توهّج على بطاقة في البرنامج أو في القائمة
+  function glow(b, on) { const r = b && b.getSvgRoot && b.getSvgRoot(); if (r) r.classList.toggle('siraj-hint', on !== false); }
+  function glowTool(ws, step) {
+    const [type, fields] = Array.isArray(step) ? step : [step];
+    const fl = ws.getFlyout && ws.getFlyout();
+    if (!fl) return;
+    const list = fl.getWorkspace().getTopBlocks(false).filter(b => b.type === type);
+    const k = MAIN[type];
+    const best = list.find(b => !k || !fields || fields[k] == null || b.getFieldValue(k) === String(fields[k])) || list[0];
+    glow(best);
+  }
+  function clearGlow(ws) {
+    [ws, ws.getFlyout && ws.getFlyout() && ws.getFlyout().getWorkspace()].forEach(w => w && w.getAllBlocks(false).forEach(b => glow(b, false)));
+  }
+  // يمسح البرنامج (ما عدا البداية)
+  function clear(ws) { const s = startOf(ws), n = s.getNextBlock(); if (n) n.dispose(false); ws.getTopBlocks(false).forEach(b => { if (b !== s) b.dispose(false); }); }
+
+  root.Blocks = {
+    DEFS, COLORS, LIGHTS, LIGHT_DOT, VARS, FUNCS, makeWorkspace, dispose, compile, python: toPython, countBlocks, startOf,
+    load, opsOf, countOf, diff, glow, glowTool, clearGlow, clear, lineOf,
+  };
 })(window);

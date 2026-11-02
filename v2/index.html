@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">
@@ -6,7 +6,15 @@
   <title>بيت الخوارزمي</title>
   <meta name="theme-color" content="#161a3d">
   <meta name="description" content="بيت الخوارزمي: تعلّم البرمجة بلغة بايثون مع الروبوت سراج">
-  <link rel="stylesheet" href="css/app.css?v=9">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="بيت الخوارزمي">
+  <link rel="stylesheet" href="css/app.css?v=11">
+  <link rel="stylesheet" href="css/extras.css?v=1">
+  <link rel="stylesheet" href="css/cw.css?v=1">
 </head>
 <body>
   <div id="app"><p class="boot">جارٍ تحميل بيت الخوارزمي...</p></div>
@@ -18,15 +26,27 @@
   <script src="vendor/blockly/blocks_compressed.js"></script>
   <script src="vendor/blockly/python_compressed.js"></script>
   <script src="vendor/blockly/msg/ar.js"></script>
-  <script src="voice/list.js?v=9"></script>
-  <script src="js/texts.js?v=9"></script>
+  <script src="voice/list.js?v=11"></script>
+  <script src="js/texts.js?v=11"></script>
   <script src="js/sfx.js?v=9"></script>
   <script src="js/siraj.js?v=9"></script>
   <script src="js/crypt.js?v=9"></script>
-  <script src="js/store.js?v=9"></script>
-  <script src="js/blocks.js?v=9"></script>
-  <script src="js/levels.js?v=9"></script>
-  <script src="js/activities.js?v=9"></script>
-  <script src="js/app.js?v=9"></script>
+  <script src="js/store.js?v=10"></script>
+  <script src="js/extras-texts.js?v=1"></script>
+  <script src="js/blocks.js?v=10"></script>
+  <script src="js/levels.js?v=11"></script>
+  <script src="js/activities.js?v=11"></script>
+  <script src="js/pylab.js?v=2"></script>
+  <script src="js/extras.js?v=1"></script>
+  <script src="js/parents.js?v=1"></script>
+  <script src="js/cw/texts.js?v=1"></script><script src="js/cw/core.js?v=1"></script><script src="js/cw/art.js?v=1"></script><script src="js/cw/intro.js?v=1"></script><script src="js/cw/parts.js?v=1"></script><script src="js/cw/hands.js?v=1"></script><script src="js/cw/typing.js?v=1"></script><script src="js/cw/safety.js?v=1"></script><script src="js/cw/think.js?v=1"></script>
+  <script src="js/app.js?v=11"></script>
+  <script>
+    // العمل بدون إنترنت (ما يشتغل في وضع الاختبار عشان الاختبارات تشوف آخر نسخة دايماً)
+    if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0 && !/[?&]test=1/.test(location.search)) {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    }
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  </script>
 </body>
 </html>

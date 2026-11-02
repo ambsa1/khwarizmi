@@ -5,12 +5,17 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const done = tl => new Promise(r => (tl && tl.then ? tl.then(r) : r()));
 
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // رقم يقوله سراج بصوته (n_<رقم>)، وإلا صوت الجهاز
+  const sayNum = v => { const N = SIRAJ_TEXTS.NUMS; Voice.play(Number.isInteger(v) && v >= 0 && v < N.length ? 'n_' + v : 'n_x', Number.isInteger(v) && v >= 0 && v < N.length ? N[v] : String(v)); };
+  const talkChip = a => a === 'wave' ? '👋' : a === 'jump' ? '🦘' : `💬<small>${esc(a.slice(4))}</small>`;
+
   /* ---------- سراج يتكلم ---------- */
   class TalkStage {
     constructor(el, level, color) { this.el = el; this.level = level; this.color = color; }
     mount() {
       // خطة بالصور فوق: الطفل اللي ما بيقرأ يشوف المطلوب، وكل خطوة تتلوّن لما سراج يعملها
-      const chip = a => a === 'wave' ? '👋' : a === 'jump' ? '🦘' : `💬<small>${a.slice(4)}</small>`;
+      const chip = talkChip;
       this.el.innerHTML = `<div class="talk-stage">
         <div class="plan">${this.level.target.map((a, i) => `<span class="pc" data-i="${i}">${chip(a)}</span>`).join('<i>←</i>')}</div>
         <div class="talk-window"><span></span><span></span></div>
@@ -39,9 +44,10 @@
     async exec(o) {
       if (o.op === 'say') {
         this.actions.push('say:' + o.arg); this.mark();
-        this.bubble(o.arg);
+        this.bubble(String(o.arg));
         const i = Talk.key(o.arg);
-        Voice.play('ph_' + i, i >= 0 ? SIRAJ_TEXTS.PHRASES[i][1] : o.arg);
+        if (typeof o.arg === 'number') sayNum(o.arg);
+        else Voice.play(i >= 0 ? 'ph_' + i : 'ph_x', i >= 0 ? SIRAJ_TEXTS.PHRASES[i][1] : o.arg);
         await this.siraj.talk(950);
         await sleep(200);
         this.bubble('');
@@ -56,6 +62,9 @@
       if (ok) return { ok };
       return { ok, reason: a.length < t.length ? 'talk_short' : a.length > t.length ? 'talk_long' : 'talk_order' };
     }
+    // وضع الصغار: هل آخر ضغطة غلط؟ ونرجّعها خطوة واحدة بدل ما نبدأ من الأول
+    wrong() { const k = this.actions.length - 1; return k >= this.level.target.length ? 'talk_long' : this.actions[k] !== this.level.target[k] ? 'talk_order' : null; }
+    pop() { const k = this.actions.length - 1; this.actions.pop(); const c = this.el.querySelector(`.pc[data-i="${k}"]`); if (c) c.classList.remove('ok', 'bad'); }
     celebrate() { return done(this.siraj.happy()); }
     destroy() { this.siraj && this.siraj.destroy(); }
   }
@@ -91,7 +100,8 @@
     px(x, y) { return [this.ox + (x - this.minX) * this.u, this.oy + (y - this.minY) * this.u]; }
     reset() {
       const [x, y, h] = this.level.start;
-      this.x = x; this.y = y; this.h = h; this.lines = []; this.edges = new Set();
+      this.x = x; this.y = y; this.h = h; this.lines = []; this.edges = new Set(); this.ghost = null;
+      if (this.ghostTw) this.ghostTw.kill();
       this.draw();
       this.placePen(true);
     }
@@ -106,7 +116,16 @@
       g.lineCap = 'round';
       g.setLineDash([u * 0.12, u * 0.14]); g.strokeStyle = 'rgba(120,130,170,.55)'; g.lineWidth = Math.max(4, u * 0.08);
       for (const s of this.level.target) { const a = this.px(s[0], s[1]), b = this.px(s[2], s[3]); g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke(); }
-      g.setLineDash([]); g.strokeStyle = this.color; g.lineWidth = Math.max(6, u * 0.13);
+      g.setLineDash([]);
+      // التلميح: طريق القلم الصحيح بالبرتقالي الشفاف
+      if (this.ghost) {
+        const pts = this.ghost, n = Math.max(1, Math.round(this.ghostT * (pts.length - 1)));
+        g.strokeStyle = 'rgba(255,154,46,.55)'; g.lineWidth = Math.max(8, u * 0.2);
+        g.beginPath(); g.moveTo(...this.px(...pts[0]));
+        for (let i = 1; i <= n && i < pts.length; i++) g.lineTo(...this.px(...pts[i]));
+        g.stroke();
+      }
+      g.strokeStyle = this.color; g.lineWidth = Math.max(6, u * 0.13);
       for (const l of this.lines.concat(extra ? [extra] : [])) { const a = this.px(l[0], l[1]), b = this.px(l[2], l[3]); g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke(); }
     }
     placePen(instant) {
@@ -166,12 +185,27 @@
       if (!extra && !missing) return { ok: true };
       return { ok: false, reason: extra ? 'draw_extra' : 'draw_missing' };
     }
+    wrong() { const r = this.result(); return r.reason === 'draw_extra' ? 'draw_extra' : null; }
+    // التلميح: سراج يرسم الطريق الصحيح ببطء بخط شفاف
+    hint(ops) {
+      let [x, y, h] = this.level.start;
+      const pts = [[x, y]];
+      for (const o of ops) {
+        if (o.op === 'turn') h = (h + o.arg + 360) % 360;
+        if (o.op === 'forward') { const r = h * Math.PI / 180; x = Math.round((x + Math.cos(r) * o.arg) * 100) / 100; y = Math.round((y + Math.sin(r) * o.arg) * 100) / 100; pts.push([x, y]); }
+      }
+      if (pts.length < 2) return false;
+      this.ghost = pts; this.ghostT = 0;
+      if (this.ghostTw) this.ghostTw.kill();
+      this.ghostTw = gsap.to(this, { ghostT: 1, duration: 0.5 + 0.35 * pts.length, ease: 'none', onUpdate: () => this.draw() });
+      return 'hint_draw';
+    }
     celebrate() {
       const r = this.el.getBoundingClientRect();
       FX.burst(r.left + r.width / 2, r.top + r.height / 2, 40, ['#ffd23e', '#ff6b9a', '#4fd1ff', '#7cff8a']);
       return done(this.mini.happy());
     }
-    destroy() { this.mini && this.mini.destroy(); }
+    destroy() { if (this.ghostTw) this.ghostTw.kill(); this.mini && this.mini.destroy(); }
   }
 
   /* ---------- مغامرة النور ---------- */
@@ -280,6 +314,24 @@
       if (this.got.size < this.sparks.length) return { ok: false, reason: 'path_sparks' };
       return { ok: false, reason: 'path_lamp' };
     }
+    // التلميح: نقاط مرقّمة على الطريق الصحيح
+    hint(ops) {
+      const b = this.el.querySelector('.board');
+      b.querySelectorAll('.hint-dot').forEach(d => d.remove());
+      let x, y;
+      this.grid.forEach((row, j) => [...row].forEach((c, i) => { if (c === 'R') { x = i; y = j; } }));
+      let k = 0, h = '';
+      for (const o of ops) {
+        const d = MOVES[o.op];
+        if (!d) continue;
+        x += d[0]; y += d[1]; k++;
+        if (y < 0 || y >= this.grid.length || x < 0 || x >= this.grid[0].length) break;
+        h += `<div class="hint-dot" style="left:${x * this.C + this.C / 2}px;top:${y * this.R + this.R / 2}px;z-index:${y * 10 + 6}">${k}</div>`;
+      }
+      b.insertAdjacentHTML('beforeend', h);
+      gsap.from(b.querySelectorAll('.hint-dot'), { scale: 0, stagger: 0.12, duration: 0.3, ease: 'back.out(3)' });
+      return 'hint_path';
+    }
     async celebrate() {
       this.lit = true;
       Sfx.light();
@@ -292,6 +344,191 @@
       return done(this.mini.happy());
     }
     destroy() { this.mini && this.mini.destroy(); }
+  }
+
+  /* ---------- عرض الأضواء ---------- */
+  // صف مصابيح في شارع المدينة. كل light("لون") يضيء المصباح التالي، و off() يتركه مطفأ.
+  // تحت كل مصباح دائرة صغيرة بلون الهدف، عشان الصغير يشوف المطلوب بدون قراءة
+  const LC = () => Blocks.LIGHTS;
+  class LightsStage {
+    constructor(el, level, color) { this.el = el; this.level = level; this.color = color; }
+    mount() {
+      const t = this.level.target;
+      this.el.innerHTML = `<div class="lights-stage"><div class="lt-moon"></div>
+        <div class="lt-row" style="--n:${t.length}">${t.map((c, i) => `<div class="lt" data-i="${i}">
+          <div class="lt-bulb"></div><div class="lt-post"></div><div class="lt-want ${c === 'off' ? 'off' : ''}" style="--want:${LC()[c] || '#2a2d4a'}"></div></div>`).join('')}</div>
+        <div class="lt-ground"></div><div class="siraj-holder lt-siraj"></div></div>`;
+      this.siraj = Siraj.create(this.el.querySelector('.lt-siraj'), this.color);
+      this.reset();
+    }
+    reset() {
+      this.seq = [];
+      this.el.querySelectorAll('.lt').forEach(l => { l.className = 'lt'; l.style.removeProperty('--on'); });
+      if (this.siraj) this.siraj.setChest('#ffd23e');
+    }
+    lamp(k) { return this.el.querySelector(`.lt[data-i="${k}"]`); }
+    async exec(o) {
+      if (o.op === 'loop' || o.op === 'call') { await sleep(110); return true; }
+      if (o.op !== 'light' && o.op !== 'off') return true;
+      const c = o.op === 'off' ? 'off' : o.arg, k = this.seq.length;
+      this.seq.push(c);
+      this.siraj.setChest(c === 'off' ? '#3a3d58' : LC()[c]);
+      const l = this.lamp(k);
+      if (l) {
+        const good = this.level.target[k] === c;
+        l.classList.add(c === 'off' ? 'dark' : 'on', good ? 'ok' : 'bad');
+        if (c !== 'off') l.style.setProperty('--on', LC()[c]);
+        gsap.fromTo(l.querySelector('.lt-bulb'), { scale: 0.6 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
+      } else {
+        // مصباح زائد: الشارع كله يهتز
+        gsap.fromTo(this.el.querySelector('.lt-row'), { x: -6 }, { x: 0, duration: 0.3, ease: 'elastic.out(3,0.3)' });
+      }
+      if (c === 'off') Sfx.tap(); else Sfx.spark();
+      await sleep(380);
+      return true;
+    }
+    result() {
+      const t = this.level.target, s = this.seq;
+      const bad = s.findIndex((c, i) => i < t.length && c !== t[i]);
+      if (bad >= 0) return { ok: false, reason: 'light_wrong' };
+      if (s.length < t.length) return { ok: false, reason: 'light_short' };
+      if (s.length > t.length) return { ok: false, reason: 'light_long' };
+      return { ok: true };
+    }
+    wrong() { const r = this.result(); return r.reason === 'light_wrong' || r.reason === 'light_long' ? r.reason : null; }
+    pop() { const k = this.seq.length - 1; this.seq.pop(); const l = this.lamp(k); if (l) { l.className = 'lt'; l.style.removeProperty('--on'); } }
+    celebrate() {
+      Sfx.light();
+      const ls = this.el.querySelectorAll('.lt-bulb');
+      gsap.fromTo(ls, { y: 0 }, { y: -14, duration: 0.22, yoyo: true, repeat: 3, stagger: 0.07, ease: 'sine.inOut' });
+      const r = this.el.getBoundingClientRect();
+      FX.burst(r.left + r.width / 2, r.top + r.height / 2, 40, this.level.target.filter(c => c !== 'off').map(c => LC()[c]).concat(['#fff']));
+      return done(this.siraj.happy());
+    }
+    destroy() { this.siraj && this.siraj.destroy(); }
+  }
+
+  /* ---------- صناديق الذاكرة ---------- */
+  // كل متغيّر صندوق عليه اسمه بالإنجليزي، وجواه حبات بعدد الرقم. علامة 🎯 تبيّن الرقم المطلوب.
+  const vEmoji = n => Blocks.VARS[n] || '📦';
+  class VarsStage {
+    constructor(el, level, color) { this.el = el; this.level = level; this.color = color; }
+    mount() {
+      const says = this.level.says || [];
+      this.el.innerHTML = `<div class="vars-stage">
+        ${says.length ? `<div class="plan">${says.map((n, i) => `<span class="pc" data-i="${i}">💬<small>${n}</small></span>`).join('<i>←</i>')}</div>` : ''}
+        <div class="vboxes"></div><div class="say-bubble" id="sayBubble"></div><div class="siraj-holder vsiraj"></div></div>`;
+      this.siraj = Siraj.create(this.el.querySelector('.vsiraj'), this.color);
+      this.reset();
+    }
+    reset() {
+      this.vals = {}; this.said = []; this.failReason = null;
+      const want = this.level.target || {};
+      this.names = (this.level.vars || []).slice();
+      Object.keys(want).forEach(n => { if (!this.names.includes(n)) this.names.push(n); });
+      this.el.querySelector('.vboxes').innerHTML = this.names.map(n => this.boxHtml(n)).join('');
+      this.names.forEach(n => this.paint(n));
+      this.el.querySelectorAll('.pc').forEach(c => c.classList.remove('ok', 'bad'));
+      this.bubble('');
+    }
+    boxHtml(n) {
+      const w = (this.level.target || {})[n];
+      return `<div class="vbox" data-n="${esc(n)}"><div class="vb-items"></div><div class="vb-front"><b class="vb-val"></b></div>
+        <div class="vb-label" dir="ltr">${vEmoji(n)} ${esc(n)}</div>${w != null ? `<div class="vb-want">🎯 ${w}</div>` : ''}</div>`;
+    }
+    box(n) {
+      let b = this.el.querySelector(`.vbox[data-n="${CSS.escape(n)}"]`);
+      if (!b) { this.names.push(n); this.el.querySelector('.vboxes').insertAdjacentHTML('beforeend', this.boxHtml(n)); b = this.el.querySelector(`.vbox[data-n="${CSS.escape(n)}"]`); gsap.from(b, { scale: 0, duration: 0.4, ease: 'back.out(2)' }); }
+      return b;
+    }
+    paint(n) {
+      const b = this.box(n), v = this.vals[n];
+      b.querySelector('.vb-val').textContent = v == null ? '?' : typeof v === 'number' ? String(Math.round(v * 100) / 100) : String(v);
+      b.classList.toggle('empty', v == null);
+      const k = Number.isInteger(v) && v > 0 && v <= 12 ? v : 0;
+      b.querySelector('.vb-items').innerHTML = Array.from({ length: k }, () => `<i>${vEmoji(n)}</i>`).join('');
+      const w = (this.level.target || {})[n];
+      b.classList.toggle('match', w != null && v === w);
+    }
+    bubble(t) {
+      const b = this.el.querySelector('#sayBubble');
+      b.textContent = t; b.classList.toggle('show', t !== '');
+      if (t !== '') gsap.fromTo(b, { scale: 0.6 }, { scale: 1, duration: 0.35, ease: 'back.out(2.5)' });
+    }
+    empty(n) {
+      this.failReason = 'var_empty';
+      const b = this.box(n);
+      gsap.fromTo(b, { x: -8 }, { x: 0, duration: 0.4, ease: 'elastic.out(3,0.3)' });
+      Sfx.bump();
+      return false;
+    }
+    async speak(v) {
+      const k = this.said.length;
+      this.said.push(v);
+      const c = this.el.querySelector(`.pc[data-i="${k}"]`), says = this.level.says || [];
+      if (c) { c.classList.add(says[k] === v ? 'ok' : 'bad'); gsap.fromTo(c, { scale: 1.3 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' }); }
+      this.bubble(String(v));
+      if (typeof v === 'number') sayNum(v);
+      await this.siraj.talk(800);
+      this.bubble('');
+    }
+    async exec(o) {
+      if (o.op === 'loop' || o.op === 'call') { await sleep(110); return true; }
+      if (o.op === 'set') {
+        this.vals[o.name] = o.arg; this.paint(o.name); Sfx.snap();
+        gsap.fromTo(this.box(o.name).querySelector('.vb-val'), { scale: 1.6 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
+        await sleep(o.loopvar ? 150 : 350);
+      } else if (o.op === 'add') {
+        let v = this.vals[o.name];
+        if (v == null) { if (!this.little) return this.empty(o.name); v = 0; }
+        this.vals[o.name] = v + o.arg; this.paint(o.name); Sfx.hop();
+        const b = this.box(o.name);
+        b.insertAdjacentHTML('beforeend', `<span class="vb-plus">${o.arg > 0 ? '+' : '−'}${Math.abs(o.arg)}</span>`);
+        const p = b.querySelector('.vb-plus:last-child');
+        gsap.fromTo(p, { y: 0, opacity: 1 }, { y: -40, opacity: 0, duration: 0.8, onComplete: () => p.remove() });
+        await sleep(420);
+      } else if (o.op === 'sayvar') {
+        const v = this.vals[o.name];
+        if (v == null) { if (!this.little) return this.empty(o.name); }
+        await this.speak(v == null ? 0 : v);
+      } else if (o.op === 'say') await this.speak(o.arg);
+      else if (o.op === 'wave') await done(this.siraj.wave());
+      else if (o.op === 'jump') await done(this.siraj.jump());
+      return true;
+    }
+    result() {
+      if (this.failReason) return { ok: false, reason: this.failReason };
+      const want = this.level.target || {}, says = this.level.says || [];
+      if (Object.entries(want).some(([n, v]) => this.vals[n] !== v)) return { ok: false, reason: 'var_wrong' };
+      if (says.length !== this.said.length || says.some((v, i) => this.said[i] !== v)) return { ok: false, reason: 'var_say' };
+      return { ok: true };
+    }
+    wrong() {
+      const says = this.level.says || [];
+      return this.said.some((v, i) => says[i] !== v) ? 'var_say' : null;
+    }
+    celebrate() {
+      const r = this.el.getBoundingClientRect();
+      FX.burst(r.left + r.width / 2, r.top + r.height / 2, 40, ['#ffd23e', '#ff6b9a', '#4fd1ff', '#7cff8a']);
+      gsap.fromTo(this.el.querySelectorAll('.vbox'), { y: 0 }, { y: -16, duration: 0.25, yoyo: true, repeat: 1, stagger: 0.1 });
+      return done(this.siraj.happy());
+    }
+    destroy() { this.siraj && this.siraj.destroy(); }
+  }
+
+  /* ---------- صور "ماذا سيحدث؟" ---------- */
+  // يرسم اختياراً صغيراً حسب نوع المسرح: خطة كلام، صف أضواء، رسمة، أو رقم
+  function preview(kind, c) {
+    if (kind === 'talk') return `<div class="pv-talk">${c.map(a => `<span class="pc">${talkChip(a)}</span>`).join('')}</div>`;
+    if (kind === 'lights') return `<div class="pv-lights">${c.map(x => `<i style="background:${x === 'off' ? '#2a2d4a' : LC()[x]}"></i>`).join('')}</div>`;
+    if (kind === 'vars') return `<div class="pv-num">💬 ${esc(c)}</div>`;
+    if (kind === 'draw') {
+      const xs = c.flatMap(s => [s[0], s[2]]), ys = c.flatMap(s => [s[1], s[3]]);
+      const x0 = Math.min(...xs, 0) - 0.5, y0 = Math.min(...ys, 0) - 0.5, w = Math.max(...xs, 0) - x0 + 0.5, h = Math.max(...ys, 0) - y0 + 0.5;
+      const sz = Math.max(w, h);
+      return `<svg class="pv-draw" viewBox="${x0} ${y0} ${sz} ${sz}"><g stroke="#16a865" stroke-width="${sz / 14}" stroke-linecap="round">${c.map(s => `<line x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"/>`).join('')}</g></svg>`;
+    }
+    return '';
   }
 
   /* ---------- جزيئات الاحتفال ---------- */
@@ -318,7 +555,7 @@
     };
   })();
 
-  root.Stages = { talk: TalkStage, draw: DrawStage, path: PathStage };
+  root.Stages = { talk: TalkStage, draw: DrawStage, path: PathStage, lights: LightsStage, vars: VarsStage, preview };
   root.FX = FX;
   root.Talk = Talk;
 })(window);

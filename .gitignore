@@ -7,3 +7,6 @@ Thumbs.db
 desktop.ini
 v2/tools/voice_texts.json
 v2/tools/family.local.json
+v2/tests/node_modules/
+v2/tests/shots/
+v2/tools/family-code.local.txt
