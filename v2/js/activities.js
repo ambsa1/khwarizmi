@@ -355,8 +355,8 @@
     mount() {
       const t = this.level.target;
       this.el.innerHTML = `<div class="lights-stage"><div class="lt-moon"></div>
-        <div class="lt-row" style="--n:${t.length}">${t.map((c, i) => `<div class="lt" data-i="${i}">
-          <div class="lt-bulb"></div><div class="lt-post"></div><div class="lt-want ${c === 'off' ? 'off' : ''}" style="--want:${LC()[c] || '#2a2d4a'}"></div></div>`).join('')}</div>
+        <div class="lt-row" style="--n:${t.length}">${t.map((c, i) => `<div class="lt" data-i="${i}" style="--want:${LC()[c] || '#2a2d4a'}">
+          <div class="lt-bulb"></div><div class="lt-post"></div><div class="lt-want ${c === 'off' ? 'off' : ''}"></div></div>`).join('')}</div>
         <div class="lt-ground"></div><div class="siraj-holder lt-siraj"></div></div>`;
       this.siraj = Siraj.create(this.el.querySelector('.lt-siraj'), this.color);
       this.reset();

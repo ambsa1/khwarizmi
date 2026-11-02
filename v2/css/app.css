@@ -291,7 +291,7 @@ input { -webkit-user-select: text; user-select: text; }
 .lt.ok::after { content: "✓"; background: #16a865; }
 .lt.bad::after { content: "✗"; background: #f0533f; }
 .lt.bad .lt-bulb { animation: shake .4s; }
-.lt-siraj { position: absolute; right: 2%; bottom: 6%; height: 58%; aspect-ratio: 200 / 230; z-index: 3; }
+.lt-siraj { position: absolute; right: 1%; bottom: 6%; height: 58%; width: 21%; z-index: 3; }
 
 /* مسرح صناديق الذاكرة */
 .vars-stage { position: absolute; inset: 0; background: linear-gradient(#fff4dc, #ffe2b0); overflow: hidden; }
@@ -308,9 +308,12 @@ input { -webkit-user-select: text; user-select: text; }
 .vbox.empty .vb-val { color: #b4a68f; }
 .vbox.match .vb-front { border-color: #16a865; box-shadow: 0 0 0 3px #7be3a8, inset 0 6px 0 rgba(255,255,255,.18); }
 .vb-label { margin-top: 4px; background: #20213a; color: #ffe48a; border-radius: 8px; padding: 1px 8px; font: 700 14px var(--code); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.vb-want { position: absolute; top: -12px; left: -8px; background: #fff; border-radius: 999px; padding: 1px 7px; font: 800 13px var(--head); box-shadow: 0 2px 6px rgba(0,0,0,.2); z-index: 3; }
+.vb-want { margin-top: 3px; background: #fff; border-radius: 999px; padding: 1px 7px; font: 800 13px var(--head); box-shadow: 0 2px 6px rgba(0,0,0,.2); z-index: 3; }
 .vb-plus { position: absolute; top: 20px; font: 800 24px var(--head); color: #16a865; z-index: 4; pointer-events: none; }
-.vsiraj { position: absolute; right: 3%; bottom: 6%; height: 56%; aspect-ratio: 200 / 230; z-index: 2; }
+.vsiraj { position: absolute; right: 2%; bottom: 6%; height: 56%; width: 26%; z-index: 2; }
+.lt-siraj, .vsiraj { display: flex; align-items: flex-end; justify-content: center; }
+.lt-siraj .siraj-svg, .vsiraj .siraj-svg { width: 100%; height: auto; max-height: 100%; display: block; }
+.lt-row { z-index: 2; } .lt-post { max-height: 110px; }
 .vars-stage .say-bubble { top: auto; bottom: 64%; right: 4%; z-index: 4; }
 
 /* اختيار "ماذا سيحدث؟" */
@@ -319,9 +322,12 @@ input { -webkit-user-select: text; user-select: text; }
 .pchoice:active { transform: translateY(3px); box-shadow: none; }
 .pchoice.right { border-color: #16a865; background: #e5f8ee; box-shadow: 0 0 0 4px #7be3a8; }
 .pchoice.dim { opacity: .4; }
-.pv-talk { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; direction: ltr; }
+.pv-talk { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
 .pv-talk .pc { font-size: 18px; padding: 2px 5px; }
-.pv-lights { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; direction: ltr; }
+.pv-lights { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.pred-talk .pchoice, .pred-lights .pchoice { flex-basis: 100%; max-width: none; min-height: 64px; }
+.m-card .pred-title { font-size: 24px; }
+.plan .pc { padding: 3px 6px; font-size: 19px; } .plan .pc small { font-size: 11px; } .plan { gap: 3px; }
 .pv-lights i { width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #ccc; }
 .pv-num { font: 800 32px var(--head); }
 .pv-draw { width: 72px; height: 72px; }
@@ -370,6 +376,7 @@ input { -webkit-user-select: text; user-select: text; }
 .key:active { transform: translateY(2px); box-shadow: none; }
 .level.t-py .stage-wrap { flex-basis: 34%; }
 .vars-stage .pc small { font-size: 16px; }
+.level > *, .editor.pyed > *, .keys { min-width: 0; } /* صفوف الأزرار الطويلة تتمرّر بدل ما توسّع الشاشة */
 .vbox { width: clamp(92px, 16vw, 140px); }
 .lt-want.off, .lt.dark .lt-bulb { --want: #12153a; }
 /* شاشات قصيرة بالطول: نصغّر المسرح والأزرار عشان مساحة البرنامج تكفي */

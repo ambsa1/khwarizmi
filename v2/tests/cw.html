@@ -48,7 +48,7 @@
       playSeq: function (items) { items.forEach(function (it) { window.__said.push(it[0]); if (!it[1] || !CW_TEXTS[it[0]]) window.__missing.push(it[0]); }); },
       say: function (k, t) { this.playSeq([[k, t]]); },
       sfx: Sfx, Siraj: Siraj, fx: FX,
-      saveProgress: function (id, stars) { window.__saved[id] = Math.max(window.__saved[id] || 0, stars); player.progress[id] = Math.max(player.progress[id] || 0, stars); },
+      saveProgress: function (id, stars) { var k = 'cw:' + id; window.__saved[k] = Math.max(window.__saved[k] || 0, stars); player.progress[k] = Math.max(player.progress[k] || 0, stars); },
       back: function () { window.__backs++; },
     };
     CW.render(document.getElementById('app'), ctx);

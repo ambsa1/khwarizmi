@@ -25,6 +25,7 @@
     if (S.ws) { Blocks.dispose(S.ws); S.ws = null; }
     if (S.stage) { S.stage.destroy(); S.stage = null; }
     S.sirajs.forEach(s => s.destroy()); S.sirajs = [];
+    if (window.CW && CW.destroy) CW.destroy(); // لو عالم الكمبيوتر مفتوح، يقفل نفسه
     closeModal();
     S.running = false;
   }
@@ -95,7 +96,7 @@
       <div class="sections">
         <button class="door code" data-act="code"><span class="d-pic">${mini(p.color)}</span><span><h3>البرمجة مع سراج</h3><p>برمج سراج يتكلم ويرسم وينوّر المدينة</p>
           <span class="lamps">${allLevels().map(l => `<i class="${Store.solved(p, l.id) ? 'on' : ''}"></i>`).join('')}</span></span></button>
-        <button class="door pc" data-act="pc"><span class="d-pic big">💻</span><span><h3>عالم الكمبيوتر</h3><p>أجزاء الكمبيوتر، مدرسة الكتابة، والأمان في الإنترنت</p><span class="soon">قريباً</span></span></button>
+        <button class="door pc" data-act="pc"><span class="d-pic big">💻</span><span><h3>عالم الكمبيوتر</h3><p>أجزاء الكمبيوتر، مدرسة الكتابة، والأمان في الإنترنت</p></span></button>
         ${window.Extras ? Extras.sectionsRow(p) : ''}
       </div>`, 'night');
     gsap.from('.door', { x: 60, opacity: 0, stagger: 0.12, duration: 0.5, ease: 'back.out(1.6)' });
@@ -189,9 +190,9 @@
     const order = L.predict.choices.map((c, i) => i).sort(() => Math.random() - 0.5);
     const code = S.ws ? Blocks.python(S.ws).lines : [];
     S.predSeq = seq;
-    showModal(`<h2>🤔 ${plain(SAY[key('predict')])}</h2>
+    showModal(`<h2 class="pred-title">🤔 ${plain(SAY[key('predict')])}</h2>
       ${code.length ? `<pre class="w-code" dir="ltr">${code.map(hl).join('\n')}</pre>` : ''}
-      <div class="pred">${order.map(i => `<button class="pchoice" data-act="pred" data-i="${i}">${Stages.preview(kind, L.predict.choices[i])}</button>`).join('')}</div>`, true);
+      <div class="pred pred-${kind}">${order.map(i => `<button class="pchoice" data-act="pred" data-i="${i}">${Stages.preview(kind, L.predict.choices[i])}</button>`).join('')}</div>`, true);
     say('predict');
   }
   function pickPredict(t) {
@@ -577,7 +578,21 @@
     },
     sections: () => renderSections(),
     code: () => { renderTracks(); say('tracks'); },
-    pc: () => { Sfx.tap(); say('soon'); },
+    // عالم الكمبيوتر: يرسم شاشاته بنفسه داخل التطبيق، ويرجع لاختيار القسم لما الطفل يخرج
+    pc: () => {
+      Sfx.tap();
+      if (!window.CW || !CW.render) { say('soon'); return; }
+      cleanup(); S.screen = 'cw';
+      const p = S.player;
+      CW.render(app, {
+        player: p,
+        playSeq: items => Voice.playSeq(items),
+        say: (k, t) => Voice.play(k, t),
+        sfx: Sfx, Siraj, fx: FX,
+        saveProgress: (id, stars) => Store.cwWin(p, id, stars),
+        back: () => renderSections(),
+      });
+    },
     tracks: () => { Voice.stop(); renderTracks(); },
     level: t => {
       if (t.classList.contains('locked')) { Sfx.oops(); return; }

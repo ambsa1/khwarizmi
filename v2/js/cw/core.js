@@ -77,7 +77,8 @@
     function save(id, n) {
       const k = 'cw:' + id;
       n = Math.max(0, Math.min(3, n | 0));
-      if (ctx.saveProgress) { try { ctx.saveProgress(k, n); } catch (e) { /* لا شيء */ } }
+      // ctx.saveProgress يستقبل معرّف النشاط بدون البادئة (مثل Store.cwWin)، والمفتاح المحفوظ cw:<id>
+      if (ctx.saveProgress) { try { ctx.saveProgress(id, n); } catch (e) { /* لا شيء */ } }
       if ((P.progress[k] || 0) < n) P.progress[k] = n; // لو الـ ctx ما حدّث اللاعب
     }
     const cwStars = () => Object.keys(P.progress).filter(k => k.startsWith('cw:')).reduce((a, k) => a + (+P.progress[k] || 0), 0);

@@ -47,7 +47,7 @@
 .cw-art { display: block; flex: none; }
 .cw-art svg, .cw-svg { width: 100%; height: auto; display: block; overflow: visible; }
 .cw-art.xs { width: 26px; } .cw-art.sm { width: clamp(44px, 12vmin, 70px); }
-.cw-art.md { width: clamp(60px, 17vmin, 120px); } .cw-art.lg { width: clamp(90px, 28vmin, 190px); } .cw-art.xl { width: clamp(130px, 42vmin, 290px); }
+.cw-art.md { width: clamp(60px, 17vmin, 120px); } .cw-art.lg { width: clamp(90px, 28vmin, 190px); } .cw-art.xl { width: clamp(130px, 52vmin, 300px); }
 .cw-card { background: #fff; border-radius: 26px; box-shadow: 0 8px 0 rgba(0,0,0,.08), 0 10px 26px rgba(0,0,0,.08); }
 .cw-emo { font-size: clamp(64px, 22vmin, 140px); line-height: 1; }
 .cw-glow { animation: cwglow 1.6s ease-in-out infinite; }
@@ -119,7 +119,9 @@
 .cw-part.empty svg { opacity: .2; filter: grayscale(1); }
 .cw-part.empty { outline: 3px dashed rgba(43,120,194,.55); outline-offset: 2px; border-radius: 10px; }
 .cw-chips { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
-.cw-chip { width: 46px; height: 46px; border-radius: 14px; background: rgba(0,0,0,.07); display: flex; align-items: center; justify-content: center; opacity: .45; transition: all .3s; }
+.cw-chip { width: clamp(46px, 11vmin, 64px); height: clamp(46px, 11vmin, 64px); padding: 6px; border-radius: 14px; background: rgba(0,0,0,.07); display: flex; align-items: center; justify-content: center; opacity: .45; transition: all .3s; }
+.cw-chip .cw-art, .cw-titem .cw-art { width: 100% !important; height: 100%; }
+.cw-chip .cw-art svg, .cw-titem .cw-art svg { width: 100%; height: 100%; }
 .cw-chip.on { background: #fff; opacity: 1; box-shadow: 0 0 0 3px var(--green); }
 .cw-tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 8px; background: rgba(255,255,255,.75); border-radius: 20px; }
 .cw-tray.gone { display: none; }
