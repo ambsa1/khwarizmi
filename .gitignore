@@ -1,5 +1,6 @@
 # ملفات ما بترتفع على جيت هب
 .claude/
+mockups/
 __pycache__/
 *.pyc
 Thumbs.db
