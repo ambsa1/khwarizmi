@@ -111,8 +111,8 @@
           <small class="p-muted">آخر نسخة: ${d.lastBackup ? new Date(d.lastBackup).toLocaleDateString('ar-EG') : 'لم تُحفظ بعد'}</small>
           <input type="file" id="pFile" accept=".json,application/json,text/plain" hidden></section>
         <section class="p-card"><h3>🏠 وضع العائلة</h3>
-          ${d.family ? '<p class="ok">✔ وضع العائلة مفعّل على هذا الجهاز</p>'
-            : `<p class="p-muted">إن كان لديك رمز العائلة فاكتبه هنا.</p><input id="pFam" class="inp" autocomplete="off" aria-label="رمز العائلة"><p class="err" id="pFamErr"></p>
+          ${Store.familyReady() ? '<p class="ok">✔ وضع العائلة مفعّل على هذا الجهاز</p>'
+            : `<p class="p-muted">${d.family ? 'اكتب رمز العائلة مرة واحدة لتشغيل الترحيب بالأسماء.' : 'إن كان لديك رمز العائلة فاكتبه هنا.'}</p><input id="pFam" class="inp" autocomplete="off" aria-label="رمز العائلة"><p class="err" id="pFamErr"></p>
               <button class="p-btn wide" data-p="family">تفعيل</button>`}</section>
         <section class="p-card p-help"><h3>❓ مساعدة</h3>
           <p>• <b>التثبيت:</b> من قائمة المتصفح اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».</p>
@@ -189,8 +189,16 @@
       confirmBox(`حذف «${esc(p.name || 'بدون اسم')}» نهائياً من هذا الجهاز؟ لا يمكن التراجع إلا من نسخة احتياطية.`, '🗑 حذف', () => { Store.removePlayer(p.id); panel(); });
     },
     confirm: () => { const f = confirmFn; confirmFn = null; if (f) f(); },
+    // فك التشفير يأخذ لحظة (PBKDF2): نعطّل الزر وننتظر، ولا نرجع للوحة لو الأهل خرجوا
     family: () => {
-      if (Store.enableFamily(val('pFam'))) { panel(); message('✔ تم', 'وضع العائلة مفعّل.'); } else { const e = $('#pFamErr'); if (e) e.textContent = 'الرمز غير صحيح'; }
+      const b = document.querySelector('[data-p="family"]'), e = $('#pFamErr');
+      if (b) b.disabled = true; if (e) e.textContent = '…';
+      Store.enableFamily(val('pFam')).then(ok => {
+        if (!onPanel()) return;
+        if (ok) { panel(); message('✔ تم', 'وضع العائلة مفعّل.'); return; }
+        const e2 = $('#pFamErr'), b2 = document.querySelector('[data-p="family"]');
+        if (e2) e2.textContent = 'الرمز غير صحيح'; if (b2) b2.disabled = false;
+      });
     },
   };
   document.addEventListener('click', e => {

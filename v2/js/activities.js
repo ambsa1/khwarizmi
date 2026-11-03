@@ -18,7 +18,7 @@
     mount() {
       // خطة بالصور فوق: الطفل اللي ما بيقرأ يشوف المطلوب، وكل خطوة تتلوّن لما سراج يعملها
       const chip = talkChip;
-      this.el.innerHTML = `<div class="talk-stage">
+      this.el.innerHTML = `<div class="talk-stage${this.level.target.length ? ' has-plan' : ''}">
         <div class="plan">${this.level.target.map((a, i) => `<span class="pc" data-i="${i}">${chip(a)}</span>`).join('<i>←</i>')}</div>
         <div class="talk-window"><span></span><span></span></div>
         <div class="say-bubble" id="sayBubble"></div>
@@ -94,7 +94,7 @@
       const top = 54; // مكان شريط الهدف فوق
       this.u = Math.floor(Math.min((r.width - 24) / w, (r.height - top - 16) / h, 90));
       this.ox = (r.width - w * this.u) / 2; this.oy = top + (r.height - top - h * this.u) / 2;
-      const d = devicePixelRatio || 1;
+      const d = Math.min(2, devicePixelRatio || 1); // أكثر من ٢ يتعب التلفونات الرخيصة بدون فرق يُرى
       this.cv.width = r.width * d; this.cv.height = r.height * d;
       this.cv.style.width = r.width + 'px'; this.cv.style.height = r.height + 'px';
       this.g = this.cv.getContext('2d');
@@ -422,7 +422,7 @@
     constructor(el, level, color) { this.el = el; this.level = level; this.color = color; }
     mount() {
       const says = this.level.says || [];
-      this.el.innerHTML = `<div class="vars-stage">
+      this.el.innerHTML = `<div class="vars-stage${says.length ? '' : ' no-plan'}">
         ${says.length ? `<div class="plan">${says.map((n, i) => `<span class="pc" data-i="${i}">💬<small>${n}</small></span>`).join('<i>←</i>')}</div>` : ''}
         <div class="vboxes"></div><div class="say-bubble" id="sayBubble"></div><div class="siraj-holder vsiraj"></div></div>`;
       this.siraj = Siraj.create(this.el.querySelector('.vsiraj'), this.color);
@@ -542,7 +542,7 @@
   const FX = (() => {
     const cv = document.getElementById('fx'), g = cv.getContext('2d');
     let parts = [], running = false;
-    const fit = () => { const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; g.setTransform(d, 0, 0, d, 0, 0); };
+    const fit = () => { const d = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * d; cv.height = innerHeight * d; g.setTransform(d, 0, 0, d, 0, 0); };
     fit(); addEventListener('resize', fit);
     function loop() {
       g.clearRect(0, 0, innerWidth, innerHeight);

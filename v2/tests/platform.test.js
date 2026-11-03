@@ -138,10 +138,19 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
     await pg.click('.corner'); await wait(pg);
     await pg.fill('#pPin', '2222'); await pg.click('[data-p="pin-ok"]'); await wait(pg);
     await pg.fill('#pFam', 'خطأ'); await pg.click('[data-p="family"]');
+    await pg.waitForFunction(() => /غير صحيح/.test((document.querySelector('#pFamErr') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => {});
     check(/غير صحيح/.test(await pg.textContent('#pFamErr')), 'wrong family code rejected');
-    await pg.fill('#pFam', FAMILY_CODE); await pg.click('[data-p="family"]'); await wait(pg);
-    await pg.click('[data-p="close"]'); await wait(pg);
-    await pg.click('[data-act="home"]'); await wait(pg, 700);
+    await pg.fill('#pFam', FAMILY_CODE); await pg.click('[data-p="family"]');
+    await pg.waitForFunction(() => Store.familyReady(), null, { timeout: 8000 }).catch(() => {});
+    await wait(pg);
+    // ترحيب العائلة: ملفات مشفّرة فقط، تُفك بعد الفتح، وتشتغل بعد إعادة الفتح بدون الرمز
+    const hi = async () => pg.waitForFunction(() => Store.data.players.filter(p => p.fid).every(p => Voice.has('hi_' + p.fid)), null, { timeout: 8000 }).then(() => true, () => false);
+    check(await hi(), 'family greeting voices decrypted after unlock');
+    check(await pg.evaluate(c => !(window.SIRAJ_VOICE || []).some(k => /^hi_/.test(k)) && !Object.keys(localStorage).some(k => localStorage.getItem(k).includes(c)), FAMILY_CODE), 'no plain family voices listed, code not stored');
+    check(await pg.evaluate(async () => (await fetch('voice/hi_1.mp3')).status === 404), 'no plain hi_*.mp3 published');
+    await pg.reload(); await wait(pg, 700);
+    check(await pg.evaluate(() => Store.familyReady()) && await hi(), 'family unlock remembered after reload (no code)');
+    await pg.evaluate(() => App.renderHome()); await wait(pg, 700);
     const fam = await pg.evaluate(() => document.querySelectorAll('.player.fam').length);
     check(fam === 4, 'family mode shows 4 kids', String(fam));
     await pg.evaluate(() => { const k = Store.data.players.filter(p => p.fid); ['t1', 't2', 'd1'].forEach(id => Store.win(k[0], id, 3)); Store.win(k[1], 't1', 2); Store.win(k[2], 'p1', 3); });

@@ -5,7 +5,7 @@
 
   const KEY = 'khwarizmi.v1';
   // بيانات أطفال العائلة مشفّرة برمز العائلة (tools/family.js)، فأسماؤهم لا تظهر في الكود المنشور
-  const FAMILY_ENC = 'WgsEaLtL+QkxnMbLBtk1LRR+BmWJPDbqoHMiM2xME2/ibIIf6iwSEerLK19ZLPWa0oUkmBrNIzOF+TYQiO3nLrHh9ZyuL1GsR2h7JqvtetlKP/eyMYX/uSOBgIJNvWymzpNrp5ZEU0fhhU5MNcbZ6WptNTXiKp/+9SPzVZYv6qNfc5hBjlg1LKK+G1rEvq1Ig0LprRBsY02VedMnoNrnZQpz9X1xDxCBDWTzIOThanSxgYRR5n91XroKhy819KebhopkiWPNf9eUJp1n9VG+6fb2Uor3dakwXX49OXLgoxTD87a+jI2EA7kApOeF2n2yc9n3+H3B9wRd8Q2Et0VcOrIYwyqw8LxMwZ+cDLFkqntnuEZOsMzoxOpegc+BsFQ7cTyqPmuXS2ypyunFwXNxPnp+Hq0ffAOWIiAHMxLTfrYf746YoCZrizqdrSyLszfbStgt+pF1mo/lIjqHBZDlTL1r2ucrXeJba+EA8PiqAGJWqv5iewAXmz2UpBvZX7Rv7R1qGj5+RhnVO15CWvMR2FdQAbZNHiDOLoCuTM+oPEQNzCFn9e+FgLh9FtmgZXo5iPyWyVEv2UPlLtrNvmKYmhk=';
+  const FAMILY_ENC = 'AQLK7vgeRY5H9sr4iNfVy53UGR9wJ1j4Q51zWk0PUJsgBfxVyBOaq4YeCQs7j9nkQdpe+J4r2Bq4Yl84w2RaIarjjyCi5sI1JBtMlZ6s+kIUB/kTrSD+9qAmeCH9nNRArJbHMUil92AbSXRLBYrHHrgs7fy0D2CEj+5cHUq9lbFNFFUeVqMahCmd6jaMpuGwPtHY2j6LGAHLOXXRx1lB1m0zZ80PuzkAhrtBa2XefXisWVtyxWdV1IdQrhO6fCCb79nY2JwhNmLOYTwODFihcJ6zx00NVMP4O/CYaFuzZLAqvk7W6H/bvyPOk89tYTKOmV92fEDAxUhMMK0GnBkTeGgC7/hqCV4rkbnUL+cDjJGFxHV7a7JjSRmk6UgC+tzELP9QasTqmaFbYDvF9CNtcm18UBChLJy0JF0iMoVSH3e8l8WfLVZ2cvDfNAAxl5fF/zTpFEC034+g+dQcJSK9HXGQh6UWuV+0WVuqMkeqM6fxRkjP8K91RTkRR34B0FfJxVuDzfNkPS8nzAUhpe09vxqU4ctdt2PRPuTl3kF2SDAk6dOdoc5nytHoDckUfTLOFmQldmY3V7YegGk4ximUohLFezMhysxZaZBmS7+BEfyQJH5uJesgOM+tnvYBTS3n5o/6fwmb9Z2hkn8z1Gk=';
   const APP = 'khwarizmi';
   const LIMITS = [0, 15, 30, 45, 60, 90]; // دقائق اللعب في اليوم (0 = بدون حد)
   const MAX_PLAYERS = 40;
@@ -60,6 +60,7 @@
         const seenIds = new Set();
         data.players = (Array.isArray(raw.players) ? raw.players : []).map(clean).filter(p => p && !seenIds.has(p.id) && seenIds.add(p.id)).slice(0, MAX_PLAYERS);
         data.family = raw.family === true;
+        if (data.family && typeof raw.fk === 'string' && /^[A-Za-z0-9+/]{43}=$/.test(raw.fk)) data.fk = raw.fk;
         const s = isObj(raw.settings) ? raw.settings : {};
         data.settings.voice = s.voice !== false;
         data.settings.limit = LIMITS.includes(s.limit) ? s.limit : 30;
@@ -70,6 +71,7 @@
     } catch (e) { data = blank(); }
     try { localStorage.setItem(KEY + '.probe', '1'); localStorage.removeItem(KEY + '.probe'); saveFailed = false; } catch (e) { saveFailed = true; }
     if (data.players.length) requestPersist();
+    if (familyReady()) setTimeout(familyVoices, 0);
     return data;
   }
   function save() {
@@ -100,15 +102,36 @@
     save();
   }
 
+  // يرجع Promise<true|false>. نحفظ المفتاح المشتق (وليس الرمز) عشان أصوات الترحيب تشتغل كل مرة بدون إعادة كتابة الرمز
+  let unlocking = null;
   function enableFamily(code) {
-    const txt = root.Crypt ? Crypt.open(FAMILY_ENC, code) : null;
-    let fam = null;
-    try { fam = JSON.parse(txt); } catch (e) { return false; }
-    if (!fam || fam.ok !== 'siraj' || !Array.isArray(fam.family)) return false;
-    data.family = true;
-    for (const f of fam.family) if (!data.players.some(p => p.fid === f.fid)) addPlayer(Object.assign({}, f));
-    save();
-    return true;
+    if (unlocking) return unlocking;
+    return (unlocking = (async () => {
+      const o = root.Crypt && FAMILY_ENC ? await Crypt.open(FAMILY_ENC, code) : null;
+      let fam = null;
+      try { fam = JSON.parse(o.text); } catch (e) { return false; }
+      if (!fam || fam.ok !== 'siraj' || !Array.isArray(fam.family)) return false;
+      data.family = true; data.fk = o.key;
+      for (const f of fam.family) if (!data.players.some(p => p.fid === f.fid)) addPlayer(Object.assign({}, f));
+      save();
+      familyVoices();
+      return true;
+    })().finally(() => { unlocking = null; }));
+  }
+  const familyReady = () => data.family && !!data.fk;
+  // ترحيب كل طفل باسمه: ملف مشفّر voice/hi_<fid>.bin → يُفك بالمفتاح المحفوظ → رابط blob يشغّله Voice
+  const heard = {};
+  function familyVoices() {
+    if (!familyReady() || !root.Voice || !Voice.blob || typeof fetch !== 'function') return;
+    for (const p of data.players) {
+      const k = 'hi_' + p.fid;
+      if (!p.fid || !/^\w+$/.test(p.fid) || heard[k]) continue;
+      heard[k] = 1;
+      fetch('voice/' + k + '.bin').then(r => (r.ok ? r.arrayBuffer() : null))
+        .then(b => b && Crypt.openBytes(b, data.fk))
+        .then(m => { if (m) Voice.blob(k, URL.createObjectURL(new Blob([m], { type: 'audio/mpeg' }))); else delete heard[k]; })
+        .catch(() => { delete heard[k]; });
+    }
   }
 
   function win(p, levelId, stars) {
@@ -186,7 +209,7 @@
   function setSeen(p, k, v) { if (p && safeKey(k)) { p.seen[k] = v; save(); } }
 
   root.Store = {
-    load, save, addPlayer, getPlayer, removePlayer, resetPlayer, enableFamily, win, stars, solved, cwWin, cwSolved,
+    load, save, addPlayer, getPlayer, removePlayer, resetPlayer, enableFamily, familyReady, familyVoices, win, stars, solved, cwWin, cwSolved,
     addTime, todaySec, setLimit, LIMITS, setPin, checkPin, hasPin, pinOk, digits,
     exportAll, exportOne, importData, backupDue, requestPersist, setSeen, today,
     get data() { return data; }, get settings() { return data.settings; }, get saveFailed() { return saveFailed; },

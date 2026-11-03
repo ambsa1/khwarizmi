@@ -45,6 +45,28 @@
   function titleIdx(p) { const s = Store.stars(p); let i = 0; TITLES.forEach((t, j) => { if (s >= t[0]) i = j; }); return i; }
   const titleKey = (p, i) => 'x_t' + i + (girlOf(p) ? '_f' : '');
   const titleName = (p, i) => plain(X[titleKey(p, i == null ? titleIdx(p) : i)]);
+  // مكافأة كل لقب: لون جديد لسراج (الألوان الأساسية متاحة دايماً). LOOKS[i] = لون اللقب i
+  const LOOKS = [null, '#2ed1a2', '#ff6f91', '#5ac8fa', '#c2410c', '#94a3b8', '#1e3a8a', '#d4a017'];
+  const looksFor = p => Siraj.COLORS.map(c => ({ c, ok: true })).concat(LOOKS.map((c, i) => c && { c, i, ok: titleIdx(p) >= i }).filter(Boolean));
+  function openLooks() {
+    const p = P(); if (!p) return;
+    const i = titleIdx(p);
+    A().showModal(`<div class="x-title-big"><span>${TITLES[i][1]}</span>${esc(titleName(p, i))}</div>
+      <div class="w-siraj" id="xsj"></div>
+      <div class="x-looks">${looksFor(p).map(l => l.ok
+        ? `<button class="sw x-look ${l.c === p.color ? 'on' : ''}" data-x="look" data-c="${l.c}" style="background:${l.c}" aria-label="لون"></button>`
+        : `<button class="x-look locked" data-x="look-lock" data-i="${l.i}" style="--lc:${l.c}" aria-label="مقفول"><span>🔒</span><small>${TITLES[l.i][1]}</small></button>`).join('')}</div>
+      <div class="w-acts"><button class="run" data-x="looks-done">✔</button></div>`, true);
+    const el = $('#xsj'); if (el) { const s = Siraj.create(el, p.color); A().S.msirajs.push(s); s.happy(); }
+    Voice.play(titleKey(p, i), X[titleKey(p, i)], undefined, FORCE);
+  }
+  function setLook(t) {
+    const p = P(), c = t.dataset.c; if (!p || !looksFor(p).some(l => l.ok && l.c === c)) return;
+    p.color = c; Store.save(); Sfx.spark();
+    document.querySelectorAll('.x-look').forEach(b => b.classList.toggle('on', b === t));
+    A().S.msirajs.forEach(s => s.destroy()); A().S.msirajs = [];
+    const el = $('#xsj'); if (el) { el.innerHTML = ''; const s = Siraj.create(el, c); A().S.msirajs.push(s); s.happy(); }
+  }
   function titleChip(p) {
     if (!p) return '';
     const i = titleIdx(p);
@@ -56,6 +78,8 @@
     '🌈', '🌙', '☀️', '🌻', '🍉', '🍓', '🍦', '🎈', '🎨', '🎸', '⚽', '🚂', '🚁', '⛵', '🏰', '🎁', '🧩', '🔭', '💎', '🏆'];
   const PER = 4;
   const stickerCount = p => Math.min(STICKERS.length, Math.floor(Store.stars(p) / PER));
+  // كل ملصق على شارة واحدة الشكل (لون خلفية هادي مختلف)، عشان الإيموجي يبان موحّد على كل الأجهزة
+  const stkStyle = i => `--r:${((i * 37) % 17) - 8}deg;--h:${(i * 47) % 360}`;
 
   /* ---------- الموسوعة ---------- */
   // lv: يُطابق أنواع البطاقات أو اسم المسار أو نوع المرحلة. cw: يُطابق نشاطات عالم الكمبيوتر.
@@ -66,7 +90,7 @@
     { id: 'python', g: 'py', icon: '🐍', word: 'Python', code: 1, lv: /./ },
     { id: 'say', g: 'py', icon: '💬', word: 'say("مرحبا")', code: 1, lv: /say/ },
     { id: 'print', g: 'py', icon: '🖨️', word: 'print("مرحبا")', code: 1, lv: /say|^print$/ },
-    { id: 'paren', g: 'py', icon: '🫧', word: '( )', code: 1, lv: /./ },
+    { id: 'paren', g: 'py', icon: '🤲', word: '( )', code: 1, lv: /./ },
     { id: 'wave', g: 'py', icon: '👋', word: 'wave()', code: 1, lv: /wave/ },
     { id: 'jump', g: 'py', icon: '🦘', word: 'jump()', code: 1, lv: /jump/ },
     { id: 'light', g: 'py', icon: '🚦', word: 'light("red")\noff()', code: 1, lv: /^light|^off$/ },
@@ -79,7 +103,7 @@
     { id: 'i', g: 'py', icon: '🔤', word: 'i', code: 1, lv: /repeat|^for$/ },
     { id: 'colon', g: 'py', icon: '➡️', word: 'for i in range(3):\n    jump()', code: 1, lv: /repeat|^for$|^if$|^def$|^func_def/ },
     { id: 'var', g: 'py', icon: '📦', word: 'x = 5', code: 1, lv: /^var/ },
-    { id: 'eq', g: 'py', icon: '🟰', word: '=', code: 1, lv: /^var/ },
+    { id: 'eq', g: 'py', icon: '⬅️', word: '=', code: 1, lv: /^var/ },
     { id: 'plus', g: 'py', icon: '➕', word: '+', code: 1, lv: /var_add|^plus$/ },
     { id: 'if', g: 'py', icon: '🤔', word: 'if', code: 1, lv: /^if$|^elif$/ },
     { id: 'def', g: 'py', icon: '🧩', word: 'def', code: 1, lv: /^def$|^func_/ },
@@ -171,13 +195,15 @@
   function openStickers() {
     const p = P(); if (!p) return;
     const n = stickerCount(p), s = Store.stars(p), left = n >= STICKERS.length ? 0 : (n + 1) * PER - s;
-    const body = `<div class="x-st-head"><span class="x-st-n">${frac(n, STICKERS.length)}</span>
-        ${left ? `<div class="x-bar"><i style="width:${Math.round(((s % PER) / PER) * 100)}%"></i></div><p>⭐ ${left} للملصق التالي</p>` : '<p>🎉 جمعت كل الملصقات!</p>'}</div>
+    // العدّاد 🏅 للملصقات، والشريط عليه ⭐ كم نجمة من ٤ للملصق الجاي (عشان ما يتلخبطوا)
+    const body = `<div class="x-st-head"><span class="x-st-n">🏅 ${frac(n, STICKERS.length)}</span>
+        ${left ? `<div class="x-bar-w"><div class="x-bar"><i style="width:${Math.round(((s % PER) / PER) * 100)}%"></i></div><b>⭐ ${frac(s % PER, PER)}</b></div><p>⭐ ${left} للملصق التالي</p>` : '<p>🎉 جمعت كل الملصقات!</p>'}
+        <button class="x-looks-btn" data-x="title"><span class="pic">${A().mini(p.color)}</span>🎨 ألوان سراج</button></div>
       <div class="x-stickers">${STICKERS.map((e, i) => i < n
-        ? `<button class="x-stk" data-x="stk" style="--r:${((i * 37) % 17) - 8}deg">${e}</button>`
-        : `<span class="x-stk off" style="--r:${((i * 37) % 17) - 8}deg">${e}</span>`).join('')}</div>`;
+        ? `<button class="x-stk" data-x="stk" style="${stkStyle(i)}"><span>${e}</span></button>`
+        : `<span class="x-stk off" style="${stkStyle(i)}"><span>${e}</span></span>`).join('')}</div>`;
     go('stickers', '🏅 ملصقاتي', body, 'x_stickers');
-    gsap.from('.x-stk:not(.off)', { scale: 0, rotation: -40, stagger: 0.03, duration: 0.4, ease: 'back.out(2.4)' });
+    if (n) gsap.from('.x-stk:not(.off)', { scale: 0, rotation: -40, stagger: 0.03, duration: 0.4, ease: 'back.out(2.4)' });
   }
 
   function openCerts() {
@@ -286,6 +312,7 @@
       certName = `شهادة-${(p.name || 'سراج').replace(/[\\/:*?"<>|]/g, '')}-${g.name}.png`;
       A().showModal(`<h2>📜 ${esc(xtext('x_cert', p))}</h2><img class="x-cert-img" alt="شهادة" src="${certUrl}">
         <div class="w-acts"><button class="sq x-save" data-x="cert-save" aria-label="احفظ">💾</button><button class="run" data-x="${fromQueue ? 'q-next' : 'm-close'}">▶</button></div>`, true);
+      const mc = $('.m-card'); if (mc) mc.classList.add('x-wide');
       FX.confetti(); Sfx.win();
       Voice.play(...xline('x_cert', p), undefined, FORCE);
     }, 'image/png');
@@ -342,14 +369,15 @@
   function showTitle(p, i) {
     rewardModal(`<div class="w-siraj" id="xsj"></div><p class="x-sub">${esc(xtext('x_title_new', p))}</p>
       <div class="x-title-big"><span>${TITLES[i][1]}</span>${esc(titleName(p, i))}</div>
-      <div class="w-acts"><button class="run" data-x="q-next">▶</button></div>`, p.color);
+      ${LOOKS[i] ? `<p class="x-newlook">🎁 <i class="sw" style="background:${LOOKS[i]}"></i> 🎨</p>` : ''}
+      <div class="w-acts">${LOOKS[i] ? '<button class="sq" data-x="title" aria-label="ألوان سراج">🎨</button>' : ''}<button class="run" data-x="q-next">▶</button></div>`, p.color);
     gsap.from('.x-title-big', { scale: 0.3, opacity: 0, duration: 0.6, ease: 'back.out(2.5)', delay: 0.15 });
     Voice.playSeq([xline('x_title_new', p), [titleKey(p, i), X[titleKey(p, i)]]], FORCE);
   }
   function showSticker(p, from, to) {
     const got = STICKERS.slice(from, to).slice(-3);
     rewardModal(`<p class="x-sub">${esc(xtext('x_sticker_new', p))}</p>
-      <div class="x-new-stk">${got.map(e => `<span class="x-stk">${e}</span>`).join('')}</div>
+      <div class="x-new-stk">${got.map((e, j) => `<span class="x-stk" style="${stkStyle(STICKERS.indexOf(e))}"><span>${e}</span></span>`).join('')}</div>
       <div class="w-acts"><button class="sq" data-x="go-stickers" aria-label="ملصقاتي">🏅</button><button class="run" data-x="q-next">▶</button></div>`);
     gsap.from('.x-new-stk .x-stk', { scale: 0, rotation: 200, stagger: 0.15, duration: 0.7, ease: 'back.out(2)' });
     Voice.play(...xline('x_sticker_new', p), undefined, FORCE);
@@ -413,7 +441,14 @@
     stickers: () => { Sfx.tap(); openStickers(); hear('x_stickers'); },
     certs: () => { Sfx.tap(); openCerts(); },
     family: () => { Sfx.tap(); openFamily(); },
-    title: () => { const p = P(); if (p) { Sfx.tap(); Voice.play(titleKey(p, titleIdx(p)), X[titleKey(p, titleIdx(p))], undefined, FORCE); } },
+    title: () => { if (P()) { Sfx.tap(); openLooks(); } }, // اللقب + ألوان سراج (لون جديد مع كل لقب)
+    look: t => setLook(t),
+    'look-lock': t => { Sfx.oops(); gsap.fromTo(t, { x: -5 }, { x: 0, duration: 0.4, ease: 'elastic.out(1, .3)' }); hear('x_locked', FORCE); },
+    // نقفل نافذة الألوان ونعيد رسم الشاشة عشان سراج الصغير ياخد اللون الجديد
+    'looks-done': () => {
+      const n = A().S.screen; A().closeModal();
+      if (queue.length) { setTimeout(() => runQueue(), 250); return; } // باقي المكافآت أولاً
+      if (n === 'sections') A().renderSections(); else if (n === 'stickers') openStickers(); },
     'e-ar': (t, e) => {
       e.stopPropagation();
       const id = t.dataset.k; Sfx.tap();

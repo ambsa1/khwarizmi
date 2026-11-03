@@ -70,7 +70,7 @@ async function boot(browser, w, h, touch, tag) {
   await pg.waitForTimeout(300);
   await pg.addScriptTag({ path: path.join(__dirname, 'vendor', 'gremlins.min.js') });
   // سرعة حقيقية وصوت حقيقي (وضع الاختبار يسرّع ويكتم)
-  await pg.evaluate(fam => { window.__speed = 1; gsap.globalTimeline.timeScale(1); Store.settings.voice = true; if (fam) Store.enableFamily(fam); }, familyCode());
+  await pg.evaluate(async fam => { window.__speed = 1; gsap.globalTimeline.timeScale(1); Store.settings.voice = true; if (fam) await Store.enableFamily(fam); }, familyCode());
   return pg;
 }
 

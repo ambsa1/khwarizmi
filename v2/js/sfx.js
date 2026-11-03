@@ -49,7 +49,8 @@
   player.preload = 'auto';
   let token = 0, voices = null, cur = null, wd = null, lastAmbient = -1e9;
   const last = new Map(), memo = {}, picked = {}, log = [];
-  const has = k => { if (!voices) voices = new Set(root.SIRAJ_VOICE || []); return voices.has(k); };
+  const blobs = {}; // أصوات مفكوكة التشفير في الذاكرة (ترحيب العائلة): مفتاح → رابط blob
+  const has = k => { if (!voices) voices = new Set(root.SIRAJ_VOICE || []); return voices.has(k) || !!blobs[k]; };
   const enabled = () => !(root.Store && Store.settings && Store.settings.voice === false);
   const now = () => V.now();
   const note = (k, ev, extra) => { log.push(Object.assign({ t: now(), k, ev }, extra)); if (log.length > 400) log.splice(0, 100); };
@@ -120,7 +121,7 @@
       if (has(key)) {
         player.onended = () => { if (my === token) next(); };
         player.onerror = () => { if (my === token) { player.onerror = null; fallback(text, lang, my, next); } };
-        player.src = 'voice/' + key + '.mp3';
+        player.src = blobs[key] || 'voice/' + key + '.mp3';
         player.play().catch(e => { if (my === token && e && e.name !== 'AbortError' && player.onerror) { player.onerror = null; fallback(text, lang, my, next); } });
       } else {
         fallback(text, lang, my, next);
@@ -139,7 +140,8 @@
 
   const V = root.Voice = {
     play: (key, text, lang, opts) => playSeq([[key, text, lang]], opts),
-    playSeq, stop, pick, cls, PRI,
+    playSeq, stop, pick, cls, PRI, has,
+    blob: (k, url) => { if (blobs[k]) URL.revokeObjectURL(blobs[k]); blobs[k] = url; },
     busy: () => (cur ? cur.pri : 0),
     now: () => Date.now(),
     who: null, // app.js: دالة ترجع اللاعب الحالي (لعدّادات الأسماء)

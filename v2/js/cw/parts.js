@@ -5,7 +5,7 @@
 
   // مكان كل جزء على المكتب (شبكة ١٦٠×١٠٠): [المعرّف، الرسمة، س، ص، العرض]
   const DESK = [
-    ['monitor', 'monitor', 52, 10, 56], ['camera', 'camera', 72, 0, 16],
+    ['monitor', 'monitor', 52, 10, 56], ['camera', 'camera', 72, -3, 16], // فوق الشاشة شوية: ما تتداخل مع لمس الشاشة
     ['speaker', 'speaker', 31, 31, 15], ['speaker2', 'speaker', 114, 31, 15],
     ['tower', 'tower', 134, 21, 22], ['printer', 'printer', 2, 35, 26],
     ['keyboard', 'keyboard', 48, 69, 62], ['mouse', 'mouse', 116, 71, 12],

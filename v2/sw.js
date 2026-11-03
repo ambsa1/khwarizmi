@@ -5,21 +5,39 @@ const { version, files } = self.PRECACHE;
 const CACHE = 'khwarizmi-' + version;
 const fresh = u => new Request(u, { cache: 'reload' });
 
+// الصوت مسموح يفشل (يكمل لاحقاً)؛ أي ملف غيره لازم يتخزّن، وإلا التثبيت يفشل ويُعاد في الفتحة الجاية
+const isVoice = u => /^voice\/.+\.(mp3|bin)$/.test(u);
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const c = await caches.open(CACHE);
     // نخزّن الملفات ستة ستة، عشان التلفونات الضعيفة ما تتعب
     for (let i = 0; i < files.length; i += 6) {
-      await Promise.all(files.slice(i, i + 6).map(u => c.add(fresh(u)).catch(() => {})));
+      await Promise.all(files.slice(i, i + 6).map(u => (isVoice(u) ? c.add(fresh(u)).catch(() => {}) : c.add(fresh(u)))));
     }
     await self.skipWaiting();
   })());
 });
 
+// نكمّل ملفات الصوت الناقصة (بعد التفعيل، ومع كل فتح للعبة لحد ما تكمل)
+let filling = null, full = false;
+function fill() {
+  if (full || filling) return filling || Promise.resolve();
+  return (filling = (async () => {
+    const c = await caches.open(CACHE);
+    let miss = 0;
+    for (const u of files.filter(isVoice)) {
+      if (await c.match(u, { ignoreSearch: true })) continue;
+      try { await c.add(fresh(u)); } catch (err) { miss++; }
+    }
+    full = !miss;
+  })().finally(() => { filling = null; }));
+}
+
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     for (const k of await caches.keys()) if (k.startsWith('khwarizmi-') && k !== CACHE) await caches.delete(k);
     await self.clients.claim();
+    fill();
   })());
 });
 
@@ -42,6 +60,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   if (req.headers.get('range')) { e.respondWith(ranged(req)); return; }
+  if (req.mode === 'navigate' && !full) e.waitUntil(fill());
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     // نتجاهل ?v=N في البحث، لأن البصمة نفسها بتضمن النسخة الصحيحة

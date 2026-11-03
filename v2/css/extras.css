@@ -12,7 +12,7 @@
 .x-fam-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #c98f00; }
 
 /* لقب الطفل وأزرار القسم */
-.chip.x-title { max-width: 44vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0; font-size: 15px; }
+.chip.x-title { min-height: 44px; display: inline-flex; align-items: center; max-width: 44vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0; font-size: 15px; }
 .x-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 10px; }
 .x-tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px 10px; border-radius: 22px; color: #fff;
   background: linear-gradient(180deg, rgba(255,255,255,.17), rgba(255,255,255,.06)); border: 2px solid rgba(255,255,255,.14); box-shadow: 0 5px 0 rgba(0,0,0,.2); }
@@ -49,10 +49,30 @@
 .x-st-head p { margin: 6px 0 0; color: #c7cbf3; }
 .x-bar { height: 12px; border-radius: 999px; background: rgba(0,0,0,.25); overflow: hidden; max-width: 320px; margin: 8px auto 0; }
 .x-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ffe48a, #ffc531); box-shadow: 0 0 10px rgba(255,197,49,.6); }
+.x-bar-w { display: flex; align-items: center; gap: 8px; max-width: 320px; margin: 8px auto 0; }
+.x-bar-w .x-bar { flex: 1; margin: 0; }
+.x-bar-w b { font-family: var(--head); color: var(--glow); font-size: 16px; white-space: nowrap; }
 .x-stickers { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 14px; }
-.x-stk { width: 76px; height: 76px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 42px; background: #fff;
-  box-shadow: 0 0 0 4px #fff, 0 0 0 7px rgba(255,197,49,.65), 0 8px 14px rgba(0,0,0,.35); transform: rotate(var(--r, 0deg)); }
-.x-stk.off { background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 3px rgba(255,255,255,.12); filter: grayscale(1) brightness(0) opacity(.28); }
+/* شارة موحّدة: خلفية بلون هادي + إطار أبيض ودائرة ذهبية، والإيموجي في النص بنفس الحجم */
+.x-stk { width: 76px; height: 76px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; line-height: 1;
+  background: hsl(var(--h, 45), 85%, 88%); background: radial-gradient(circle at 35% 30%, #fff, hsl(var(--h, 45), 85%, 86%) 70%);
+  box-shadow: 0 0 0 4px #fff, 0 0 0 7px rgba(255,197,49,.75), 0 8px 14px rgba(0,0,0,.35); transform: rotate(var(--r, 0deg)); }
+.x-stk > span { display: block; width: 1.15em; text-align: center; }
+/* المقفول: ظل أبيض واضح للشكل على الخلفية الغامقة */
+.x-stk.off { background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 3px rgba(255,255,255,.28); }
+.x-stk.off > span { filter: grayscale(1) brightness(0) invert(1); opacity: .42; }
+/* ألوان سراج (مكافأة الألقاب) */
+.x-looks-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 16px 4px 10px; min-height: 48px; border-radius: 999px; background: rgba(255,255,255,.14); color: #fff; font-family: var(--head); font-size: 17px; }
+.x-looks-btn .pic { width: 34px; height: 40px; }
+.x-looks-btn:active { transform: translateY(2px); }
+.x-looks { display: grid; grid-template-columns: repeat(4, 48px); gap: 12px; justify-content: center; margin: 10px 0 4px; }
+.x-look { width: 48px; height: 48px; border-radius: 50%; }
+.x-look.locked { background: #ece6d8; border: 3px dashed var(--lc); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; padding: 0; }
+.x-look.locked span { font-size: 15px; } .x-look.locked small { font-size: 14px; }
+.m-card .sw.x-look { box-shadow: 0 0 0 3px rgba(0,0,0,.12); }
+.m-card .sw.x-look.on { box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--gold); transform: scale(1.08); }
+.x-newlook { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 26px; margin: 4px 0; }
+.x-newlook .sw { display: inline-block; width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--gold); }
 .x-new-stk { display: flex; justify-content: center; gap: 18px; margin: 16px 0 8px; }
 .x-new-stk .x-stk { width: 96px; height: 96px; font-size: 56px; margin: 0; }
 
@@ -68,7 +88,7 @@
 .x-cert.got .x-ic { filter: none; opacity: 1; }
 .x-c-ok { background: var(--gold); color: var(--ink); border-radius: 999px; padding: 2px 12px; font-weight: 800; }
 .x-cert-img { width: 100%; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.25); margin: 8px 0; -webkit-user-select: auto; user-select: auto; -webkit-touch-callout: default; }
-.m-card:has(.x-cert-img) { max-width: 620px; }
+.m-card.x-wide { max-width: 620px; } /* كلاس من extras.js بدل :has (مش مدعوم في المتصفحات القديمة) */
 
 /* نوافذ المكافأة والراحة */
 .x-sub { font-family: var(--head); font-size: 22px; color: #6b4d00; }
@@ -86,7 +106,7 @@
 .x-fam-total p { margin: 4px 0 0; color: #c7cbf3; font-size: 18px; font-family: var(--head); }
 .x-kids { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; }
 .x-kid { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
-  border: 2px solid color-mix(in srgb, var(--pc) 60%, transparent); box-shadow: 0 6px 0 rgba(0,0,0,.2); }
+  border: 2px solid rgba(255,255,255,.2); border: 2px solid color-mix(in srgb, var(--pc) 60%, transparent); box-shadow: 0 6px 0 rgba(0,0,0,.2); }
 .x-kid .pic { width: 70px; height: 80px; flex: none; }
 .x-kid .pic svg { width: 100%; height: 100%; }
 .x-kid-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -131,5 +151,5 @@
 
 @media (max-width: 360px) {
   .x-tile b { font-size: 14px; } .x-tile span { font-size: 28px; }
-  .x-stickers { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); } .x-stk { width: 64px; height: 64px; font-size: 34px; }
+  .x-stickers { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); } .x-stk { width: 64px; height: 64px; font-size: 32px; }
 }

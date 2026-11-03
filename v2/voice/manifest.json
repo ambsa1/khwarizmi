@@ -32,10 +32,6 @@
  "soon": "4ebf53a22897",
  "retry": "c6c915f74eab",
  "retry_f": "abdb1bd11050",
- "hi_munib": "bac0ab421385",
- "hi_haneen": "3e14c36a9dbe",
- "hi_mohammed": "f44bd3f027b9",
- "hi_omran": "74365a3c8020",
  "ph_0": "190df1d98a8d",
  "ph_1": "f0b281e4abfa",
  "ph_2": "20a80db5b464",
@@ -76,10 +72,6 @@
  "goal_t2b": "6efb84ba62f9",
  "goal_d2b": "e83623b5acef",
  "goal_p1b": "b2d04931a3e8",
- "hi_1": "bac0ab421385",
- "hi_2": "3e14c36a9dbe",
- "hi_3": "f44bd3f027b9",
- "hi_4": "74365a3c8020",
  "light_wrong": "17f32729121f",
  "light_short": "1b4d42afcb31",
  "light_long": "4d0c5b2a7911",
@@ -722,5 +714,7 @@
  "x_lk_hands": "3f46b6b394b1",
  "x_lk_typing": "b263827ca256",
  "x_lk_safety": "a17fec8eafcb",
- "x_lk_think": "dd1f54892590"
+ "x_lk_think": "dd1f54892590",
+ "np_age": "b5b85f6c5b24",
+ "np_gender": "091121b79bb2"
 }

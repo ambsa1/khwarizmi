@@ -36,6 +36,14 @@
 .cw-bub::before { content: ""; position: absolute; right: -7px; top: 50%; margin-top: -7px; border: 7px solid transparent; border-left-color: rgba(255,255,255,.96); border-right: 0; }
 .cw-bub-i { font-size: 22px; flex: none; }
 .cw-bub-t { font: 800 17px/1.25 var(--head); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+/* الشاشات الضيقة: الفقاعة تاخد مساحة رمز النشاط، و٣ أسطر بخط أصغر بدل ما الكلام يتقطع */
+@media (max-width: 420px) {
+  .cw-bar .cw-bub-i { display: none; }
+  .cw-bar { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  .cw-bar .cw-bsj { width: 30px; height: 35px; }
+  .cw-bub { padding: 4px 10px; }
+  .cw-bub-t { font-size: 15px; line-height: 1.2; -webkit-line-clamp: 3; }
+}
 .cw-stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
 .cw-stage > div { position: relative; }
 
@@ -50,8 +58,12 @@
 .cw-art.md { width: clamp(60px, 17vmin, 120px); } .cw-art.lg { width: clamp(90px, 28vmin, 190px); } .cw-art.xl { width: clamp(130px, 52vmin, 300px); }
 .cw-card { background: #fff; border-radius: 26px; box-shadow: 0 8px 0 rgba(0,0,0,.08), 0 10px 26px rgba(0,0,0,.08); }
 .cw-emo { font-size: clamp(64px, 22vmin, 140px); line-height: 1; }
-.cw-glow { animation: cwglow 1.6s ease-in-out infinite; }
-@keyframes cwglow { 50% { filter: drop-shadow(0 0 16px rgba(255,197,49,.9)); } }
+/* التوهّج: هالة جاهزة تتغيّر شفافيتها بس (بدون فلتر في حركة لا تنتهي) */
+.cw-glow, .cw-pulse-pwr { isolation: isolate; }
+.cw-glow { position: relative; }
+.cw-glow::before, .cw-pulse-pwr::before { content: ""; position: absolute; inset: -18%; border-radius: 50%; z-index: -1; pointer-events: none; opacity: 0; animation: cwglow 1.6s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255,197,49,.75), rgba(255,197,49,0) 65%); }
+@keyframes cwglow { 50% { opacity: 1; } }
 .cw-shake { animation: shake .4s; }
 .cw-draggable { cursor: grab; touch-action: none; }
 .cw-dragging { z-index: 40 !important; cursor: grabbing; filter: drop-shadow(0 10px 14px rgba(0,0,0,.25)); }
@@ -110,6 +122,9 @@
 .cw-desk-top { position: absolute; left: 0; right: 0; top: 60%; bottom: 0; border-radius: 0 0 22px 22px; background: linear-gradient(#c98d5a, #a96f42); box-shadow: inset 0 6px 0 #dca472; }
 .cw-wall-win { position: absolute; left: 5%; top: 6%; width: 12%; height: 22%; border-radius: 8px; border: 4px solid #fff; background: radial-gradient(1.5px 1.5px at 30% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #fff, transparent), linear-gradient(#2b2f7a, #4a3d9e); }
 .cw-part { position: absolute; cursor: pointer; }
+/* الأجزاء الصغيرة (الكاميرا، الفأرة، السماعات): مساحة لمس شفافة ٤٨ بكسل على الأقل حول الرسمة */
+.cw-part::before { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 48px); height: max(100%, 48px); transform: translate(-50%, -50%); }
+.cw-part[data-p="camera"]::before { top: auto; bottom: 0; transform: translateX(-50%); } /* الكاميرا: المساحة لفوق، بعيد عن الشاشة */
 .cw-part svg { width: 100%; height: auto; display: block; transition: filter .2s, opacity .3s; }
 .cw-part.on svg { filter: drop-shadow(0 0 6px #ffd23e) drop-shadow(0 0 3px #ffb300); }
 .cw-tag { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); margin-bottom: 4px; white-space: nowrap; background: #fff; border-radius: 12px; padding: 2px 10px;
@@ -129,9 +144,8 @@
 .cw-titem .cw-art.sm { width: 100%; }
 .cw-titem.used { visibility: hidden; }
 .cw-titem.sel { box-shadow: 0 0 0 4px var(--gold), 0 4px 0 rgba(0,0,0,.1); }
-.cw-pulse-pwr { animation: pwrglow 1s ease-in-out infinite; }
+.cw-pulse-pwr::before { background: radial-gradient(circle, rgba(62,224,138,.75), rgba(62,224,138,0) 65%); animation-duration: 1s; }
 .cw-pulse-pwr::after { content: "👆"; position: absolute; left: 30%; top: 40%; font-size: max(26px, 2.2em); animation: tapme 1s ease-in-out infinite; pointer-events: none; }
-@keyframes pwrglow { 50% { filter: drop-shadow(0 0 14px #3ee08a); } }
 @keyframes tapme { 50% { transform: translate(-4px, -8px); } }
 .cw-boot { position: absolute; left: 10%; right: 10%; top: 10.9%; height: 54.3%; border-radius: 4px; overflow: hidden; background: linear-gradient(135deg, #5ab0ff, #7b4fe0); display: flex; align-items: center; justify-content: center; }
 .cw-boot-sj { height: 86%; aspect-ratio: 200 / 230; }
@@ -154,7 +168,7 @@
 /* ---------- ٣ أيادٍ صغيرة ---------- */
 .cw-sky-play { position: absolute !important; inset: 0; overflow: hidden; touch-action: none; background: linear-gradient(#8fd3ff, #d8f1ff 72%, #a7de8f 72%, #8acb72); }
 .cw-balloon { position: absolute; left: 0; top: 0; padding: 0; will-change: transform; }
-.cw-balloon svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 2px rgba(0,0,0,.15)); pointer-events: none; }
+.cw-balloon svg { width: 100%; height: 100%; display: block; pointer-events: none; } /* بدون ظل بفلتر: البالونات بتتحرك طول الوقت */
 .cw-balloon.pop, .cw-drop.pop { animation: popb .25s forwards; }
 @keyframes popb { to { opacity: 0; scale: 1.6; } }
 .cw-count { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,.92); border-radius: 999px; padding: 4px 16px; font: 800 20px var(--head); z-index: 2; pointer-events: none; direction: ltr; }
@@ -187,7 +201,7 @@
 .cw-les { background: #fff; border-radius: 20px; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; box-shadow: 0 5px 0 rgba(0,0,0,.1); min-height: 94px; }
 .cw-les-n { font: 800 15px var(--head); color: #8b5cf6; }
 .cw-les-k { font: 800 24px var(--head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.cw-les.words .cw-les-k { font-size: 16px; }
+.cw-les.words .cw-les-k { font-size: 16px; line-height: 1.2; white-space: normal; text-overflow: clip; overflow: visible; text-align: center; } /* كلمتين على سطرين بدل ما تتقطع */
 .cw-les.locked { opacity: .5; }
 .cw-les.done { background: #f3ecff; }
 .cw-les.next { box-shadow: 0 0 0 4px #8b5cf6, 0 5px 0 rgba(0,0,0,.1); animation: pulse 1.4s ease-in-out infinite; }
@@ -329,12 +343,12 @@
 .cw-bits.win b { color: var(--gold); text-shadow: 0 0 14px var(--gold); }
 .cw-px { height: 100%; display: flex; flex-direction: column; padding: 28px 8px 8px; gap: 6px; background: #f3efe6; }
 .cw-px-main { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
-.cw-px-grid { --c: 36px; display: flex; flex-direction: column; gap: 2px; background: #fff; padding: 8px; border-radius: 16px; box-shadow: 0 6px 0 rgba(0,0,0,.08); }
+.cw-px-grid { --c: 36px; display: flex; flex-direction: column; gap: 2px; background: #fff; padding: 5px; border-radius: 16px; box-shadow: 0 6px 0 rgba(0,0,0,.08); }
 .cw-px-row { display: flex; gap: 2px; align-items: center; }
 .cw-px-c { width: var(--c); height: var(--c); border-radius: calc(var(--c) * .18); background: #eceaf3; padding: 0; transition: background .15s; }
 .cw-px-c.on { background: var(--pc); }
 .cw-px-c.bad { background: #f0533f; animation: shake .3s; }
-.cw-px-code { margin-left: 10px; font: 700 calc(var(--c) * .5) var(--code); letter-spacing: 1px; color: #5d6191; }
+.cw-px-code { margin-left: 6px; font: 700 calc(var(--c) * .38) var(--code); letter-spacing: 0; color: #5d6191; }
 .cw-px-grid.done .cw-px-c:not(.on) { background: #fff; }
 .cw-px-grid.done .cw-px-code { opacity: .3; }
 .cw-px-acts { position: absolute !important; top: 4px; left: 8px; z-index: 7; }

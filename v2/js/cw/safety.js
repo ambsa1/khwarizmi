@@ -8,7 +8,7 @@
   const SCEN = [
     { b: '🤫', scene: `<div class="cw-dev-h">🎮 لعبة</div><div class="cw-msg in">أين تسكن؟ 🏠</div>`, opts: [['🙅', 1], ['✍️', 0]] },
     { b: '🔑', scene: `<div class="cw-big-emo">🔐</div>`, opts: [['1234', 0, 1], ['قمر*أخضر7يقفز', 1, 1]] },
-    { b: '🤔', scene: `<div class="cw-dev-h">▶ فيديو</div><div class="cw-video">🐱🪽<small>القطط تطير!</small></div>`, opts: [['🙋', 1], ['📢', 0]] },
+    { b: '🤔', scene: `<div class="cw-dev-h">▶ فيديو</div><div class="cw-video">🐱🚀<small>القطط تطير!</small></div>`, opts: [['🙋', 1], ['📢', 0]] },
     { b: '✉️', scene: `<div class="cw-dev-h">✉️ رسالة</div><div class="cw-msg in">👤❓ اضغط هنا 🔗</div>`, opts: [['🚫', 1], ['👆', 0]] },
     { b: '👾', scene: `<div class="cw-dev-h">🎮 دردشة اللعبة</div><div class="cw-msg in">👾 لنلتقِ في الحديقة!</div>`, opts: [['👨‍👩‍👧', 1], ['🚶', 0]] },
     { b: '💛', scene: `<div class="cw-dev-h">🎮 لعبة</div><div class="cw-big-emo">😢</div><div class="cw-msg in">خسرت…</div>`, opts: [['💛', 1], ['😝', 0]] },
@@ -89,10 +89,10 @@
   /* ---------- فخّ النوافذ المنبثقة ---------- */
   const POPS = [['🎁', 'فزت بجائزة!', 'اضغط هنا'], ['⚠️', 'جهازك فيه فيروس!', 'نظّف الآن'], ['🎮', 'لعبة مجانية!', 'حمّل الآن'], ['💎', 'جواهر مجانية!', 'خذها'], ['🏆', 'أنت الفائز!', 'استلم']];
   const popup = {
-    id: 'popup', name: 'فخّ النوافذ', icon: '🪟', minAge: 5,
+    id: 'popup', name: 'فخّ النوافذ', icon: '⚠️', minAge: 5,
     mount(el, A) {
       const N = A.age <= 6 ? 4 : 5;
-      el.innerHTML = `<div class="cw-pop"><div class="cw-tab"><div class="cw-tab-scr" id="scr"><div class="cw-tab-h"><span>⭐ <b id="sc">0</b></span><span>🪟 <b id="pc">0</b>/${N}</span></div></div></div></div>`;
+      el.innerHTML = `<div class="cw-pop"><div class="cw-tab"><div class="cw-tab-scr" id="scr"><div class="cw-tab-h"><span>⭐ <b id="sc">0</b></span><span>❎ <b id="pc">0</b>/${N}</span></div></div></div></div>`;
       const q = s => el.querySelector(s), scr = q('#scr');
       let score = 0, closed = 0, traps = 0, popOpen = false, shown = 0, over = false;
       const order = U.shuffle(POPS);

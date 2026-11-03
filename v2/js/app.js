@@ -9,6 +9,16 @@
   const plain = s => String(s).replace(/[ً-ْ]/g, ''); // التشكيل للصوت فقط، والشاشة بدونه
   const { SAY, CARD, CARD_EN, EN } = window.SIRAJ_TEXTS;
 
+  // شاشة فاضية (مثلاً صفر ملصقات) ما تطلّع تحذيرات "target not found" في الكونسول
+  gsap.config({ nullTargetWarn: false });
+  // "حركة أقل" من إعدادات الجهاز: الحركات الزخرفية اللي بتتكرر للأبد تقف (مرة واحدة أو تقفز للنهاية)
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const calm = v => !!v && v.repeat === -1 && Object.assign(v, { repeat: 0, yoyo: false });
+    const tl = gsap.timeline.bind(gsap); gsap.timeline = v => { calm(v); return tl(v); };
+    ['to', 'from'].forEach(m => { const f = gsap[m].bind(gsap); gsap[m] = (t, v) => f(t, calm(v) ? Object.assign(v, { duration: 0.01 }) : v); });
+    const ft = gsap.fromTo.bind(gsap); gsap.fromTo = (t, a, b) => ft(t, a, calm(b) ? Object.assign(b, { duration: 0.01 }) : b);
+  }
+
   const S = { screen: 'home', player: null, track: null, li: 0, stage: null, ws: null, running: false, run: 0, lock: 0, timers: [], sirajs: [], msirajs: [] };
   const girl = () => S.player && S.player.gender === 'g';
   const key = k => (girl() && SAY[k + '_f'] ? k + '_f' : k);
@@ -89,16 +99,28 @@
         <div class="lbl">عمرك</div>
         <div class="ages">${[3, 4, 5, 6, 7, 8, 9, 10].map(a => `<button data-act="age" data-a="${a}">${a}</button>`).join('')}</div>
         <div class="gender"><button data-act="gender" data-g="b">👦 ولد</button><button data-act="gender" data-g="g">👧 بنت</button></div>
-        <button class="big-go" id="saveNp" data-act="save-new" disabled>✔ يلا نبدأ</button>
+        <button class="big-go off" id="saveNp" data-act="save-new" aria-disabled="true">✔ يلا نبدأ</button>
       </div>`, 'night');
     S.pv = live($('#pv'), S.np.color);
   }
-  function npReady() { $('#saveNp').disabled = !(S.np.age && S.np.gender); }
+  // الزر مش disabled فعلاً: لو الطفل ضغطه قبل ما يختار، سراج يقول له إيه الناقص والجزء ده ينوّر
+  function npReady() { const ok = !!(S.np.age && S.np.gender), b = $('#saveNp'); b.classList.toggle('off', !ok); b.setAttribute('aria-disabled', String(!ok)); return ok; }
+  function npMissing() {
+    const [sel, k] = !S.np.age ? ['.ages', 'np_age'] : ['.gender', 'np_gender'], el = $(sel);
+    Sfx.oops(); say(k, { pri: 'instruction', force: true });
+    if (!el) return;
+    el.classList.add('need'); el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    gsap.fromTo(el, { scale: 1.08 }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, .4)' });
+    later(() => el.classList.remove('need'), 1600);
+  }
 
   /* ---------- اختيار القسم ---------- */
   // مصابيح القسم: مراحل المسارات التي يراها هذا الطفل فقط (بدون المختبر للصغار مثلاً)
   const tracksFor = window.tracksFor;
   const myLevels = p => tracksFor(p).reduce((a, [t]) => a.concat(t.levels), []);
+  // مصابيح عالم الكمبيوتر: نشاط لكل مصباح (نفس حساب الشهادات في extras.js)
+  const cwLamps = p => (window.Extras ? Extras.groups(p).filter(g => g.key[0] === 'C')
+    .map(g => { const d = Extras.doneIn(p, g); return g.ids.map((x, i) => `<i class="${i < d ? 'on' : ''}"></i>`).join(''); }).join('') : '');
   function renderSections() {
     const p = S.player;
     S.screen = 'sections';
@@ -107,7 +129,8 @@
       <div class="sections">
         <button class="door code" data-act="code"><span class="d-pic">${mini(p.color)}</span><span><h3>البرمجة مع سراج</h3><p>برمج سراج يتكلم ويرسم وينوّر المدينة</p>
           <span class="lamps">${myLevels(p).map(l => `<i class="${Store.solved(p, l.id) ? 'on' : ''}"></i>`).join('')}</span></span></button>
-        <button class="door pc" data-act="pc"><span class="d-pic big">💻</span><span><h3>عالم الكمبيوتر</h3><p>أجزاء الكمبيوتر، مدرسة الكتابة، والأمان في الإنترنت</p></span></button>
+        <button class="door cwd" data-act="pc"><span class="d-pic">${window.CW && CW.art && CW.art.monitor ? CW.art.monitor('on') : '💻'}</span><span><h3>عالم الكمبيوتر</h3><p>أجزاء الكمبيوتر، مدرسة الكتابة، والأمان في الإنترنت</p>
+          <span class="lamps">${cwLamps(p)}</span></span></button>
         ${window.Extras ? Extras.sectionsRow(p) : ''}
       </div>`, 'night');
     gsap.from('.door', { x: 60, opacity: 0, stagger: 0.12, duration: 0.5, ease: 'back.out(1.6)' });
@@ -477,7 +500,7 @@
         ${L.free && S.kind === 'draw' ? '<button class="sq" data-act="savepic" aria-label="احفظ رسمتي">💾</button>' : ''}
         <button class="run" data-act="next">${last ? '✔ تم' : '▶ التالي'}</button></div>`, true);
     const s = Siraj.create($('#wsj'), p.color); S.msirajs.push(s); s.happy();
-    gsap.from('.w-stars span.on', { scale: 0, rotation: -90, stagger: 0.18, duration: 0.5, ease: 'back.out(3)', delay: 0.2 });
+    if (stars) gsap.from('.w-stars span.on', { scale: 0, rotation: -90, stagger: 0.18, duration: 0.5, ease: 'back.out(3)', delay: 0.2 });
   }
 
   /* ---------- وضع الصغار: كل ضغطة تتنفّذ فوراً ---------- */
@@ -541,15 +564,32 @@
     S.lpal = littlePalette(S.kind, L);
     S.lseq = littleSeq(S.kind, L, S.lpal);
     S.littleCode = []; S.ltaps = [];
+    // الأسهم على شكل يد تحكم: كل سهم في مكانه (فوق، وتحت بين اليمين واليسار)
+    $('#lpal').classList.toggle('dpad', arrowsKind(S.kind));
     $('#lpal').innerHTML = S.lpal.map((o, i) => `<button class="lb ${o.op}" data-act="lb" data-i="${i}" style="--tc:${LCOLOR(t, o)}">${LICON[o.op](o)}</button>`).join('');
-    $('#strip').innerHTML = '';
+    ghosts();
+  }
+  // خانات فاضية بعدد خطوات الحل: الطفل يشوف كم ضغطة باقية
+  const slots = () => (level().free ? FREE_TAPS : (S.lseq || []).length);
+  function ghosts() {
+    const st = $('#strip'); if (!st) return;
+    st.querySelectorAll('.ghost').forEach(g => g.remove());
+    const n = slots() - st.querySelectorAll('.sb').length;
+    for (let i = 0; i < n; i++) st.insertAdjacentHTML('beforeend', '<span class="sb ghost"></span>');
+  }
+  function addStrip(html) {
+    const st = $('#strip'), g = st.querySelector('.ghost'), tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const el = st.insertBefore(tmp.firstElementChild, g);
+    if (g) g.remove();
+    return el;
   }
   function resetLittle() {
     if (!S.stage) return;
     S.stage.reset(); S.littleCode = []; S.ltaps = [];
-    const st = $('#strip'); if (st) st.innerHTML = '';
+    const st = $('#strip'); if (st) { st.innerHTML = ''; ghosts(); }
   }
-  function popStrip() { S.littleCode.pop(); S.ltaps.pop(); const l = $('#strip .sb:last-child'); if (l) l.remove(); }
+  function popStrip() { S.littleCode.pop(); S.ltaps.pop(); const l = [...document.querySelectorAll('#strip .sb:not(.ghost)')].pop(); if (l) { l.remove(); ghosts(); } }
   // تلميح الصغار: الزر الصحيح التالي يلمع (أو نقاط الطريق في المغامرة)
   function littleHint() {
     if (S.screen !== 'level' || !S.lseq) return;
@@ -565,8 +605,8 @@
     document.querySelectorAll('.lb.pulse').forEach(b => b.classList.remove('pulse'));
     try {
       S.littleCode.push(LPY(S.kind, o, stage)); S.ltaps.push(i);
-      $('#strip').insertAdjacentHTML('beforeend', `<span class="sb" style="--tc:${LCOLOR(t, o)}">${LICON[o.op](o)}</span>`);
-      gsap.from('#strip .sb:last-child', { scale: 0, duration: 0.35, ease: 'back.out(3)' });
+      const sb = addStrip(`<span class="sb" style="--tc:${LCOLOR(t, o)}">${LICON[o.op](o)}</span>`);
+      if (sb) gsap.from(sb, { scale: 0, duration: 0.35, ease: 'back.out(3)' });
       const ok = await stage.exec(o);
       if (my !== S.run) return;
       if (L.free) { if (S.ltaps.length >= FREE_TAPS) await win(L, 0, my); return; }
@@ -586,26 +626,7 @@
     }
   }
 
-  /* ---------- الأهل ---------- */
-  function parents() {
-    const a = 6 + Math.floor(Math.random() * 4), b = 12 + Math.floor(Math.random() * 8);
-    S.gate = a * b;
-    showModal(`<h2>🔒 للكبار</h2><p>كم يساوي <bdi>${a} × ${b}</bdi>؟</p>
-      <input id="gate" inputmode="numeric" class="inp"><p class="err" id="gerr"></p>
-      <div class="w-acts"><button class="run" data-act="gate">دخول</button></div>`);
-  }
-  function parentsPanel() {
-    const d = Store.data;
-    showModal(`<h2>لوحة الأهل</h2>
-      ${d.family ? '<p class="ok">✔ وضع العائلة مفعّل</p>' : `<p>رمز العائلة</p><input id="fam" class="inp" autocomplete="off"><p class="err" id="ferr"></p><button class="sq wide" data-act="family">تفعيل</button>`}
-      <label class="row"><span>صوت سراج</span><input type="checkbox" id="vc" ${d.settings.voice ? 'checked' : ''}></label>
-      <div class="plist">${d.players.map(p => `<div class="prow"><span class="pic">${mini(p.color)}</span><b>${esc(p.name) || '—'}</b><small>${p.age} سنين · ⭐ ${Store.stars(p)}</small>
-        <button class="del" data-act="delp" data-id="${esc(p.id)}" aria-label="حذف">🗑</button></div>`).join('')}</div>
-      <div class="w-acts"><button class="run" data-act="m-close">تم</button></div>`);
-  }
-
   /* ---------- الأحداث ---------- */
-  const toAscii = s => String(s || '').replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660).replace(/[۰-۹]/g, d => d.charCodeAt(0) - 0x6F0).trim();
   const ACT = {
     home: () => { renderHome(); say('who'); },
     'm-close-bg': (t, e) => { if (e.target === t) closeModal(); },
@@ -620,6 +641,7 @@
     age: t => { S.np.age = +t.dataset.a; document.querySelectorAll('.ages button').forEach(b => b.classList.toggle('on', b === t)); Sfx.tap(); npReady(); },
     gender: t => { S.np.gender = t.dataset.g; document.querySelectorAll('.gender button').forEach(b => b.classList.toggle('on', b === t)); Sfx.tap(); npReady(); },
     'save-new': () => {
+      if (!npReady()) return npMissing();
       S.player = Store.addPlayer({ name: $('#nm').value.trim().slice(0, 16), age: S.np.age, gender: S.np.gender, color: S.np.color });
       renderSections(); say('sections');
     },
@@ -681,10 +703,7 @@
       const t = TRACKS[S.track];
       if (S.li + 1 < t.levels.length) renderLevel(S.track, S.li + 1); else renderTracks();
     },
-    parents: () => (window.Parents ? Parents.open() : parents()),
-    gate: () => { if (+toAscii($('#gate').value) === S.gate) parentsPanel(); else $('#gerr').textContent = 'غير صحيح'; },
-    family: () => { if (Store.enableFamily($('#fam').value)) parentsPanel(); else $('#ferr').textContent = 'الرمز غير صحيح'; },
-    delp: t => { if (confirm('حذف هذا اللاعب نهائياً؟')) { Store.removePlayer(t.dataset.id); parentsPanel(); } },
+    parents: () => Parents.open(),
   };
 
   /* حارس الضغطات السريعة (للتطبيق كله، ومنه extras.js و parents.js):
@@ -709,7 +728,6 @@
     const f = ACT[t.dataset.act];
     if (f) f(t, e);
   });
-  document.addEventListener('change', e => { if (e.target.id === 'vc') { Store.settings.voice = e.target.checked; Store.save(); if (!e.target.checked) Voice.stop(); } });
   document.addEventListener('visibilitychange', () => { if (document.hidden) Voice.stop(); });
 
   // لو حجم المسرح اتغيّر (تدوير الجهاز مثلاً) نعيد رسمه؛ وهو شغّال نأجّل لحدي ما يخلص

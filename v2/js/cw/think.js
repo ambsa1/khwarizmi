@@ -87,7 +87,8 @@
       }
       function fit() {
         const main = q('.cw-px-main'), n = pic.length;
-        const cell = Math.floor(Math.max(18, Math.min(58, (main.clientWidth - 22 - 2 * n) / (n * 1.33), (main.clientHeight - 24 - 2 * n) / n)));
+        // كود الصف بخط أصغر (٠٫٣٨ من المربع) عشان المربعات تكبر قد ما نقدر
+        const cell = Math.floor(Math.max(18, Math.min(58, (main.clientWidth - 20 - 2 * n) / (n * 1.24), (main.clientHeight - 16 - 2 * n) / n)));
         q('.cw-px-grid').style.setProperty('--c', cell + 'px');
       }
       A.onResize(() => pic && fit());
@@ -127,10 +128,12 @@
   };
 
   /* ---------- رتّب الخطوات (الخوارزمية) ---------- */
+  // فرشاة الأسنان رسمة صغيرة (إيموجي الفرشاة جديد وبيظهر مربّع في التلفونات القديمة)
+  const BRUSH = '<svg viewBox="0 0 40 40" width="1em" height="1em" aria-hidden="true"><g transform="rotate(-35 20 20)"><rect x="1" y="21" width="27" height="6" rx="3" fill="#3d8bff"/><rect x="25" y="19" width="14" height="8" rx="2.5" fill="#e9f3ff" stroke="#7fb0f0" stroke-width="1.2"/><path d="M27 19v-7M30 19v-7M33 19v-7M36 19v-7" stroke="#4fd1ff" stroke-width="2.4" stroke-linecap="round"/></g></svg>';
   const ALGS = [
     ['🚰', '🧼', '👐', '💧', '🧻'],
     ['⛏️', '🌰', '🟫', '🚿', '🌳'],
-    ['🪥', '🧴', '😁', '💦'], // تنظيف الأسنان: كل خطوة لازم بعد اللي قبلها (الشطيرة كان فيها ترتيبان صحيحان)
+    [BRUSH, '🧴', '😁', '💦'], // تنظيف الأسنان: كل خطوة لازم بعد اللي قبلها (الشطيرة كان فيها ترتيبان صحيحان)
     ['🧦', '👟', '🎀'],
   ];
   const algo = {
@@ -232,8 +235,10 @@
       let r = 0, secret = 0, tries = 0, total = 0, lo = 1, hi = N, busy = false;
       function fit() {
         const m = q('.cw-hl-main'), W = m.clientWidth - 6, H = m.clientHeight - 6;
-        const cols = N >= 50 && W / H > 1.6 ? 20 : 10, rows = Math.ceil(N / cols);
-        const c = Math.floor(Math.max(16, Math.min(64, (W - 3 * (cols - 1)) / cols, (H - 3 * (rows - 1)) / rows)));
+        // نختار عدد الأعمدة اللي يكبّر الأزرار أكثر (٥ أو ١٠ أو ٢٠؛ المية دايماً صفوف من ١٠ أو ٢٠)
+        const size = k => Math.min(64, (W - 3 * (k - 1)) / k, (H - 3 * (Math.ceil(N / k) - 1)) / Math.ceil(N / k));
+        const cols = [5, 10, 20].filter(k => k < N && (N <= 50 || k >= 10)).reduce((a, k) => (size(k) > size(a) ? k : a), 10);
+        const c = Math.floor(Math.max(16, size(cols)));
         q('#nums').style.setProperty('--c', c + 'px');
         q('#nums').style.gridTemplateColumns = `repeat(${cols}, var(--c))`;
       }

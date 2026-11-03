@@ -1,6 +1,7 @@
 // يجمع كل كلام سراج في ملف واحد ليُولَّد صوته:
-//   node tools/voice.js "رمز العائلة"   ثم   python tools/make_voice.py
-// رمز العائلة اختياري: بدونه ما يتولّد ترحيب أطفال العائلة بأسمائهم.
+//   node tools/voice.js   ثم   python tools/make_voice.py
+// رمز العائلة يُقرأ من tools/family-code.local.txt (بدونه ما يتولّد ترحيب أطفال العائلة بأسمائهم).
+// ملفات الترحيب hi_*.mp3 تتشفّر تلقائياً إلى hi_*.bin في آخر make_voice.py (tools/family.js) ولا تُنشر كـ mp3 أبداً.
 const fs = require('fs');
 const path = require('path');
 const T = require('../js/texts.js');
@@ -17,12 +18,16 @@ for (const [k, v] of Object.entries(T.COLORS || {})) out.push({ key: 'c_' + k, t
 (T.NUMS || []).forEach((v, i) => out.push({ key: 'n_' + i, text: v }));
 for (const t of TRACKS) for (const L of t.levels) out.push({ key: 'goal_' + L.id, text: L.goal });
 
-const code = process.argv[2];
+(async () => {
+// ترحيب أطفال العائلة (hi_): الرمز من tools/family-code.local.txt. make_voice.py يشفّر ملفاتهم بعدها (tools/family.js)
+let code = process.argv[2];
+if (!code) { try { code = fs.readFileSync(path.join(__dirname, 'family-code.local.txt'), 'utf8').trim(); } catch (e) { /* بدون عائلة */ } }
 if (code) {
   const store = fs.readFileSync(path.join(__dirname, '..', 'js', 'store.js'), 'utf8');
   const enc = store.match(/FAMILY_ENC = '([^']+)'/)[1];
-  const fam = JSON.parse(Crypt.open(enc, code));
-  for (const f of fam.family) out.push({ key: 'hi_' + f.fid, text: f.hi });
+  const o = await Crypt.open(enc, code);
+  if (!o) { console.error('family code does not open FAMILY_ENC (run node tools/family.js)'); process.exit(1); }
+  for (const f of JSON.parse(o.text).family) out.push({ key: 'hi_' + f.fid, text: f.hi });
 }
 
 // الموسوعة والمكافآت (x_)، وكلمات الكود بالإنجليزي (en_، تُنطق بصوت إنجليزي)
@@ -38,3 +43,4 @@ for (const [k, v] of Object.entries(CWT)) out.push(k.startsWith('cw_en_') ? { ke
 const uniq = [...new Map(out.map(i => [i.key, i])).values()];
 fs.writeFileSync(path.join(__dirname, 'voice_texts.json'), JSON.stringify(uniq, null, 1));
 console.log(uniq.length + ' texts');
+})();
