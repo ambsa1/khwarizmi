@@ -95,8 +95,9 @@
       const openIt = () => { clearTimeout(hold); taps = []; if (S.screen === 'home' && !Store.familyReady()) Parents.familyPrompt(); };
       const start = e => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); clearTimeout(hold); hold = setTimeout(openIt, 2000); };
       const stop = () => clearTimeout(hold);
-      lg.addEventListener('pointerdown', start); lg.addEventListener('pointerup', stop); lg.addEventListener('pointercancel', stop);
-      lg.addEventListener('click', () => { const t = Date.now(); taps = taps.filter(x => t - x < 3000).concat(t); if (taps.length >= 7) openIt(); });
+      // الضغطات السريعة تُعدّ عند رفع الإصبع (click ما يوصل بعد preventDefault على بعض الأجهزة)
+      const tap = () => { stop(); const t = Date.now(); taps = taps.filter(x => t - x < 3000).concat(t); if (taps.length >= 7) openIt(); };
+      lg.addEventListener('pointerdown', start); lg.addEventListener('pointerup', tap); lg.addEventListener('pointercancel', stop);
       lg.addEventListener('contextmenu', e => e.preventDefault());
       lg.addEventListener('dragstart', e => e.preventDefault());
     }
