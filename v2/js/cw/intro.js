@@ -48,7 +48,7 @@
   };
 
   /* ---------- هل هو كمبيوتر؟ ---------- */
-  const YES = [['laptop', 1], ['phone', 1], ['tablet', 1], ['watch', 1], ['atm', 1], ['monitor', 1], ['🎮', 1], ['🤖', 1]];
+  const YES = [['laptop', 1], ['phone', 1], ['tablet', 1], ['watch', 1], ['atm', 1], ['monitor', 1], ['tower', 1], ['🤖', 1]]; // يد اللعب 🎮 مش كمبيوتر، فحطّينا صندوق الكمبيوتر
   const NO = [['🪑', 0], ['🍎', 0], ['🧸', 0], ['🌳', 0], ['⚽', 0], ['📚', 0], ['🥄', 0], ['🎈', 0]];
   const isit = {
     id: 'isit', name: 'هل هو كمبيوتر؟', icon: '🤔', minAge: 3,
@@ -137,11 +137,12 @@
         const first = !seen[kind]; seen[kind] = 1;
         if (first) A.good(bin, 'cw_ipo_' + kind); else { A.good(bin); A.praise(['cw_good1', 'cw_good2', 'cw_good3']); }
         if (root.gsap) gsap.to(card, { scale: 0, opacity: 0, duration: 0.3 });
-        A.later(() => {
+        const next = () => {
           i++;
           if (i < items.length) show();
           else { setDot(items.length); A.win({ stars: miss <= 1 ? 3 : miss <= 4 ? 2 : 1 }); }
-        }, first ? 2600 : 1100);
+        };
+        if (first) A.afterVoice(next, 1200, 9000); else A.later(next, 1100); // التعريف الأول يُسمع كاملاً
         return true;
       }
       A.on(el, 'click', e => { const b = e.target.closest('.cw-bin'); if (b && card) choose(b); });

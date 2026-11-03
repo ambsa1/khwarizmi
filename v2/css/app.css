@@ -149,6 +149,7 @@ b.k { color: #c792ea; } b.f { color: #82aaff; } b.s { color: #c3e88d; } b.n { co
 .lpal { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 12px; direction: ltr; }
 .lb { height: 96px; border-radius: 26px; background: var(--tc); color: #fff; font-size: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 7px 0 rgba(0,0,0,.25); }
 .lb small { font-size: 15px; margin-top: 2px; }
+.strip.rtl, .lpal.rtl { direction: rtl; } /* الكلام والأضواء والصناديق: من اليمين مثل المسرح */
 .lb:active { transform: translateY(5px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
 
 /* مسرح الكلام */

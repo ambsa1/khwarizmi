@@ -183,6 +183,12 @@
         key: vkey, text, line,
         say: (k, o) => speak(k, o),
         later(fn, ms) { const t = setTimeout(() => { if (alive) fn(); }, ms); timers.push(t); return t; },
+        // الجولة التالية بعد ما سراج يخلّص جملة الشرح (على الأقل min، وأقصى حد max). بدون صوت: بعد min بس
+        afterVoice(fn, min, max) {
+          const t0 = Date.now(), V = root.Voice;
+          const tick = () => { const el = Date.now() - t0; if (el >= (max || 9000) || !(V && V.busy && V.busy())) fn(); else A.later(tick, 150); };
+          return A.later(tick, min || 900);
+        },
         every(fn, ms) { const t = setInterval(() => { if (alive) fn(); }, ms); ivals.push(t); return t; },
         wait: ms => new Promise(r => { timers.push(setTimeout(r, ms)); }),
         loop(fn) { // حلقة رسم: fn(dt) ترجع false للإيقاف

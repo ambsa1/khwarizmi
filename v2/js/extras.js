@@ -20,8 +20,10 @@
   const tracks = () => (Array.isArray(window.TRACKS) ? window.TRACKS : []);
   const cwSections = () => (window.CW && Array.isArray(window.CW.sections) ? window.CW.sections : []);
   // كل قسم له شهادة، وبيت في مدينة المصابيح
-  function groups() {
-    return tracks().map(t => ({ key: 'T-' + t.id, name: t.name, icon: t.icon, color: t.color, ids: (t.levels || []).map(l => l.id) }))
+  // p (اختياري): المسارات التي يراها هذا الطفل فقط (بدون المختبر تحت ٨، وبدون الكلمات والحشرات للصغار)
+  const tracksOf = p => (p && window.tracksFor ? window.tracksFor(p).map(x => x[0]) : tracks());
+  function groups(p) {
+    return tracksOf(p).map(t => ({ key: 'T-' + t.id, name: t.name, icon: t.icon, color: t.color, ids: (t.levels || []).map(l => l.id) }))
       .concat(cwSections().map(s => ({ key: 'C-' + s.id, name: s.name, icon: s.icon, color: s.color, ids: (s.activities || []).map(cwItem) })))
       .filter(g => g.ids.length);
   }
@@ -80,7 +82,6 @@
     { id: 'eq', g: 'py', icon: '🟰', word: '=', code: 1, lv: /^var/ },
     { id: 'plus', g: 'py', icon: '➕', word: '+', code: 1, lv: /var_add|^plus$/ },
     { id: 'if', g: 'py', icon: '🤔', word: 'if', code: 1, lv: /^if$|^elif$/ },
-    { id: 'while', g: 'py', icon: '♾️', word: 'while', code: 1, lv: /^while$/ },
     { id: 'def', g: 'py', icon: '🧩', word: 'def', code: 1, lv: /^def$|^func_/ },
     { id: 'bug', g: 'py', icon: '🐞', word: 'bug', code: 1, lv: /bug/ },
     { id: 'algorithm', g: 'pc', icon: '📋', word: 'خوارزمية', more: 'الكلمة جاءت من اسم العالم الخوارزمي!', lv: /./, cw: /^algo/ },
@@ -122,6 +123,14 @@
     const ids = levelsFor(e).concat(actsFor(e));
     return !ids.length || ids.some(id => isDone(p, id));
   }
+  // في أي مسار (أو قسم عالم الكمبيوتر) تُفتح الكلمة؟ نفضّل مساراً يراه الطفل
+  function whereFor(e, p) {
+    const ids = levelsFor(e), has = t => t.levels.some(l => ids.includes(l.id));
+    const t = tracksOf(p).find(has) || tracks().find(has);
+    if (t) return { id: t.id, icon: t.icon, name: t.name };
+    const s = cwSections().find(s => e.cw && (e.cw.test(s.id) || (s.activities || []).some(a => e.cw.test(a.id))));
+    return s ? { id: s.id, icon: s.icon, name: s.name } : null;
+  }
 
   /* ---------- الشاشات ---------- */
   const back = () => (P() ? 'sections' : 'home');
@@ -139,7 +148,12 @@
   function openEncy() {
     const p = P(); if (!p) return;
     const card = e => {
-      if (!unlocked(e, p)) return `<button class="x-entry locked" data-x="e-lock"><span class="x-ic">🔒</span><b>؟</b><p>${esc(plain(X.x_locked))}</p></button>`;
+      // المقفولة: رمزها الخاص باهتاً، ومكتوب تحته المسار الذي يفتحها (والضغط يقوله بالصوت)
+      if (!unlocked(e, p)) {
+        const w = whereFor(e, p);
+        return `<button class="x-entry locked" data-x="e-lock" data-k="${w ? esc(w.id) : ''}"><span class="x-ic">${e.icon}</span><b>🔒</b>
+          <p>${w ? `${w.icon} ${esc(w.name)}` : esc(plain(X.x_locked))}</p></button>`;
+      }
       return `<div class="x-entry" data-x="e-ar" data-k="${e.id}" role="button" tabindex="0">
         <span class="x-ic">${e.icon}</span>
         ${e.code ? `<code dir="ltr">${esc(e.word).replace(/&quot;(.*?)&quot;/g, '&quot;<bdi>$1</bdi>&quot;')}</code>` : `<b>${esc(e.word)}</b>`}
@@ -168,7 +182,7 @@
 
   function openCerts() {
     const p = P(); if (!p) return;
-    const gs = groups();
+    const gs = groups(p);
     const body = `<div class="x-certs">${gs.map(g => {
       const d = doneIn(p, g), all = g.ids.length, got = p.certs[g.key];
       return got ? `<button class="x-cert got" data-x="cert" data-k="${esc(g.key)}" style="--tc:${esc(g.color || '#ffc531')}"><span class="x-ic">${g.icon || '📜'}</span><b>${esc(g.name)}</b><span class="x-c-ok">📜 شهادة</span></button>`
@@ -203,10 +217,10 @@
     const kids = Store.data.players.filter(p => p.fid).sort((a, b) => String(a.fid).localeCompare(String(b.fid)));
     const ps = kids.length ? kids : Store.data.players;
     const total = ps.reduce((a, p) => a + Store.stars(p), 0);
-    const lamps = p => groups().reduce((a, g) => a + doneIn(p, g), 0), all = groups().reduce((a, g) => a + g.ids.length, 0);
+    const lamps = p => groups(p).reduce((a, g) => a + doneIn(p, g), 0), all = p => groups(p).reduce((a, g) => a + g.ids.length, 0);
     const body = `<div class="x-fam-total"><span class="x-bigstar">⭐</span><b>${total}</b><p>نجوم عائلتنا معاً</p></div>
       <div class="x-kids">${ps.map(p => `<div class="x-kid" style="--pc:${esc(p.color)}"><span class="pic">${A().mini(p.color)}</span>
-        <div class="x-kid-main"><b>${esc(p.name) || '&nbsp;'}</b>${city(p, groups().filter(g => g.key[0] === 'T'))}${city(p, groups().filter(g => g.key[0] === 'C'))}<small>💡 ${frac(lamps(p), all)} · ${TITLES[titleIdx(p)][1]} ${esc(titleName(p))}</small></div></div>`).join('')}</div>`;
+        <div class="x-kid-main"><b>${esc(p.name) || '&nbsp;'}</b>${city(p, groups(p).filter(g => g.key[0] === 'T'))}${city(p, groups(p).filter(g => g.key[0] === 'C'))}<small>💡 ${frac(lamps(p), all(p))} · ${TITLES[titleIdx(p)][1]} ${esc(titleName(p))}</small></div></div>`).join('')}</div>`;
     go('family', '🏠 ركن العائلة', body, 'x_family');
     gsap.from('.x-kid', { y: 24, opacity: 0, stagger: 0.1, duration: 0.45, ease: 'back.out(1.6)' });
     gsap.from('.x-bigstar', { scale: 0, rotation: -120, duration: 0.7, ease: 'back.out(2.5)' });
@@ -290,7 +304,7 @@
   let queue = [], qTimer = null, breakDue = false, lastBreak = 0;
   function collect(p) {
     const q = [];
-    for (const g of groups()) {
+    for (const g of groups(p)) {
       if (!p.certs[g.key] && g.ids.every(id => isDone(p, id))) { p.certs[g.key] = Date.now(); Store.save(); q.push(() => showCert(p, g, true)); }
     }
     const ti = titleIdx(p);
@@ -407,9 +421,9 @@
       const card = t.closest('.x-entry'); if (card) gsap.fromTo(card, { scale: 0.96 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
     },
     'e-en': (t, e) => { e.stopPropagation(); Sfx.tap(); Voice.play('en_' + t.dataset.k, EN[t.dataset.k], 'en', FORCE); },
-    'e-lock': () => { Sfx.oops(); hear('x_locked'); },
+    'e-lock': t => { Sfx.oops(); hear(X['x_lk_' + t.dataset.k] ? 'x_lk_' + t.dataset.k : 'x_locked', FORCE); },
     stk: t => { Sfx.spark(); gsap.fromTo(t, { scale: 1.4, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.6, ease: 'elastic.out(1, .4)' }); },
-    cert: t => { const p = P(), g = groups().find(x => x.key === t.dataset.k); if (p && g) showCert(p, g, false); },
+    cert: t => { const p = P(), g = groups(p).find(x => x.key === t.dataset.k); if (p && g) showCert(p, g, false); },
     'cert-save': () => saveCert(),
     'q-next': () => { A().closeModal(); setTimeout(() => runQueue(), 250); },
     'm-close': () => A().closeModal(),

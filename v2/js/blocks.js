@@ -49,7 +49,15 @@
     m.setValue(f.getValue());
   });
 
-  const varField = { type: 'field_dropdown', name: 'V', options: Object.entries(VARS).map(([k, e]) => [e + ' ' + k, k]) };
+  // اسم الكلمة يظهر ومعه الأقواس، والقيمة المحفوظة الاسم وحده
+  const fname = suffix => function () {
+    const f = this.getField('NAME'), show = f.getDisplayText_;
+    f.getDisplayText_ = function () { return show.call(this) + suffix; };
+  };
+  Blockly.Extensions.register('fname_def', fname('():'));
+  Blockly.Extensions.register('fname_call', fname('()'));
+
+  const varField ={ type: 'field_dropdown', name: 'V', options: Object.entries(VARS).map(([k, e]) => [e + ' ' + k, k]) };
 
   // تعريف البطاقات: النص المكتوب هو كود بايثون
   const DEFS = [
@@ -82,9 +90,10 @@
       { type: 'field_dropdown', name: 'N', options: nums(1, 5) }], colour: COLORS.box, extensions: ['var_mirror'] }, stmt),
     Object.assign({ type: 'var_say', message0: '%1 say( %2 )', args0: [icon(ico.say), varField], colour: COLORS.talk }, stmt),
     // علّم سراج كلمة جديدة (الدوال): الاسم ثابت في كل مرحلة
-    Object.assign({ type: 'func_def', message0: '%1 def %2():', args0: [icon(ico.book), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }],
-      message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], colour: COLORS.func }, stmt),
-    Object.assign({ type: 'func_call', message0: '%1 %2()', args0: [icon(ico.call), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }], colour: COLORS.func }, stmt),
+    // الأقواس ملزوقة في الاسم نفسه (def dance(): مثل بايثون، مش def dance ():)
+    Object.assign({ type: 'func_def', message0: '%1 def %2', args0: [icon(ico.book), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }],
+      message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], colour: COLORS.func, extensions: ['fname_def'] }, stmt),
+    Object.assign({ type: 'func_call', message0: '%1 %2', args0: [icon(ico.call), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }], colour: COLORS.func, extensions: ['fname_call'] }, stmt),
   ];
   Blockly.common.defineBlocks(Blockly.common.createBlockDefinitionsFromJsonArray(DEFS));
   // إصبع الطفل يهتز: الضغطة ما تتحوّل لسحب يفصل البطاقة إلا بعد ١٢ بكسل (الافتراضي ٥)
@@ -387,6 +396,31 @@
     const k = MAIN[type];
     const best = list.find(b => !k || !fields || fields[k] == null || b.getFieldValue(k) === String(fields[k])) || list[0];
     glow(best);
+    showTool(ws, best);
+  }
+
+  /* قائمة البطاقات بالعرض: على التلفون ما تكفي كل البطاقات، فنحرّكها لتبان البطاقة المطلوبة */
+  const flyWs = ws => { const fl = ws && !(ws.isDisposed && ws.isDisposed()) && ws.getFlyout && ws.getFlyout(); return fl ? fl.getWorkspace() : null; };
+  function slide(ws, to, o) {
+    const fw = flyWs(ws); if (!fw || !fw.scrollbar || !root.gsap) return null;
+    const p = { x: -fw.scrollX };
+    return gsap.to(p, Object.assign({ x: to, duration: 0.6, ease: 'power2.inOut', onUpdate() { const w = flyWs(ws); if (!w || !w.scrollbar) { this.kill(); return; } w.scrollbar.set(p.x, 0); } }, o));
+  }
+  // تحريك القائمة حتى تظهر هذه البطاقة كاملة
+  function showTool(ws, b) {
+    const fw = flyWs(ws); if (!fw || !b || !b.getSvgRoot()) return;
+    const r = b.getSvgRoot().getBoundingClientRect(), v = fw.getParentSvg().getBoundingClientRect();
+    if (r.left >= v.left && r.right <= v.right) return;
+    const m = fw.getMetricsManager(), max = Math.max(0, m.getScrollMetrics().width - m.getViewMetrics().width);
+    slide(ws, Math.max(0, Math.min(max, -fw.scrollX + (r.left - v.left) - 12)));
+  }
+  // لمحة عند فتح المرحلة: القائمة تتحرك للآخر وترجع، عشان الطفل يعرف إن فيه بطاقات أكثر
+  function peek(ws) {
+    const fw = flyWs(ws); if (!fw) return;
+    const m = fw.getMetricsManager(), max = m.getScrollMetrics().width - m.getViewMetrics().width;
+    if (max < 20) return;
+    const tw = slide(ws, max, { duration: 0.9, yoyo: true, repeat: 1, repeatDelay: 0.5 });
+    if (tw) ws.getParentSvg().parentNode.addEventListener('pointerdown', () => tw.kill(), { once: true, capture: true }); // الطفل لمس: نقف
   }
   function clearGlow(ws) {
     [ws, ws.getFlyout && ws.getFlyout() && ws.getFlyout().getWorkspace()].forEach(w => w && w.getAllBlocks(false).forEach(b => glow(b, false)));
@@ -396,6 +430,6 @@
 
   root.Blocks = {
     DEFS, COLORS, LIGHTS, LIGHT_DOT, VARS, FUNCS, makeWorkspace, dispose, compile, python: toPython, countBlocks, startOf,
-    load, opsOf, countOf, diff, glow, glowTool, clearGlow, clear, lineOf,
+    load, opsOf, countOf, diff, glow, glowTool, clearGlow, clear, lineOf, peek, showTool,
   };
 })(window);

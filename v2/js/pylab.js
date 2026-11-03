@@ -405,7 +405,7 @@
   const escH = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function editor(el, level, kind, onEdit) {
-    const words = (KEYS[kind] || []).concat(level.keys || []);
+    const words = (level.keys || []).concat(KEYS[kind] || []); // كلمات المرحلة الجديدة أولاً، عشان تبان على التلفون
     el.innerHTML = `<div class="code-ed" dir="ltr"><div class="ed-hl"></div><pre class="gutter" aria-hidden="true"></pre>
       <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Python"></textarea></div>
       <div class="py-err" id="pyErr" hidden></div>
@@ -469,6 +469,7 @@
     return {
       get: () => ta.value,
       set(v) { ta.value = v; changed(); },
+      caret(i) { ta.selectionStart = ta.selectionEnd = i; }, // بدون focus عشان لوحة مفاتيح التلفون ما تفتح لوحدها
       mark(line, bad) {
         mark = line ? { line, bad } : null; sync();
         if (line) { const y = PAD + (line - 1) * LH; if (y < ta.scrollTop || y > ta.scrollTop + ta.clientHeight - LH) ta.scrollTop = y - ta.clientHeight / 2; }

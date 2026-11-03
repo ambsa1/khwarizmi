@@ -39,6 +39,9 @@
 .x-hear button:active { transform: translateY(2px); box-shadow: none; }
 .x-entry.locked { background: rgba(255,255,255,.07); color: #aeb3e6; box-shadow: none; border: 2px dashed rgba(255,255,255,.18); }
 .x-entry.locked b { font-size: 34px; color: rgba(255,255,255,.35); }
+.x-entry.locked .x-ic { filter: grayscale(1); opacity: .4; } /* رمز الكلمة نفسها باهت */
+.x-entry.locked b { font-size: 18px; }
+.x-entry.locked p { font-size: 13px; }
 
 /* الملصقات */
 .x-st-head { text-align: center; margin: 6px 0 14px; }

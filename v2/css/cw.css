@@ -315,7 +315,9 @@
 .cw-bface, .cw-bback { position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: transform .45s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .cw-bface { background: #fff8e0; color: var(--ink); transform: rotateY(180deg); box-shadow: 0 0 22px rgba(255,214,90,.65); }
 .cw-bback { background: linear-gradient(135deg, #3a3f8f, #262a5a); border: 2px solid rgba(255,255,255,.22); }
-.cw-bback::after { content: "?"; font: 800 26px var(--head); color: rgba(255,255,255,.25); }
+.cw-bback .cw-bdots, .cw-bback b { opacity: .3; } /* ظهر البطاقة: نفس النقاط والرقم باهتة */
+.cw-bback .cw-bdots i { background: #fff; }
+.cw-bback b { font: 800 clamp(18px, 5vmin, 30px) var(--head); color: #fff; }
 .cw-bcard.on .cw-bface { transform: rotateY(0); }
 .cw-bcard.on .cw-bback { transform: rotateY(-180deg); }
 .cw-bdots { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; width: 82%; }

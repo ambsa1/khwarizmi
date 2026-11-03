@@ -60,12 +60,13 @@
     }
     result() {
       const t = this.level.target, a = this.actions;
+      if (this.level.free) return a.length ? { ok: true } : { ok: false, reason: 'talk_short' }; // لعب حر: أي عرض ينفع
       const ok = t.length === a.length && t.every((x, i) => x === a[i]);
       if (ok) return { ok };
       return { ok, reason: a.length < t.length ? 'talk_short' : a.length > t.length ? 'talk_long' : 'talk_order' };
     }
     // وضع الصغار: هل آخر ضغطة غلط؟ ونرجّعها خطوة واحدة بدل ما نبدأ من الأول
-    wrong() { const k = this.actions.length - 1; return k >= this.level.target.length ? 'talk_long' : this.actions[k] !== this.level.target[k] ? 'talk_order' : null; }
+    wrong() { if (this.level.free) return null; const k = this.actions.length - 1; return k >= this.level.target.length ? 'talk_long' : this.actions[k] !== this.level.target[k] ? 'talk_order' : null; }
     pop() { const k = this.actions.length - 1; this.actions.pop(); const c = this.el.querySelector(`.pc[data-i="${k}"]`); if (c) c.classList.remove('ok', 'bad'); }
     celebrate() { return done(this.siraj.happy()); }
     destroy() { this.siraj && this.siraj.destroy(); }
@@ -84,7 +85,8 @@
       this.reset();
     }
     layout() {
-      const pts = [[0, 0]].concat(...this.level.target.map(s => [[s[0], s[1]], [s[2], s[3]]]));
+      const a = this.level.area; // اللعب الحر: لوحة ثابتة بدل حدود الشكل المطلوب
+      const pts = [[0, 0]].concat(a ? [[a[0], a[1]], [a[2], a[3]]] : [], ...this.level.target.map(s => [[s[0], s[1]], [s[2], s[3]]]));
       const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
       this.minX = Math.min(...xs) - 1; this.minY = Math.min(...ys) - 1;
       const w = Math.max(...xs) - this.minX + 1, h = Math.max(...ys) - this.minY + 1;
@@ -180,6 +182,7 @@
       for (let i = 0; i < n; i++) set.add(key(x1 + dx * i, y1 + dy * i, x1 + dx * (i + 1), y1 + dy * (i + 1)));
     }
     result() {
+      if (this.level.free) return this.lines.length ? { ok: true } : { ok: false, reason: 'draw_missing' };
       const want = new Set();
       this.level.target.forEach(s => this.addSeg(s[0], s[1], s[2], s[3], want));
       const extra = [...this.edges].some(e => !want.has(e));
@@ -187,7 +190,7 @@
       if (!extra && !missing) return { ok: true };
       return { ok: false, reason: extra ? 'draw_extra' : 'draw_missing' };
     }
-    wrong() { const r = this.result(); return r.reason === 'draw_extra' ? 'draw_extra' : null; }
+    wrong() { if (this.level.free) return null; const r = this.result(); return r.reason === 'draw_extra' ? 'draw_extra' : null; }
     // التلميح: سراج يرسم الطريق الصحيح ببطء بخط شفاف
     hint(ops) {
       let [x, y, h] = this.level.start;
@@ -355,10 +358,11 @@
   class LightsStage {
     constructor(el, level, color) { this.el = el; this.level = level; this.color = color; }
     mount() {
-      const t = this.level.target;
+      // اللعب الحر: مصابيح فاضية بدون لون مطلوب
+      const t = this.level.target || Array(this.level.lamps || 8).fill('');
       this.el.innerHTML = `<div class="lights-stage"><div class="lt-moon"></div>
         <div class="lt-row" style="--n:${t.length}">${t.map((c, i) => `<div class="lt" data-i="${i}" style="--want:${LC()[c] || '#2a2d4a'}">
-          <div class="lt-bulb"></div><div class="lt-post"></div><div class="lt-want ${c === 'off' ? 'off' : ''}"></div></div>`).join('')}</div>
+          <div class="lt-bulb"></div><div class="lt-post"></div>${c ? `<div class="lt-want ${c === 'off' ? 'off' : ''}"></div>` : ''}</div>`).join('')}</div>
         <div class="lt-ground"></div><div class="siraj-holder lt-siraj"></div></div>`;
       this.siraj = Siraj.create(this.el.querySelector('.lt-siraj'), this.color);
       this.reset();
@@ -377,7 +381,7 @@
       this.siraj.setChest(c === 'off' ? '#3a3d58' : LC()[c]);
       const l = this.lamp(k);
       if (l) {
-        const good = this.level.target[k] === c;
+        const good = this.level.free || this.level.target[k] === c;
         l.classList.add(c === 'off' ? 'dark' : 'on', good ? 'ok' : 'bad');
         if (c !== 'off') l.style.setProperty('--on', LC()[c]);
         gsap.fromTo(l.querySelector('.lt-bulb'), { scale: 0.6 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
@@ -391,20 +395,21 @@
     }
     result() {
       const t = this.level.target, s = this.seq;
+      if (this.level.free) return s.length ? { ok: true } : { ok: false, reason: 'light_short' };
       const bad = s.findIndex((c, i) => i < t.length && c !== t[i]);
       if (bad >= 0) return { ok: false, reason: 'light_wrong' };
       if (s.length < t.length) return { ok: false, reason: 'light_short' };
       if (s.length > t.length) return { ok: false, reason: 'light_long' };
       return { ok: true };
     }
-    wrong() { const r = this.result(); return r.reason === 'light_wrong' || r.reason === 'light_long' ? r.reason : null; }
+    wrong() { if (this.level.free) return null; const r = this.result(); return r.reason === 'light_wrong' || r.reason === 'light_long' ? r.reason : null; }
     pop() { const k = this.seq.length - 1; this.seq.pop(); const l = this.lamp(k); if (l) { l.className = 'lt'; l.style.removeProperty('--on'); } }
     celebrate() {
       Sfx.light();
       const ls = this.el.querySelectorAll('.lt-bulb');
       gsap.fromTo(ls, { y: 0 }, { y: -14, duration: 0.22, yoyo: true, repeat: 3, stagger: 0.07, ease: 'sine.inOut' });
       const r = this.el.getBoundingClientRect();
-      FX.burst(r.left + r.width / 2, r.top + r.height / 2, 40, this.level.target.filter(c => c !== 'off').map(c => LC()[c]).concat(['#fff']));
+      FX.burst(r.left + r.width / 2, r.top + r.height / 2, 40, (this.level.target || this.seq).filter(c => c !== 'off').map(c => LC()[c]).concat(['#fff']));
       return done(this.siraj.happy());
     }
     destroy() { this.siraj && this.siraj.destroy(); }

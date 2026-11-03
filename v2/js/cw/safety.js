@@ -41,7 +41,8 @@
         badge.classList.remove('cur'); badge.classList.add('on');
         A.good(badge);
         A.say(['cw_sf_safe', 'cw_rule' + (i + 1)], { pri: 'feedback' });
-        A.later(() => { i++; if (i < SCEN.length) show(); else A.win({ stars: miss <= 1 ? 3 : miss <= 3 ? 2 : 1, say: 'cw_sf_end' }); }, 3800);
+        // الموقف التالي بعد ما سراج يخلّص القاعدة (ما نقطعها)
+        A.afterVoice(() => { i++; if (i < SCEN.length) show(); else A.win({ stars: miss <= 1 ? 3 : miss <= 3 ? 2 : 1, say: 'cw_sf_end' }); }, 1500, 10000);
       });
       A.later(show, 250);
       return { async solve() { while (A.alive && i < SCEN.length) { if (!busy) q('.cw-sopt[data-ok="1"]').click(); await A.wait(3900); } } };
@@ -78,7 +79,7 @@
         A.good(b, it[2] ? 'cw_sk_ok_share' : 'cw_sk_ok_keep');
         const r = b.getBoundingClientRect(), c = q('#cd').getBoundingClientRect();
         if (root.gsap) gsap.to(q('#cd'), { x: r.left + r.width / 2 - (c.left + c.width / 2), rotation: v ? -15 : 15, scale: 0.4, opacity: 0, duration: 0.5, ease: 'power2.in' });
-        A.later(() => { i++; if (i < list.length) show(); else { setDot(list.length); A.win({ stars: miss <= 1 ? 3 : miss <= 3 ? 2 : 1 }); } }, 2200);
+        A.afterVoice(() => { i++; if (i < list.length) show(); else { setDot(list.length); A.win({ stars: miss <= 1 ? 3 : miss <= 3 ? 2 : 1 }); } }, 1200, 7000);
       });
       A.later(show, 250);
       return { async solve() { while (A.alive && i < list.length) { if (!busy) q(`.cw-side[data-s="${list[i][2]}"]`).click(); await A.wait(2300); } } };

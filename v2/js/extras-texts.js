@@ -9,6 +9,14 @@
     // الموسوعة والملصقات والشهادات
     x_ency: 'هذِهِ مَوْسوعَتي! اضْغَطْ لِتَسْمَع.', x_ency_f: 'هذِهِ مَوْسوعَتي! اضْغَطي لِتَسْمَعي.',
     x_locked: 'سَنَتَعَلَّمُها قَريبًا!',
+    // الكلمة المقفولة: في أي قسم نتعلّمها (x_lk_<المسار أو قسم عالم الكمبيوتر>)
+    x_lk_talk: 'نَتَعَلَّمُها في: سِراجٌ يَتَكَلَّم!', x_lk_lights: 'نَتَعَلَّمُها في: عَرْضِ الأَضْواء!',
+    x_lk_draw: 'نَتَعَلَّمُها في: ارْسُمْ بِالكود!', x_lk_path: 'نَتَعَلَّمُها في: مُغامَرَةِ النّور!',
+    x_lk_vars: 'نَتَعَلَّمُها في: صَناديقِ الذّاكِرَة!', x_lk_funcs: 'نَتَعَلَّمُها في: عَلِّمْ سِراجَ كَلِمَة!',
+    x_lk_bugs: 'نَتَعَلَّمُها في: صَيْدِ الحَشَرات!', x_lk_pylab: 'نَتَعَلَّمُها في: مُخْتَبَرِ بايْثون!',
+    x_lk_what: 'نَتَعَلَّمُها في: ما هُوَ الكُمْبيوتَر؟', x_lk_parts: 'نَتَعَلَّمُها في: أَجْزاءِ الكُمْبيوتَر!',
+    x_lk_hands: 'نَتَعَلَّمُها في: أَيادٍ صَغيرَة!', x_lk_typing: 'نَتَعَلَّمُها في: مَدْرَسَةِ الكِتابَة!',
+    x_lk_safety: 'نَتَعَلَّمُها في: الأَمانِ في الإِنْتَرْنِت!', x_lk_think: 'نَتَعَلَّمُها في: كَيْفَ يُفَكِّرُ الكُمْبيوتَر؟',
     x_stickers: 'اجْمَعِ النُّجومَ لِتَرْبَحَ مُلْصَقات!', x_stickers_f: 'اجْمَعي النُّجومَ لِتَرْبَحي مُلْصَقات!',
     x_sticker_new: 'رَبِحْتَ مُلْصَقًا جَديدًا!', x_sticker_new_f: 'رَبِحْتِ مُلْصَقًا جَديدًا!',
     x_title_new: 'لَقَبُكَ الجَديد:', x_title_new_f: 'لَقَبُكِ الجَديد:',
@@ -44,7 +52,6 @@
     x_e_eq: 'ضَعِ القيمَةَ داخِلَ الصُّنْدوق.',
     x_e_plus: 'نَجْمَعُ رَقْمَيْنِ مَعًا.',
     x_e_if: 'إِذا كانَ الشَّرْطُ صَحيحًا، نُنَفِّذُ الأَمْر.',
-    x_e_while: 'كَرِّرْ ما دامَ الشَّرْطُ صَحيحًا.',
     x_e_def: 'نُعَلِّمُ سِراجَ كَلِمَةً جَديدَة.',
     x_e_bug: 'خَطَأٌ صَغيرٌ في البَرْنامَج، نَصْطادُه!',
     x_e_program: 'أَوامِرُ بِالتَّرْتيبِ يُنَفِّذُها الكُمْبيوتَر.',
@@ -67,7 +74,7 @@
   const EN = {
     say: 'say', print: 'print', wave: 'wave', jump: 'jump', light: 'light, off', forward: 'forward', right: 'right', left: 'left',
     move: 'move up, move down, move left, move right', for: 'for', range: 'range', i: 'i', colon: 'colon', paren: 'parentheses',
-    var: 'variable', eq: 'equals', plus: 'plus', if: 'if', while: 'while', def: 'def', bug: 'bug', program: 'program', python: 'Python',
+    var: 'variable', eq: 'equals', plus: 'plus', if: 'if', def: 'def', bug: 'bug', program: 'program', python: 'Python',
     computer: 'computer', input: 'input', output: 'output', cpu: 'C P U', keyboard: 'keyboard', mouse: 'mouse', screen: 'screen',
     binary: 'binary', algorithm: 'algorithm', internet: 'internet', safety: 'internet safety', password: 'password',
   };

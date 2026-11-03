@@ -12,7 +12,7 @@
       el.innerHTML = `<div class="cw-binary"><div class="cw-dots" id="d"></div>
         <div class="cw-bin-goal"><span>🎯 <b id="tg"></b></span><span class="cw-bin-sum">= <b id="sm">0</b></span></div>
         <div class="cw-bcards" dir="ltr">${VALS.map((v, i) => `<button class="cw-bcard" data-i="${i}"><span class="cw-bface">
-          <span class="cw-bdots">${'<i></i>'.repeat(v)}</span><b>${v}</b></span><span class="cw-bback"></span></button>`).join('')}</div>
+          <span class="cw-bdots">${'<i></i>'.repeat(v)}</span><b>${v}</b></span><span class="cw-bback"><span class="cw-bdots">${'<i></i>'.repeat(v)}</span><b>${v}</b></span></button>`).join('')}</div>
         <div class="cw-bits" dir="ltr">${VALS.map(() => '<b>0</b>').join('')}</div></div>`;
       const q = s => el.querySelector(s);
       const setDot = A.dots(q('#d'), targets.length);
@@ -41,7 +41,7 @@
           busy = true;
           el.querySelector('.cw-bits').classList.add('win');
           A.good(q('.cw-bits'), 'cw_bin_ok');
-          A.later(() => { el.querySelector('.cw-bits').classList.remove('win'); r++; if (r < targets.length) show(); else { setDot(targets.length); A.win({ stars: 3 }); } }, 2300);
+          A.afterVoice(() => { el.querySelector('.cw-bits').classList.remove('win'); r++; if (r < targets.length) show(); else { setDot(targets.length); A.win({ stars: 3 }); } }, 1200, 7000);
         } else if (s > t && !warned) { warned = true; A.bad(q('.cw-bin-sum'), 'cw_bin_high'); }
       });
       A.later(show, 250);
@@ -130,7 +130,7 @@
   const ALGS = [
     ['🚰', '🧼', '👐', '💧', '🧻'],
     ['⛏️', '🌰', '🟫', '🚿', '🌳'],
-    ['🍞', '🧀', '🍅', '🥪'],
+    ['🪥', '🧴', '😁', '💦'], // تنظيف الأسنان: كل خطوة لازم بعد اللي قبلها (الشطيرة كان فيها ترتيبان صحيحان)
     ['🧦', '👟', '🎀'],
   ];
   const algo = {
@@ -203,7 +203,7 @@
           cells[k].classList.add('ok'); A.sfx.tap();
         }
         A.good(q('#sl'), 'cw_alg_ok');
-        A.later(() => { r++; if (r < order.length) show(); else { setDot(order.length); A.win({ stars: fails === 0 ? 3 : fails <= 2 ? 2 : 1 }); } }, 2200);
+        A.afterVoice(() => { r++; if (r < order.length) show(); else { setDot(order.length); A.win({ stars: fails === 0 ? 3 : fails <= 2 ? 2 : 1 }); } }, 1200, 7000);
       }
       A.later(show, 250);
       return {

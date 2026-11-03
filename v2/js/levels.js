@@ -43,6 +43,9 @@
           preset: [rep(2, [say('هيب هيب')]), say('هرّاي')],
           predict: { answer: 0, choices: [['say:هيب هيب', 'say:هيب هيب', 'say:هرّاي'], ['say:هيب هيب', 'say:هرّاي'], ['say:هرّاي', 'say:هيب هيب', 'say:هيب هيب']] },
           target: ['say:هيب هيب', 'say:هيب هيب', 'say:هيب هيب', 'say:هيب هيب', 'say:هرّاي'], solution: [rep(4, [say('هيب هيب')]), say('هرّاي')] },
+        // لعب حر (PRIMM: اصنع): أي برنامج يفوز بثلاث نجوم. الحل هنا مجرد مثال للاختبار
+        { id: 't8', free: true, goal: 'عَرْضٌ حُرّ! أَيُّ بَرْنامَجٍ يُعْجِبُني!', blocks: ['siraj_say', 'siraj_wave', 'siraj_jump', 'siraj_repeat'], tip: 'free_tip',
+          target: [], solution: [say('مرحبا'), 'siraj_wave', 'siraj_jump', say('هيا نلعب'), 'siraj_jump', 'siraj_wave'] },
       ],
     },
     {
@@ -65,6 +68,8 @@
           target: times(2, ['red', 'green', 'blue']), solution: [rep(2, [lt('red'), lt('green'), lt('blue')])] },
         { id: 'l8', goal: 'أَرْمِشُ بِالأَزْرَق، ثُمَّ أَخْضَرُ في النِّهايَة!', blocks: ['light_on', 'light_off', 'siraj_repeat'], max: 5,
           target: times(3, ['blue', 'off']).concat(['green']), solution: [rep(3, [lt('blue'), OFF]), lt('green')] },
+        { id: 'l9', free: true, goal: 'عَرْضُ أَضْواءٍ حُرّ! أَيُّ أَلْوانٍ تُعْجِبُني!', blocks: ['light_on', 'light_off', 'siraj_repeat'], tip: 'free_tip',
+          lamps: 8, solution: [lt('red'), lt('yellow'), lt('green'), lt('blue'), lt('purple'), OFF] },
       ],
     },
     {
@@ -91,9 +96,15 @@
           start: [0, 0, 0], target: sq(0, 0, 3), solution: [rep(4, [fw(3), R])] },
         { id: 'd8', goal: 'أُريدُ كوبًا! القَلَمُ يَنْظُرُ لِتَحْت.', blocks: ['pen_forward', 'pen_left'], tip: 'look_arrow',
           start: [0, 0, 90], target: [[0, 0, 0, 2], [0, 2, 2, 2], [2, 2, 2, 0]], solution: [fw(2), Lt, fw(2), Lt, fw(2)] },
+        // خطوة قبل النافذة: تكرار داخل تكرار بمربعين بس
+        { id: 'd8b', goal: 'مُرَبَّعانِ جَنْبًا إِلى جَنْب!', blocks: ['pen_forward', 'pen_right', 'siraj_repeat'], max: 5, tip: 'loop_loop',
+          start: [0, 0, 0], target: [].concat(sq(0, 0, 1), sq(1, 0, 1)),
+          solution: [rep(2, [rep(4, [fw(1), R]), fw(1)])] },
         { id: 'd9', goal: 'أَرْسُمُ نافِذَةً بِأَرْبَعَةِ مُرَبَّعات!', blocks: ['pen_forward', 'pen_right', 'siraj_repeat'], max: 5, tip: 'loop_loop',
           start: [0, 0, 0], target: [].concat(sq(0, 0, 1), sq(-1, 0, 1), sq(-1, -1, 1), sq(0, -1, 1)),
           solution: [rep(4, [rep(4, [fw(1), R]), R])] },
+        { id: 'd10', free: true, goal: 'رَسْمٌ حُرّ! أَيُّ رَسْمَةٍ تُعْجِبُني!', blocks: ['pen_forward', 'pen_right', 'pen_left', 'siraj_repeat'], tip: 'free_tip',
+          start: [0, 0, 0], target: [], area: [-3, -3, 3, 3], solution: [rep(4, [fw(2), R])] },
       ],
     },
     {
@@ -143,7 +154,7 @@
       ],
     },
     {
-      id: 'funcs', name: 'علّم سراج كلمة', icon: '📖', color: '#d6336c',
+      id: 'funcs', name: 'علّم سراج كلمة', icon: '📖', color: '#d6336c', noLittle: true,
       idea: 'الدالة: كلمة جديدة نعلّمها مرة ونستعملها كثيراً',
       levels: [
         { id: 'f1', stage: 'talk', goal: 'أُريدُ رَقْصَةً جَديدَة: أُلَوِّحُ ثُمَّ أَقْفِز!', blocks: ['siraj_wave', 'siraj_jump', 'func_call:dance'], must: ['func_def', 'func_call'], tip: 'func_tip',
@@ -166,7 +177,7 @@
       ],
     },
     {
-      id: 'bugs', name: 'صيد الحشرات', icon: '🐞', color: '#2f9e44',
+      id: 'bugs', name: 'صيد الحشرات', icon: '🐞', color: '#2f9e44', noLittle: true,
       idea: 'البرنامج فيه خطأ صغير: شغّله، اعرف السبب، وأصلحه',
       levels: [
         { id: 'b1', stage: 'talk', goal: 'أُريدُ مَرْحَبا ثُمَّ أُلَوِّح، لا أَقْفِز!', blocks: ['siraj_say', 'siraj_wave', 'siraj_jump'], tip: 'bug_tip',
@@ -195,9 +206,9 @@
       id: 'pylab', name: 'مختبر بايثون', icon: '🐍', color: '#3776ab', kind: 'py', minAge: 8,
       idea: 'اكتب كود بايثون الحقيقي بيدك',
       levels: [
-        { id: 'y1', stage: 'talk', goal: 'أَكْتُبُ أَوَّلَ سَطْرٍ في بايْثون!', tip: 'py_tip', keys: ['"مرحبا"'],
+        { id: 'y1', stage: 'talk', goal: 'أَكْتُبُ أَوَّلَ سَطْرٍ في بايْثون!', tip: 'py_tip', keys: ['مرحبا'], starter: 'say("|")',
           target: ['say:مرحبا'], solution: 'say("مرحبا")' },
-        { id: 'y2', stage: 'talk', goal: 'أُلَوِّحُ، أَقولُ مَرْحَبا، ثُمَّ أَقْفِز!', keys: ['"مرحبا"'],
+        { id: 'y2', stage: 'talk', goal: 'أُلَوِّحُ، أَقولُ مَرْحَبا، ثُمَّ أَقْفِز!', keys: ['مرحبا'],
           target: ['wave', 'say:مرحبا', 'jump'], solution: 'wave()\nsay("مرحبا")\njump()' },
         { id: 'y3', stage: 'draw', goal: 'أَرْسُمُ زاوِيَةً بِالكود!',
           start: [0, 0, 0], target: [[0, 0, 2, 0], [2, 0, 2, 2]], solution: 'forward(2)\nright(90)\nforward(2)' },
@@ -218,6 +229,9 @@
         { id: 'y11', stage: 'draw', goal: 'ثَلاثَةُ مُرَبَّعاتٍ بِكَلِمَةٍ جَديدَة!', keys: ['def |():', 'square', 'for i in range(|):'], mustPy: ['def', 'for'],
           start: [0, 0, 0], target: [].concat(sq(0, 0, 1), sq(1, 0, 1), sq(2, 0, 1)),
           solution: 'def square():\n    for i in range(4):\n        forward(1)\n        right(90)\nfor i in range(3):\n    square()\n    forward(1)' },
+        // الشرط وحده أولاً (if بدون else)، وبعدها y12 تضيف else
+        { id: 'y11b', stage: 'lights', goal: 'أُضيءُ ثَلاثَةً خُضْرًا فَقَط، بِالشَّرْط!', tip: 'py_if1', keys: ['for i in range(|):', 'if |:', 'i', ' < '], mustPy: ['if'],
+          target: ['green', 'green', 'green'], solution: 'for i in range(5):\n    if i < 3:\n        light("green")' },
         { id: 'y12', stage: 'lights', goal: 'ثَلاثَةٌ خُضْر، ثُمَّ اثْنانِ حُمْر، بِالشَّرْط!', tip: 'py_if', keys: ['for i in range(|):', 'if |:', 'else:', 'i', ' < '], mustPy: ['if'],
           target: ['green', 'green', 'green', 'red', 'red'], solution: 'for i in range(5):\n    if i < 3:\n        light("green")\n    else:\n        light("red")' },
       ],
@@ -246,6 +260,10 @@
     if (l.best == null && l.solution) l.best = typeof l.solution === 'string' ? pyLines(l.solution) : count(l.solution);
   }));
 
+  // المسارات التي يراها هذا الطفل: المختبر من عمر ٨، والكلمات والحشرات مش لوضع الصغار (٤ وأقل)
+  const tracksFor = p => TRACKS.map((t, ti) => [t, ti]).filter(([t]) => !p || ((!t.minAge || p.age >= t.minAge) && !(t.noLittle && p.age <= 4)));
+  Object.defineProperty(TRACKS, 'forPlayer', { value: tracksFor });
   root.TRACKS = TRACKS;
+  root.tracksFor = tracksFor;
   if (typeof module !== 'undefined') module.exports = TRACKS;
 })(typeof window !== 'undefined' ? window : globalThis);

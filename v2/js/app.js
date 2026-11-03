@@ -96,7 +96,9 @@
   function npReady() { $('#saveNp').disabled = !(S.np.age && S.np.gender); }
 
   /* ---------- اختيار القسم ---------- */
-  const allLevels = () => TRACKS.reduce((a, t) => a.concat(t.levels), []);
+  // مصابيح القسم: مراحل المسارات التي يراها هذا الطفل فقط (بدون المختبر للصغار مثلاً)
+  const tracksFor = window.tracksFor;
+  const myLevels = p => tracksFor(p).reduce((a, [t]) => a.concat(t.levels), []);
   function renderSections() {
     const p = S.player;
     S.screen = 'sections';
@@ -104,7 +106,7 @@
       <header class="bar"><button class="ib" data-act="home" aria-label="رجوع">→</button><span class="t">أهلاً ${esc(p.name)}!</span>${window.Extras ? Extras.titleChip(p) : ''}<span class="chip">⭐ ${Store.stars(p)}</span></header>
       <div class="sections">
         <button class="door code" data-act="code"><span class="d-pic">${mini(p.color)}</span><span><h3>البرمجة مع سراج</h3><p>برمج سراج يتكلم ويرسم وينوّر المدينة</p>
-          <span class="lamps">${allLevels().map(l => `<i class="${Store.solved(p, l.id) ? 'on' : ''}"></i>`).join('')}</span></span></button>
+          <span class="lamps">${myLevels(p).map(l => `<i class="${Store.solved(p, l.id) ? 'on' : ''}"></i>`).join('')}</span></span></button>
         <button class="door pc" data-act="pc"><span class="d-pic big">💻</span><span><h3>عالم الكمبيوتر</h3><p>أجزاء الكمبيوتر، مدرسة الكتابة، والأمان في الإنترنت</p></span></button>
         ${window.Extras ? Extras.sectionsRow(p) : ''}
       </div>`, 'night');
@@ -113,8 +115,7 @@
 
   /* ---------- خريطة البرمجة: مدينة تنوّر ---------- */
   // كل مسار عمارة في المدينة، وكل مرحلة نافذة فيها. المرحلة المحلولة تنوّر نافذتها.
-  // مختبر بايثون (كتابة الكود) يظهر من عمر ٨ سنين
-  const tracksFor = p => TRACKS.map((t, ti) => [t, ti]).filter(([t]) => !t.minAge || p.age >= t.minAge);
+  // مختبر بايثون (كتابة الكود) يظهر من عمر ٨ سنين، والكلمات والحشرات من عمر ٥ (tracksFor في levels.js)
   function renderTracks() {
     const p = S.player;
     S.screen = 'tracks';
@@ -154,16 +155,18 @@
     const t = TRACKS[ti], L = t.levels[li], p = S.player;
     S.screen = 'level'; S.track = ti; S.li = li; S.fails = 0; S.solShown = false; S.offered = false;
     const py = L.kind === 'py', lit = little() && !py, kind = S.kind = stageKind(t, L);
+    const rtl = arrowsKind(kind) ? '' : 'rtl'; // أزرار الصغار بنفس اتجاه المسرح (المصابيح والخطة من اليمين)
     S.drafts = S.drafts || {};
     screen(`<header class="bar"><button class="ib" data-act="tracks" aria-label="رجوع">→</button>
         <span class="t">${t.icon} ${t.name}</span><span class="chip">${li + 1}/${t.levels.length}</span>
-        ${lit ? '' : '<button class="ib hintb" id="hintBtn" data-act="hint" aria-label="مساعدة">💡</button>'}
+        ${lit || L.free ? '' : '<button class="ib hintb" id="hintBtn" data-act="hint" aria-label="مساعدة">💡</button>'}
+        ${L.free && kind === 'draw' ? '<button class="ib" data-act="savepic" aria-label="احفظ رسمتي">💾</button>' : ''}
         <button class="ib" data-act="goal" aria-label="اسمع المطلوب">🔊</button></header>
       <section class="stage-wrap"><div class="stage" id="stage"></div>
         <div class="goal">🎯 ${esc(plain(L.goal))}</div>
         <div class="toast" id="toast"></div></section>
       <section class="editor ${lit ? 'little' : ''} ${py ? 'pyed' : ''}" id="editor">
-        ${lit ? '<div class="strip" id="strip"></div><div class="lpal" id="lpal"></div>'
+        ${lit ? `<div class="strip ${rtl}" id="strip"></div><div class="lpal ${rtl}" id="lpal"></div>`
           : py ? '' : `<div class="ws" id="ws" dir="ltr"></div>
              <div class="py ${showCode() ? '' : 'folded'}" id="pyBox"><button class="py-head" data-act="py">🐍 Python <span id="cnt"></span></button><pre id="py" dir="ltr"></pre></div>`}
       </section>
@@ -178,11 +181,15 @@
     if (lit) buildLittle(t, L);
     else if (py) {
       S.ed = PyLab.editor($('#editor'), L, kind, () => { if (!S.running && S.ed) S.drafts[L.id] = S.ed.get(); });
-      S.ed.set(S.drafts[L.id] != null ? S.drafts[L.id] : (L.starter || ''));
+      // بداية المختبر: | مكان المؤشر (مثلاً بين علامتي التنصيص)
+      const d = S.drafts[L.id], st = L.starter || '', c = st.indexOf('|');
+      S.ed.set(d != null ? d : st.replace('|', ''));
+      if (d == null && c >= 0) S.ed.caret(c);
     } else {
-      S.ws = Blocks.makeWorkspace($('#ws'), L.blocks, L.max, onWs);
+      S.ws = Blocks.makeWorkspace($('#ws'), flyOrder(t, L), L.max, onWs);
       if (L.preset) { Blocks.load(S.ws, L.preset, Blocks.startOf(S.ws).nextConnection); S.ws.clearUndo(); }
       updateCode();
+      later(() => { if (S.ws && !S.running) Blocks.peek(S.ws); }, 1600); // على التلفون: لمحة إن فيه بطاقات أكثر في القائمة
     }
     // الهدف أولاً، ثم النصيحة، في تسلسل واحد عشان ما يقطع بعض
     const seq = [['goal_' + L.id, L.goal]];
@@ -191,6 +198,18 @@
     if (L.predict && !lit) { later(() => predict(L, kind, seq), 350); return; }
     later(() => Voice.playSeq(seq, { pri: 'instruction' }), 350);
     if (!lit && L.tip) later(() => toast(SAY[key(L.tip)], 'tip'), 2600);
+  }
+
+  // ترتيب قائمة البطاقات: بطاقات الحل الجديدة أولاً، ثم بطاقات الحل، ثم الباقي،
+  // عشان على التلفون (القائمة بالعرض) البطاقة المهمة تبان من غير سحب
+  const stepTypes = list => list.flatMap(s => (Array.isArray(s) ? [s[0]].concat(s[2] ? stepTypes(s[2]) : []) : [s]));
+  function flyOrder(t, L) {
+    const ty = s => s.split(':')[0], li = t.levels.indexOf(L);
+    // متى ظهرت البطاقة أول مرة في المسار (الأحدث = الفكرة اللي الطفل بيتدرّب عليها الآن)
+    const intro = s => { const k = t.levels.findIndex((l, j) => j <= li && (l.blocks || []).some(b => ty(b) === ty(s))); return k < 0 ? li : k; };
+    const need = new Set(Array.isArray(L.solution) ? stepTypes(L.solution) : []), must = L.must || [];
+    const rank = s => (must.includes(ty(s)) ? 0 : (need.has(ty(s)) ? 1 : 3) + (intro(s) < li ? 1 : 0));
+    return L.blocks.map((s, i) => [s, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || intro(b[0]) - intro(a[0]) || a[1] - b[1]).map(x => x[0]);
   }
 
   /* توقّع قبل التشغيل (PRIMM): البرنامج الجاهز ظاهر، والطفل يختار الصورة التي سيرسمها/يقولها، ثم نشغّله ونشوف */
@@ -335,7 +354,7 @@
   /* مختبر بايثون: نفس المسارح، لكن الأوامر من الكود المكتوب، والسطر الشغّال يتلوّن */
   async function runPy() {
     const L = level(), ed = S.ed, code = ed.get(), r = PyLab.compile(code);
-    if (!r.ops.length && !r.error) { toast(SAY[key('empty')], 'bad'); say('empty', { pri: 'feedback', cut: true }); return; }
+    if (!r.ops.length && !r.error) { toast(SAY[key('py_empty')], 'bad'); say('py_empty', { pri: 'feedback', cut: true }); return; }
     const my = ++S.run, stage = S.stage, alive = () => my === S.run;
     S.drafts[L.id] = code;
     setBusy(true);
@@ -379,6 +398,7 @@
   /* ---------- المساعدة ---------- */
   // بعد محاولتين فاشلتين: زر 💡 يلمع ويظهر تلميح بالصورة. بعد أربع: نعرض الحل (والفوز به نجمة واحدة)
   function helpAfterFail() {
+    if (level().free) return; // اللعب الحر ما فيه حل واحد
     const b = $('#hintBtn');
     if (S.fails >= 2 && b) b.classList.add('pulse');
     if (little()) { if (S.fails >= 2) later(littleHint, 1500); return; }
@@ -389,7 +409,7 @@
   function hint(manual) {
     const ho = manual ? { pri: 'feedback', force: true } : { pri: 'feedback' };
     const L = level();
-    if (!L.solution || S.running || S.screen !== 'level') return;
+    if (!L.solution || L.free || S.running || S.screen !== 'level') return;
     const b = $('#hintBtn'); if (b) b.classList.remove('pulse');
     if (S.ed) {
       const d = PyLab.diffLines(S.ed.get(), L.solution);
@@ -433,8 +453,8 @@
 
   async function win(L, n, my) {
     const lit = little();
-    // الصغار دايماً ثلاث نجوم، ولو شاف الحل نجمة واحدة
-    const stars = lit ? 3 : S.solShown ? 1 : n <= L.best ? 3 : n <= L.best + 2 ? 2 : 1;
+    // الصغار واللعب الحر دايماً ثلاث نجوم، ولو شاف الحل نجمة واحدة
+    const stars = lit || L.free ? 3 : S.solShown ? 1 : n <= L.best ? 3 : n <= L.best + 2 ? 2 : 1;
     S.lastResult = { won: true, stars };
     const p = S.player;
     if (!Store.solved(p, L.id)) S.justLit = L.id; // نافذة جديدة تنوّر في المدينة
@@ -444,16 +464,17 @@
     await S.stage.celebrate();
     if (my !== S.run) return;
     const w = Voice.pick(['win1', 'win2', 'win3']); // متنوّعة، وما تتكرر نفس الجملة مرتين ورا بعض
-    const code = S.ed ? S.ed.get().split('\n').filter(l => l.trim()) : S.ws ? Blocks.python(S.ws).lines : S.littleCode || [];
-    const fewer = stars < 3 && !S.solShown;
-    Voice.playSeq([line(w)].concat(fewer ? [line('fewer')] : []), { pri: 'feedback', force: true });
+    const code = S.ed ? S.ed.get().split('\n').filter(l => l.trim()) : S.ws ? Blocks.python(S.ws).lines : (S.littleCode || []).join('\n').split('\n').filter(Boolean);
+    const fewer = stars < 3 && !S.solShown, fk = S.ed ? 'fewer_py' : 'fewer'; // المختبر: سطور مش بطاقات
+    Voice.playSeq([line(w)].concat(fewer ? [line(fk)] : []), { pri: 'feedback', force: true });
     const t = TRACKS[S.track], last = S.li + 1 >= t.levels.length;
     showModal(`<div class="w-siraj" id="wsj"></div>
       <h2>${plain(SAY[key(w)])}</h2>
       <div class="w-stars">${[1, 2, 3].map(i => `<span class="${i <= stars ? 'on' : ''}">★</span>`).join('')}</div>
-      ${fewer ? `<p class="hint">${plain(SAY[key('fewer')])}</p>` : ''}
+      ${fewer ? `<p class="hint">${plain(SAY[key(fk)])}</p>` : ''}
       ${code.length ? `<pre class="w-code" dir="ltr">${code.map(hl).join('\n')}</pre>` : ''}
-      <div class="w-acts">${stars < 3 ? '<button class="sq" data-act="again" aria-label="مرة أخرى">↻</button>' : ''}
+      <div class="w-acts">${stars < 3 || L.free ? '<button class="sq" data-act="again" aria-label="مرة أخرى">↻</button>' : ''}
+        ${L.free && S.kind === 'draw' ? '<button class="sq" data-act="savepic" aria-label="احفظ رسمتي">💾</button>' : ''}
         <button class="run" data-act="next">${last ? '✔ تم' : '▶ التالي'}</button></div>`, true);
     const s = Siraj.create($('#wsj'), p.color); S.msirajs.push(s); s.happy();
     gsap.from('.w-stars span.on', { scale: 0, rotation: -90, stagger: 0.18, duration: 0.5, ease: 'back.out(3)', delay: 0.2 });
@@ -465,6 +486,12 @@
   const SKIP = ['loop', 'call', 'error'];
   const lkey = o => [o.op, o.arg, o.name].join('|');
   const arrowsKind = k => k === 'path' || k === 'draw';
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  // زر زائد للاختيار (الكلام والأضواء فقط: الضغطة الغلط هناك ترجع خطوة واحدة)
+  const DISTRACT = {
+    talk: () => [{ op: 'jump' }, { op: 'wave' }].concat(SIRAJ_TEXTS.PHRASES.map(p => ({ op: 'say', arg: p[0] }))),
+    lights: () => Object.keys(Blocks.LIGHTS).map(c => ({ op: 'light', arg: c })).concat([{ op: 'off' }]),
+  };
   function littlePalette(kind, L) {
     if (arrowsKind(kind)) return ARROWS.map(a => ({ op: a.op }));
     const seen = new Set(), out = [];
@@ -472,7 +499,9 @@
       if (SKIP.includes(o.op) || seen.has(lkey(o))) continue;
       seen.add(lkey(o)); out.push({ op: o.op, arg: o.arg, name: o.name });
     }
-    return out;
+    // الطفل يختار فعلاً: الأزرار بترتيب عشوائي، وزر زائد لو المرحلة فيها ٣ بطاقات أو أكثر
+    if (!L.free && (L.blocks || []).length >= 3 && DISTRACT[kind]) { const x = DISTRACT[kind]().find(o => !seen.has(lkey(o))); if (x) out.push(x); }
+    return shuffle(out);
   }
   // ترتيب ضغطات الحل (للتلميح وللاختبار التلقائي)
   function littleSeq(kind, L, pal) {
@@ -495,10 +524,19 @@
     sayvar: o => `💬<small>${vEm(o.name)}</small>`,
   };
   const LCOLOR = (t, o) => (o.op === 'light' ? Blocks.LIGHTS[o.arg] : o.op === 'off' ? '#3a3d58' : t.color);
-  const LPY = (kind, o) => ({
-    say: () => `say("${o.arg}")`, light: () => `light("${o.arg}")`, off: () => 'off()',
-    set: () => `${o.name} = ${o.arg}`, add: () => `${o.name} = ${o.name} ${o.arg > 0 ? '+' : '-'} ${Math.abs(o.arg)}`, sayvar: () => `say(${o.name})`,
-  }[o.op] || (() => (kind === 'path' ? `move_${o.op}()` : kind === 'draw' ? `draw_${o.op}()` : o.op + '()')))();
+  // كود بايثون الحقيقي لكل ضغطة. الرسم: السهم = لفّة (لو لازم) ثم forward(1) مثل المختبر
+  const SCR = { right: 0, down: 90, left: 180, up: 270 };
+  const LPY = (kind, o, st) => {
+    if (kind === 'draw' && SCR[o.op] != null) {
+      const d = (SCR[o.op] - st.h + 360) % 360;
+      return (d === 90 ? 'right(90)\n' : d === 270 ? 'left(90)\n' : d === 180 ? 'right(90)\nright(90)\n' : '') + 'forward(1)';
+    }
+    return ({
+      say: () => `say("${o.arg}")`, light: () => `light("${o.arg}")`, off: () => 'off()',
+      set: () => `${o.name} = ${o.arg}`, add: () => `${o.name} = ${o.name} ${o.arg > 0 ? '+' : '-'} ${Math.abs(o.arg)}`, sayvar: () => `say(${o.name})`,
+    }[o.op] || (() => (kind === 'path' ? `move_${o.op}()` : o.op + '()')))();
+  };
+  const FREE_TAPS = 6; // اللعب الحر للصغار: بعد ٦ ضغطات نحتفل
   function buildLittle(t, L) {
     S.lpal = littlePalette(S.kind, L);
     S.lseq = littleSeq(S.kind, L, S.lpal);
@@ -526,11 +564,12 @@
     S.running = true;
     document.querySelectorAll('.lb.pulse').forEach(b => b.classList.remove('pulse'));
     try {
-      S.littleCode.push(LPY(S.kind, o)); S.ltaps.push(i);
+      S.littleCode.push(LPY(S.kind, o, stage)); S.ltaps.push(i);
       $('#strip').insertAdjacentHTML('beforeend', `<span class="sb" style="--tc:${LCOLOR(t, o)}">${LICON[o.op](o)}</span>`);
       gsap.from('#strip .sb:last-child', { scale: 0, duration: 0.35, ease: 'back.out(3)' });
       const ok = await stage.exec(o);
       if (my !== S.run) return;
+      if (L.free) { if (S.ltaps.length >= FREE_TAPS) await win(L, 0, my); return; }
       const res = stage.result();
       if (res.ok) { await win(L, 0, my); return; }
       if (!ok) { fail(res.reason); popStrip(); return; } // اصطدام: نرجع خطوة بس
@@ -624,6 +663,19 @@
     pred: t => pickPredict(t),
     tjump: t => { const el = $('#tr-' + t.dataset.t); Sfx.tap(); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); gsap.fromTo(el, { scale: 1.04 }, { scale: 1, duration: 0.5, delay: 0.3 }); } },
     lb: t => littleTap(+t.dataset.i),
+    // احفظ رسمتي (اللعب الحر): صورة PNG بخلفية بيضاء
+    savepic: () => {
+      const cv = S.stage && S.stage.cv; if (!cv) return;
+      const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height;
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(cv, 0, 0);
+      Sfx.snap();
+      c.toBlob(b => {
+        if (!b) return;
+        const u = URL.createObjectURL(b), a = document.createElement('a');
+        a.href = u; a.download = 'رسمتي-سراج.png'; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(u), 5000);
+      }, 'image/png');
+    },
     again: () => { closeModal(); if (little() && level().kind !== 'py') resetLittle(); else if (S.stage) S.stage.reset(); },
     next: () => {
       const t = TRACKS[S.track];
