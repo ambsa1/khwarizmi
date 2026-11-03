@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a40b4"/><stop offset=".55" stop-color="#1f2370"/><stop offset="1" stop-color="#11143a"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="180" x2="0" y2="440" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffe98a"/><stop offset=".45" stop-color="#ffd23e"/><stop offset="1" stop-color="#f29a00"/></linearGradient>
+    <radialGradient id="halo" cx="256" cy="116" r="170" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff3b8" stop-opacity=".7"/><stop offset=".3" stop-color="#ffd23e" stop-opacity=".2"/><stop offset="1" stop-color="#ffc531" stop-opacity="0"/></radialGradient>
+    <radialGradient id="dot" cx="244" cy="104" r="50" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#fff2a8"/><stop offset="1" stop-color="#ffc531"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g transform="translate(0 0) scale(1)"><g id="art">
+    <circle cx="256" cy="116" r="170" fill="url(#halo)"/>
+    <g transform="translate(256 262) scale(.94) translate(-256 -262)">
+      <path d="M178 206 H330 L192 306 L330 406" fill="none" stroke="#0a0c2a" stroke-opacity=".5" stroke-width="62" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 13)"/>
+      <path d="M178 206 H330 L192 306 L330 406" fill="none" stroke="url(#gold)" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M184 194 H300" fill="none" stroke="#fffbe6" stroke-opacity=".3" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="256" cy="112" r="41" fill="url(#dot)"/>
+    </g>
+  </g>
+</g></svg>

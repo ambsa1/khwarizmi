@@ -1,0 +1,225 @@
+/* قسم الإنجليزي — نفس ألوان البيت (ليل أزرق ونور ذهبي)، وكل قسم له لونه.
+   الصفحة RTL، لكن كل نص إنجليزي LTR ومعزول (.en-ltr / dir="ltr"). */
+.en { height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; max-width: 1100px; margin: 0 auto; color: var(--ink);
+  padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+.en.night { color: #fff; }
+.en button { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.en-ltr { direction: ltr; unicode-bidi: isolate; font-family: "Baloo", "Segoe UI", Tahoma, sans-serif; }
+.en-scroll { flex: 1; overflow: auto; padding: 8px 16px calc(28px + env(safe-area-inset-bottom)); position: relative; -webkit-overflow-scrolling: touch; }
+.en-bsj { width: 40px; height: 46px; flex: none; }
+.en-bsj svg { width: 100%; height: 100%; overflow: visible; }
+.en-tsub { font-size: .72em; opacity: .8; font-weight: 700; }
+
+/* ---------- القوائم ---------- */
+.en-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; max-width: 900px; margin: 0 auto; }
+.en-sec { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 150px; padding: 12px 8px 12px;
+  border-radius: 28px; color: #fff; background: var(--sc); background-image: linear-gradient(160deg, rgba(255,255,255,.26), rgba(0,0,0,.2)); box-shadow: 0 7px 0 rgba(0,0,0,.25); overflow: hidden; }
+.en-sec::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 10%, rgba(255,255,255,.3), transparent 45%); pointer-events: none; }
+.en-sec:active, .en-act:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+.en-sec-ic { font-size: 50px; line-height: 1.1; filter: drop-shadow(0 4px 4px rgba(0,0,0,.25)); }
+.en-sec-en { font-weight: 800; font-size: 23px; line-height: 1.15; text-shadow: 0 2px 0 rgba(0,0,0,.18); }
+.en-sec small { font: 700 15px/1.3 var(--head); opacity: .92; }
+.en-sec.dim, .en-act.dim { filter: saturate(.55); opacity: .8; }
+.en-lamps { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+.en-lamps i { width: 10px; height: 10px; border-radius: 50%; background: rgba(0,0,0,.28); }
+.en-lamps i.on { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.en-age { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.4); color: #fff; border-radius: 999px; padding: 1px 9px; font: 800 13px var(--head); direction: ltr; z-index: 1; }
+.en-act { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 14px 8px 10px; min-height: 150px; border-radius: 26px; color: #fff;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.07)); border: 2px solid rgba(255,255,255,.16); box-shadow: 0 6px 0 rgba(0,0,0,.2); }
+.en-act.done { border-color: rgba(255,214,90,.7); }
+.en-act.quiz { border-color: rgba(255,214,90,.45); background: linear-gradient(180deg, rgba(255,214,90,.25), rgba(255,255,255,.07)); }
+.en-act-ic { width: 66px; height: 66px; border-radius: 22px; background: var(--sc); display: flex; align-items: center; justify-content: center; font-size: 36px; box-shadow: 0 5px 0 rgba(0,0,0,.25), inset 0 2px 0 rgba(255,255,255,.3); margin-bottom: 4px; }
+.en-act-en { font-weight: 800; font-size: 20px; line-height: 1.1; }
+.en-act b { font: 700 15px/1.3 var(--head); text-align: center; opacity: .9; }
+.en-st { color: var(--gold); letter-spacing: 1px; font-size: 15px; font-weight: 700; font-family: var(--head); direction: ltr; }
+.en-st i { font-style: normal; color: rgba(255,255,255,.25); }
+
+/* ---------- شاشة النشاط ---------- */
+.en-play { background: #f6f1e7; }
+.en-play .bar { background: var(--sc); background-image: linear-gradient(90deg, rgba(0,0,0,.22), rgba(255,255,255,.06)); color: #fff; gap: 8px; }
+.en-bub { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.96); color: var(--ink); border-radius: 18px; padding: 4px 12px; min-height: 46px; box-shadow: 0 3px 0 rgba(0,0,0,.12); position: relative; }
+.en-bub::before { content: ""; position: absolute; right: -7px; top: 50%; margin-top: -7px; border: 7px solid transparent; border-left-color: rgba(255,255,255,.96); border-right: 0; }
+.en-bub-i { font-size: 22px; flex: none; }
+.en-bub-t { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+.en-bub-en { font-weight: 800; font-size: 19px; max-width: 100%; overflow-wrap: anywhere; }
+.en-bub-ar { font: 700 14px/1.3 var(--head); color: #6a6680; max-width: 100%; }
+@media (max-width: 420px) {
+  .en-bar .en-bub-i { display: none; }
+  .en-bar { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  .en-bar .en-bsj { width: 30px; height: 35px; }
+  .en-bub { padding: 3px 10px; }
+  .en-bub-en { font-size: 17px; }
+  .en-bub-ar { font-size: 13px; }
+}
+.en-stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+.en-stage > div { height: 100%; position: relative; }
+.en-s-colors .en-stage { background: radial-gradient(120% 70% at 50% 0%, #fff4ec, #f9e3d7); }
+.en-s-numbers .en-stage { background: radial-gradient(120% 70% at 50% 0%, #eef6ff, #dbe9fb); }
+.en-s-animals .en-stage { background: radial-gradient(120% 70% at 50% 0%, #fff6e3, #f8e5c2); }
+.en-s-body .en-stage { background: radial-gradient(120% 70% at 50% 0%, #fff0f6, #f8dbe7); }
+.en-s-family .en-stage { background: radial-gradient(120% 70% at 50% 0%, #f4efff, #e4dafb); }
+.en-s-food .en-stage { background: radial-gradient(120% 70% at 50% 0%, #ecfbf1, #d4f0de); }
+.en-s-home .en-stage { background: radial-gradient(120% 70% at 50% 0%, #fff5ea, #f4e2cc); }
+.en-s-talk .en-stage { background: radial-gradient(120% 70% at 50% 0%, #e9fbfd, #cdeff3); }
+.en-s-big .en-stage { background: radial-gradient(120% 70% at 50% 0%, #fffbe6, #f7ebb8); }
+
+.en-dots { position: absolute; top: 9px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; z-index: 6; pointer-events: none; direction: ltr; flex-wrap: wrap; padding: 0 12px; }
+.en-dots i { width: 11px; height: 11px; border-radius: 50%; background: rgba(0,0,0,.14); transition: background .3s, transform .3s; }
+.en-dots i.on { background: var(--gold); box-shadow: 0 0 6px rgba(255,197,49,.8); }
+.en-dots i.cur { background: #fff; box-shadow: 0 0 0 2px var(--gold); transform: scale(1.25); }
+.en-shake { animation: shake .4s; }
+
+/* الصور */
+.en-pic { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; pointer-events: none; }
+.en-pic-e { font-size: var(--ps, 80px); font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; white-space: nowrap; }
+.en-pic-e.two { font-size: calc(var(--ps, 80px) * .72); }
+.en-pic-c { width: calc(var(--ps, 80px) * 1.2); }
+.en-splat { width: 100%; height: auto; display: block; filter: drop-shadow(0 4px 3px rgba(0,0,0,.15)); }
+.en-pic-n { gap: 4px; }
+.en-digit { font: 800 calc(var(--ps, 80px) * 1.05)/1 "Baloo", sans-serif; text-shadow: 0 4px 0 rgba(0,0,0,.12); }
+.en-cnt { display: grid; grid-template-columns: repeat(5, auto); gap: calc(var(--ps, 80px) * .05); justify-content: center; }
+.en-cnt i { width: calc(var(--ps, 80px) * .13); height: calc(var(--ps, 80px) * .13); border-radius: 50%; display: block; }
+.en-pic-s { width: calc(var(--ps, 80px) * 1.15); }
+.en-pic-s svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* ---------- ١ بطاقات التعلّم ---------- */
+.en-learn { display: flex; flex-direction: column; padding: 30px 10px 14px; }
+.en-lrow { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: clamp(8px, 2vw, 22px); }
+.en-card { --ps: clamp(70px, min(34vw, 22vh), 190px); flex: 0 1 auto; width: clamp(190px, 64vw, 460px); height: min(100%, calc(64vw + 150px), 560px); max-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: #fff; border-radius: 32px; padding: clamp(12px, 3vh, 28px) 14px; box-shadow: 0 8px 0 rgba(0,0,0,.08), 0 12px 30px rgba(0,0,0,.1); color: var(--ink); min-width: 0; }
+.en-card:active { transform: scale(.97); }
+.en-card .en-pic-e { padding: .06em 0 .1em; }
+.en-card .en-pic { margin-bottom: 6px; }
+.en-cword { font: 800 clamp(34px, min(11vw, 8vh), 64px)/1.1 "Baloo", sans-serif; color: #2b2a4a; max-width: 100%; overflow-wrap: anywhere; text-align: center; }
+.en-cword.mid { font-size: clamp(28px, min(8vw, 6.5vh), 54px); }
+.en-cword.long { font-size: clamp(22px, min(6.4vw, 5vh), 42px); }
+.en-car { font: 700 clamp(17px, 2.6vh, 24px)/1.3 var(--head); color: #77708f; text-align: center; }
+.en-nav { width: 60px; height: 60px; flex: none; border-radius: 50%; background: #fff; color: var(--sc, #3d8bff); font-size: 28px; font-weight: 800; box-shadow: 0 5px 0 rgba(0,0,0,.12); }
+.en-play .en-nav { color: #555; }
+.en-nav[data-x="next"] { background: linear-gradient(#3ee08a, #16a865); color: #fff; box-shadow: 0 5px 0 #0d7a45; }
+.en-nav:active { transform: translateY(4px); box-shadow: none; }
+@media (max-width: 400px) { .en-nav { width: 50px; height: 50px; font-size: 24px; } .en-card { width: calc(100vw - 140px); } }
+
+/* ---------- ٢ سؤال + صور ---------- */
+.en-q { display: flex; flex-direction: column; align-items: center; padding: 30px 12px 14px; gap: clamp(10px, 2.5vh, 26px); }
+.en-prompt { flex: none; display: flex; align-items: center; justify-content: center; min-height: 0; }
+.en-opts { flex: 1; min-height: 0; display: grid; gap: clamp(10px, 2vh, 18px); align-content: center; justify-content: center; --s: min(40vw, 25vh, 190px); }
+.en-opts.n2 { grid-template-columns: repeat(2, var(--s)); --s: min(40vw, 30vh, 210px); }
+.en-opts.n3 { grid-template-columns: repeat(3, var(--s)); --s: min(28.5vw, 26vh, 190px); }
+.en-opts.n4 { grid-template-columns: repeat(2, var(--s)); --s: min(40vw, 22vh, 180px); }
+.en-opt { --ps: calc(var(--s) * .5); position: relative; width: var(--s); height: var(--s); border-radius: 26px; background: #fff; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 0 rgba(0,0,0,.09), 0 8px 18px rgba(0,0,0,.07); transition: opacity .25s, filter .25s; overflow: hidden; }
+.en-opt:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.09); }
+.en-opts.k-count .en-opt { --ps: calc(var(--s) * .62); }
+.en-opt .en-pic-c { width: 72%; }
+.en-opt.no { opacity: .35; filter: grayscale(.8); }
+.en-opt.off { opacity: .45; }
+.en-opt.ok { box-shadow: 0 0 0 5px var(--green), 0 6px 0 rgba(0,0,0,.09); opacity: 1; }
+.en-cap { position: absolute; left: 4px; right: 4px; bottom: 4px; display: none; flex-direction: column; align-items: center; background: rgba(255,255,255,.94); border-radius: 14px; padding: 2px 4px; line-height: 1.05; }
+.en-cap .en-ltr { font-weight: 800; font-size: clamp(15px, calc(var(--s) * .14), 26px); color: #0d7a45; max-width: 100%; overflow-wrap: anywhere; text-align: center; }
+.en-cap small { font: 700 clamp(11px, calc(var(--s) * .09), 16px)/1.25 var(--head); color: #6a6680; text-align: center; }
+.en-opt.ok .en-cap { display: flex; }
+/* بعد الإجابة: الصورة تصغر لفوق، والكلمة تحتها بدون ما تغطيها */
+.en-opt > .en-pic { transition: transform .3s; }
+.en-opt.ok > .en-pic { transform: translateY(-17%) scale(.74); }
+/* السؤال */
+.en-ear { width: clamp(84px, 17vh, 130px); height: clamp(84px, 17vh, 130px); border-radius: 50%; background: linear-gradient(#ffd75e, #ffb800); box-shadow: 0 7px 0 #c98a00, 0 0 0 8px rgba(255,197,49,.25);
+  font-size: clamp(40px, 8vh, 62px); display: flex; align-items: center; justify-content: center; animation: enpulse 1.6s ease-in-out infinite; }
+.en-ear:active { transform: translateY(4px); box-shadow: 0 3px 0 #c98a00; }
+@keyframes enpulse { 50% { box-shadow: 0 7px 0 #c98a00, 0 0 0 16px rgba(255,197,49,.12); } }
+.en-word { background: #fff; border-radius: 26px; padding: 8px 28px; font: 800 clamp(38px, min(12vw, 9vh), 72px)/1.15 "Baloo", sans-serif; color: #2b2a4a; direction: ltr; unicode-bidi: isolate;
+  box-shadow: 0 6px 0 rgba(0,0,0,.08); max-width: calc(100vw - 30px); overflow-wrap: anywhere; text-align: center; }
+.en-word.mid { font-size: clamp(30px, min(9vw, 7vh), 58px); }
+.en-word.long { font-size: clamp(22px, min(6.5vw, 5.5vh), 44px); }
+.en-objs { display: grid; justify-content: center; gap: 4px 10px; max-width: min(92vw, 420px); background: rgba(255,255,255,.75); border-radius: 24px; padding: 8px 12px; font-size: clamp(30px, 6.4vh, 50px); line-height: 1.1; }
+.en-objs.many { font-size: clamp(26px, 5vh, 42px); max-width: min(92vw, 360px); }
+.en-objs span { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.en-shape { width: clamp(100px, 24vh, 200px); padding: 0; background: none; filter: drop-shadow(0 6px 6px rgba(0,0,0,.15)); }
+.en-shape svg { width: 100%; height: auto; display: block; }
+.en-shape .fill { transition: fill .4s; }
+@media (orientation: landscape) {
+  .en-q { flex-direction: row; justify-content: center; gap: clamp(16px, 4vw, 60px); padding-top: 32px; }
+  .en-prompt { max-width: 40%; }
+  .en-opts { flex: 0 1 auto; align-self: stretch; }
+  .en-opts.n2 { --s: min(24vw, 46vh, 230px); }
+  .en-opts.n3 { --s: min(18vw, 40vh, 200px); }
+  .en-opts.n4 { grid-template-columns: repeat(2, var(--s)); --s: min(20vw, 32vh, 190px); }
+  .en-ear { width: clamp(80px, 24vh, 140px); height: clamp(80px, 24vh, 140px); }
+  .en-word { max-width: 38vw; font-size: clamp(30px, min(7vw, 12vh), 72px); }
+  .en-word.mid { font-size: clamp(26px, min(5vw, 10vh), 58px); }
+  .en-word.long { font-size: clamp(20px, min(3.4vw, 7vh), 40px); padding: 8px 16px; }
+  .en-objs { max-width: 36vw; font-size: clamp(24px, 7vh, 46px); }
+  .en-objs.many { font-size: clamp(20px, 6vh, 40px); }
+  .en-shape { width: clamp(90px, 36vh, 220px); }
+}
+/* شاشات عريضة جداً: ٤ صور في صف (إلا "اقرأ": الكلمة نفسها عريضة) */
+@media (orientation: landscape) and (min-aspect-ratio: 16/9) { .en-opts.n4:not(.k-read):not(.k-count) { grid-template-columns: repeat(4, var(--s)); --s: min(14vw, 40vh, 170px); } }
+@media (orientation: landscape) { .en-word { max-width: min(38vw, 420px); } }
+
+/* ---------- ٣ صِل ---------- */
+.en-match { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 12px 14px; gap: clamp(14px, 4vh, 40px); }
+.en-mpics, .en-mwords { display: grid; gap: 12px; justify-content: center; }
+.en-mpics { --s: min(28vw, 21vh, 170px); grid-template-columns: repeat(3, var(--s)); }
+.en-mpics.n4 { --s: min(38vw, 20vh, 160px); grid-template-columns: repeat(2, var(--s)); }
+.en-mwords { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 560px); }
+.en-mwords.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.en-mp { --ps: calc(var(--s) * .52); position: relative; width: var(--s); height: var(--s); border-radius: 24px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 0 rgba(0,0,0,.09); border: 4px solid transparent; transition: border-color .2s, opacity .3s; }
+.en-mp .en-pic-c { width: 70%; }
+.en-mw { min-height: 56px; border-radius: 18px; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.1); font: 800 clamp(20px, 5.5vw, 30px)/1.1 "Baloo", sans-serif; color: #2b2a4a; padding: 6px 8px; border: 4px solid transparent; transition: border-color .2s, background .3s; min-width: 0; overflow-wrap: anywhere; }
+.en-mw.mid { font-size: clamp(17px, 4.6vw, 26px); }
+.en-mw.long { font-size: clamp(14px, 3.6vw, 20px); }
+.en-mp.sel, .en-mw.sel { border-color: #ffb800; box-shadow: 0 0 0 4px rgba(255,197,49,.35), 0 6px 0 rgba(0,0,0,.09); transform: translateY(-3px); }
+.en-mp:active, .en-mw:active { transform: translateY(3px); }
+.en-mp.ok, .en-mw.ok { opacity: .95; }
+.en-mp.ok.p0, .en-mw.ok.p0 { border-color: #16a865; background: #e6f9ee; }
+.en-mp.ok.p1, .en-mw.ok.p1 { border-color: #3d8bff; background: #e8f1ff; }
+.en-mp.ok.p2, .en-mw.ok.p2 { border-color: #e8579a; background: #fdeaf3; }
+.en-mp.ok.p3, .en-mw.ok.p3 { border-color: #f08a24; background: #fff1e2; }
+.en-tick { position: absolute; top: 4px; right: 6px; font-size: 18px; color: #16a865; font-weight: 800; }
+@media (orientation: landscape) {
+  .en-mpics, .en-mpics.n4 { --s: min(17vw, 36vh, 170px); grid-template-columns: repeat(var(--n, 3), var(--s)); }
+  .en-mpics.n4 { --n: 4; }
+  .en-mwords, .en-mwords.n4 { grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); width: min(100%, 760px); }
+  .en-mwords.n4 { --n: 4; }
+  .en-mw { min-height: 52px; font-size: clamp(18px, 3vw, 30px); }
+}
+
+/* ---------- ٤ التهجئة وترتيب الجملة ---------- */
+.en-spell { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 10px 14px; gap: clamp(10px, 3vh, 26px); }
+.en-spic { --ps: clamp(60px, 15vh, 120px); position: relative; background: #fff; border-radius: 28px; padding: 10px 22px; box-shadow: 0 6px 0 rgba(0,0,0,.09); min-width: 120px; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+.en-spic:active { transform: translateY(3px); }
+.en-spic .en-pic-c { width: calc(var(--ps) * 1.1); }
+.en-ear-s { position: absolute; bottom: -10px; left: -10px; width: 40px; height: 40px; border-radius: 50%; background: #ffc531; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 3px 0 #c98a00; }
+.en-slots { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; position: relative; max-width: 100%; }
+.en-slot { width: clamp(38px, 11vw, 56px); height: clamp(48px, 8vh, 64px); border-radius: 14px; background: rgba(255,255,255,.7); border: 3px dashed rgba(0,0,0,.2); display: flex; align-items: center; justify-content: center;
+  font: 800 clamp(26px, 6vh, 40px)/1 "Baloo", sans-serif; color: #2b2a4a; }
+.en-slot i { font-style: normal; color: rgba(43,42,74,.22); }
+.en-slot.cur { border-color: #ffb800; border-style: solid; background: #fff; box-shadow: 0 0 0 4px rgba(255,197,49,.3); }
+.en-slot.got { background: #fff; border: 3px solid #16a865; color: #0d7a45; }
+.en-slots.done .en-slot { background: #e6f9ee; }
+.en-tiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 560px; }
+.en-tile { min-width: 52px; height: 58px; padding: 0 12px; border-radius: 16px; background: linear-gradient(#fff, #f1ecff); color: #4b3a8c; font: 800 30px/1 "Baloo", sans-serif; box-shadow: 0 5px 0 #c9bdf2; }
+.en-tile:active { transform: translateY(4px); box-shadow: none; }
+.en-tile.used { visibility: hidden; }
+.en-spell.words .en-slot { width: auto; min-width: clamp(52px, 13vw, 84px); padding: 0 8px; font-size: clamp(20px, 4.5vh, 30px); }
+.en-spell.words .en-tile { font-size: 24px; padding: 0 14px; }
+.en-full { position: absolute; left: 0; right: 0; top: 100%; margin-top: 6px; text-align: center; font: 800 22px/1.2 "Baloo", sans-serif; color: #0d7a45; }
+@media (max-width: 380px) { .en-slot { width: auto; min-width: 36px; padding: 0 2px; font-size: 28px; } .en-tile { min-width: 46px; height: 54px; font-size: 26px; padding: 0 10px; } .en-spell.words .en-slot { min-width: 44px; font-size: 18px; } }
+@media (orientation: landscape) and (max-height: 520px) {
+  .en-spell { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: 1fr auto auto 1fr; column-gap: 24px; row-gap: 12px; padding-top: 30px; }
+  .en-spic { grid-row: 2 / 4; grid-column: 1; --ps: clamp(56px, 22vh, 110px); }
+  .en-slots { grid-row: 2; grid-column: 2; }
+  .en-tiles { grid-row: 3; grid-column: 2; }
+  .en-full { position: static; width: 100%; margin: 0; }
+}
+
+/* ---------- الفوز ---------- */
+.en-win { position: absolute; inset: 0; z-index: 60; background: rgba(15,16,45,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.en-wcard { background: var(--paper); border-radius: 30px; padding: 16px 20px; width: 100%; max-width: 380px; max-height: 100%; overflow: auto; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.35); color: var(--ink); }
+.en-wcard h2 { font: 800 34px/1.1 "Baloo", sans-serif; margin: 2px 0 0; color: #0d7a45; }
+.en-war { margin: 0 0 4px; font: 700 17px var(--head); color: #6a6680; }
+.en-wsj { width: 110px; height: 126px; margin: 0 auto; }
+.en-wacts { display: flex; gap: 10px; margin-top: 12px; }
+@media (max-height: 560px) { .en-wsj { width: 62px; height: 72px; } .en-wcard h2 { font-size: 26px; } .en-wcard .w-stars { font-size: 36px; } .en-wcard { padding: 10px 16px; } .en-wacts { margin-top: 8px; } }
+/* آيفون (شاشة كاملة / من الشاشة الرئيسية): أزرار النشاط ما تقعدش تحت شريط الرجوع للبيت */
+.en-play { padding-bottom: env(safe-area-inset-bottom); }

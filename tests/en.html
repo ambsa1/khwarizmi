@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>اختبار قسم الإنجليزي</title>
+  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../css/en.css">
+</head>
+<body>
+  <div id="app"></div>
+  <div id="modal"></div>
+  <canvas id="fx"></canvas>
+  <script>
+    // ?fast=N يسرّع المؤقّتات للاختبار
+    (function () {
+      var F = +(new URLSearchParams(location.search).get('fast') || 1);
+      window.__fast = F;
+      if (F > 1) {
+        var st = window.setTimeout, si = window.setInterval;
+        window.setTimeout = function (fn, ms) { var a = [].slice.call(arguments, 2); return st.apply(window, [fn, (ms || 0) / F].concat(a)); };
+        window.setInterval = function (fn, ms) { var a = [].slice.call(arguments, 2); return si.apply(window, [fn, (ms || 0) / F].concat(a)); };
+      }
+    })();
+  </script>
+  <script src="../vendor/gsap.min.js"></script>
+  <script src="../voice/list.js"></script>
+  <script src="../js/sfx.js"></script>
+  <script src="../js/siraj.js"></script>
+  <script src="../js/activities.js"></script>
+  <script src="../js/en/texts.js"></script>
+  <script src="../js/en/core.js"></script>
+  <script src="../js/en/art.js"></script>
+  <script src="../js/en/acts.js"></script>
+  <script src="../js/en/sections.js"></script>
+  <script>
+    if (window.__fast > 1) gsap.globalTimeline.timeScale(window.__fast);
+    var qs = new URLSearchParams(location.search);
+    window.__said = []; window.__missing = []; window.__saved = {}; window.__backs = 0; window.__langs = {};
+    // صوت مُحاكى: كل جملة "تشتغل" مدة حسب طولها، و Voice.busy يرجّع مشغول طول المدة (لاختبار afterVoice)
+    var busyUntil = 0;
+    Voice.busy = function () { return Date.now() < busyUntil ? 3 : 0; };
+    window.__advBusy = 0;
+    window.__enDot = function (k, A) { if (k > 0 && !/^learn/.test(A.act.id) && Voice.busy()) window.__advBusy++; };
+    var player = { name: 'تجربة', age: +(qs.get('age') || 9), gender: qs.get('g') || 'b', color: '#3d8bff', progress: {} };
+    var ctx = {
+      player: player,
+      playSeq: function (items) {
+        var ms = 0;
+        items.forEach(function (it) {
+          window.__said.push(it[0]); window.__langs[it[2] || 'ar'] = 1;
+          if (!it[1] || !EN_TEXTS[it[0]] || it[0].indexOf('en2_') !== 0) window.__missing.push(it[0]);
+          ms += (200 + String(it[1]).length * 45) / window.__fast;
+        });
+        busyUntil = Date.now() + ms;
+      },
+      say: function (k, t) { this.playSeq([[k, t, 'en']]); },
+      sfx: Sfx, Siraj: Siraj, fx: FX,
+      saveProgress: function (id, stars) { window.__saved[id] = Math.max(window.__saved[id] || 0, stars); player.progress[id] = Math.max(player.progress[id] || 0, stars); },
+      back: function () { window.__backs++; },
+    };
+    EN.render(document.getElementById('app'), ctx);
+  </script>
+</body>
+</html>

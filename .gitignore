@@ -1,0 +1,12 @@
+# ملفات ما بترتفع على جيت هب
+.claude/
+__pycache__/
+*.pyc
+Thumbs.db
+desktop.ini
+tools/voice_texts.json
+tools/family.local.json
+tools/family-code.local.txt
+tools/*.local.*
+tests/node_modules/
+tests/shots/

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>اختبار عالم الكمبيوتر</title>
+  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../css/cw.css">
+</head>
+<body>
+  <div id="app"></div>
+  <div id="modal"></div>
+  <canvas id="fx"></canvas>
+  <script>
+    // ?fast=N يسرّع المؤقّتات للاختبار
+    (function () {
+      var F = +(new URLSearchParams(location.search).get('fast') || 1);
+      window.__fast = F;
+      if (F > 1) {
+        var st = window.setTimeout, si = window.setInterval;
+        window.setTimeout = function (fn, ms) { var a = [].slice.call(arguments, 2); return st.apply(window, [fn, (ms || 0) / F].concat(a)); };
+        window.setInterval = function (fn, ms) { var a = [].slice.call(arguments, 2); return si.apply(window, [fn, (ms || 0) / F].concat(a)); };
+      }
+    })();
+  </script>
+  <script src="../vendor/gsap.min.js"></script>
+  <script src="../voice/list.js"></script>
+  <script src="../js/sfx.js"></script>
+  <script src="../js/siraj.js"></script>
+  <script src="../js/activities.js"></script>
+  <script src="../js/cw/texts.js"></script>
+  <script src="../js/cw/core.js"></script>
+  <script src="../js/cw/art.js"></script>
+  <script src="../js/cw/intro.js"></script>
+  <script src="../js/cw/parts.js"></script>
+  <script src="../js/cw/hands.js"></script>
+  <script src="../js/cw/typing.js"></script>
+  <script src="../js/cw/safety.js"></script>
+  <script src="../js/cw/think.js"></script>
+  <script>
+    if (window.__fast > 1) gsap.globalTimeline.timeScale(window.__fast);
+    var qs = new URLSearchParams(location.search);
+    window.__said = []; window.__missing = []; window.__saved = {}; window.__backs = 0;
+    var player = { name: 'تجربة', age: +(qs.get('age') || 9), gender: qs.get('g') || 'b', color: '#3d8bff', progress: {} };
+    var ctx = {
+      player: player,
+      // الصوت في الاختبار: نسجّل المفاتيح ونتأكد أن لكل مفتاح نصاً
+      playSeq: function (items) { items.forEach(function (it) { window.__said.push(it[0]); if (!it[1] || !CW_TEXTS[it[0]]) window.__missing.push(it[0]); }); },
+      say: function (k, t) { this.playSeq([[k, t]]); },
+      sfx: Sfx, Siraj: Siraj, fx: FX,
+      saveProgress: function (id, stars) { var k = 'cw:' + id; window.__saved[k] = Math.max(window.__saved[k] || 0, stars); player.progress[k] = Math.max(player.progress[k] || 0, stars); },
+      back: function () { window.__backs++; },
+    };
+    CW.render(document.getElementById('app'), ctx);
+  </script>
+</body>
+</html>
