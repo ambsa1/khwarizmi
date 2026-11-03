@@ -52,8 +52,8 @@ function instrument(seed) {
     if (app) inv.roots = Math.max(inv.roots, app.children.length);
     const S = window.App && window.App.S;
     if (S && app) {
-      // الأقسام اللي بترسم شاشاتها بنفسها: عالم الكمبيوتر (.cw)، الإنجليزية (.en)، الرياضيات (.mt)
-      const own = { cw: '.cw', en: '.en', math: '.mt' }[S.screen];
+      // الأقسام اللي بترسم شاشاتها بنفسها: عالم الكمبيوتر (.cw)، الإنجليزية (.en)، الرياضيات (.mt)، الاستوديو (.st)
+      const own = { cw: '.cw', en: '.en', math: '.mt', studio: '.st' }[S.screen];
       const ok = S.screen === 'level' ? !!document.getElementById('stage') : own ? !!app.querySelector(':scope > ' + own) : !!app.querySelector(':scope > .screen');
       if (!ok && inv.desync.length < 10) inv.desync.push(S.screen + ' vs ' + (app.firstElementChild ? app.firstElementChild.className : 'empty'));
       if (S.running) { if (!inv.runningSince) inv.runningSince = Date.now(); else if (Date.now() - inv.runningSince > 30000) { inv.stuck++; inv.runningSince = Date.now(); } } else inv.runningSince = 0;
