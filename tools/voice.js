@@ -47,6 +47,10 @@ for (const [k, v] of Object.entries(ENT)) out.push({ key: k, text: v, lang: 'en2
 const MT = require('../js/math/texts.js');
 for (const [k, v] of Object.entries(MT)) out.push({ key: k, text: v });
 
+// استوديو سراج (st_)
+const ST = require('../js/studio/texts.js');
+for (const [k, v] of Object.entries(ST)) out.push({ key: k, text: v });
+
 // مفتاح واحد لكل ملف صوت (الأخير يكسب)، عشان ما يتولّد نفس الملف مرتين في نفس الوقت
 const uniq = [...new Map(out.map(i => [i.key, i])).values()];
 fs.writeFileSync(path.join(__dirname, 'voice_texts.json'), JSON.stringify(uniq, null, 1));

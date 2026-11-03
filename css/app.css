@@ -146,6 +146,12 @@ input { font: inherit; }
 .tracks { flex: 1; overflow: auto; padding: 4px 16px 24px; display: flex; flex-direction: column; gap: 14px; position: relative; max-width: 720px; width: 100%; margin: 0 auto; }
 .track { background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05)); border-radius: 26px; padding: 14px; border: 2px solid rgba(255,255,255,.1); }
 .track-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+/* باب استوديو سراج فوق المسارات (من ٧ سنين) */
+.studio-door { display: flex; align-items: center; gap: 12px; width: 100%; text-align: start; min-height: 72px; padding: 12px 14px; border-radius: 26px; border: 2px solid rgba(255,210,62,.45); background: linear-gradient(135deg, rgba(255,210,62,.22), rgba(255,255,255,.06)); color: #fff; cursor: pointer; }
+.studio-door .ti { width: 56px; height: 56px; border-radius: 18px; background: #ffd23e; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 5px 0 rgba(0,0,0,.25); flex: none; }
+.studio-door h3 { margin: 0; font-family: var(--head); font-size: 22px; }
+.studio-door p { margin: 0; color: #c7cbf3; font-size: 14px; }
+.studio-door .n { margin-inline-start: auto; color: #ffd23e; font-weight: 800; }
 .track-head .ti { width: 56px; height: 56px; border-radius: 18px; background: var(--tc); display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 5px 0 rgba(0,0,0,.25); flex: none; }
 .track-head h3 { margin: 0; font-family: var(--head); font-size: 22px; }
 .track-head p { margin: 0; color: #c7cbf3; font-size: 14px; }
@@ -480,6 +486,29 @@ input { -webkit-user-select: text; user-select: text; }
 .ws .siraj-ghost > .blocklyPath { fill-opacity: .38; stroke: #ff7a00; stroke-opacity: 1; stroke-width: 3px; stroke-dasharray: 7 5; animation: ghostPulse 1s ease-in-out infinite alternate; }
 .ws .siraj-ghost .blocklyText, .ws .siraj-ghost image { opacity: .7; }
 .ws .siraj-ghost { cursor: pointer; }
+/* شبح الفراغ (أكمل البرنامج): مخطّط بعلامة استفهام، وكلام البطاقة مخفي عشان ما يقول الحل */
+.ws .siraj-gap { cursor: default; }
+.ws .siraj-gap > .blocklyPath { fill-opacity: .22; stroke: #8b5cf6; stroke-dasharray: 8 6; animation: ghostPulse 1.2s ease-in-out infinite alternate; }
+.ws .siraj-gap .blocklyText, .ws .siraj-gap image, .ws .siraj-gap .blocklyEditableText, .ws .siraj-gap .blocklyDropdownText { opacity: 0 !important; }
+.ws .siraj-gap .siraj-gap-q { font: 900 30px/1 var(--head); fill: #8b5cf6; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 4px; pointer-events: none; }
+
+/* بطاقة فكرة المسار (مرة واحدة قبل أول مرحلة) */
+.m-card .idea-ico { font-size: 64px; line-height: 1.15; margin-bottom: 4px; }
+.m-card .idea-txt { font-size: 20px; font-weight: 700; line-height: 1.5; margin: 6px 0 14px; }
+@media (max-height: 560px) { .m-card .idea-ico { font-size: 40px; } .m-card .idea-txt { font-size: 17px; margin: 4px 0 8px; } }
+
+/* حفلة سراج: شارع الأضواء + خطة بالصور فوق + سراج يرقص */
+.level.t-party .bar { background: linear-gradient(90deg, #9c2a7a, #e04fb0); }
+.party-stage { background: radial-gradient(120% 90% at 50% 0%, #4a2a7a, #16123a 80%); }
+.party-stage .lt-moon { display: none; }
+.party-stage.has-plan .lt-row { top: 104px; }
+.party-stage .plan .pc { background: rgba(255,255,255,.94); }
+.party-stage .plan i { color: #ffd4f0; }
+.party-stage .say-bubble { top: auto; bottom: 66%; right: 2%; max-width: 40%; font-size: 20px; z-index: 4; }
+.lt-chip { display: inline-block; width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0,0,0,.12) inset; }
+.lt-chip.off { background: #2a2d4a; }
+.plan .pc .lt-chip { width: 20px; height: 20px; margin: 2px 0; }
+@media (max-width: 420px) { .plan .pc .lt-chip { width: 16px; height: 16px; } .party-stage.has-plan .lt-row { top: 92px; } }
 @keyframes ghostPulse { from { stroke-opacity: .45; } to { stroke-opacity: 1; } }
 /* الحشرة */
 .siraj-bug { pointer-events: none; }

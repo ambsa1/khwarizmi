@@ -105,8 +105,36 @@
     },
   };
 
+  /* ---------- أيام الأسبوع (والشهور للكبار) ---------- */
+  const week = {
+    id: 'week', name: 'أيام الأسبوع', icon: '📅', minAge: 5,
+    mount(el, A) {
+      const a = A.age, N = 6;
+      const DAYS = [1, 2, 3, 4, 5, 6, 7].map(i => 'm_d_' + i), MONTHS = Array.from({ length: 12 }, (_, i) => 'm_mo_' + (i + 1));
+      return A.game({
+        rounds: N, cls: 'mt-g-week', intro: ['m_week_tip'],
+        round(r, R) {
+          const months = a >= 8 && (r >= 3 || R.last);
+          const list = months ? MONTHS : DAYS, before = !months && R.last && a >= 6;
+          const i = U.rand(0, list.length - 1), ans = list[(i + (before ? list.length - 1 : 1)) % list.length];
+          const name = k => A.text(k);
+          R.scene.innerHTML = `<div class="mt-ear-row sm"><span class="mt-sj" id="sj"></span><button class="mt-ear" aria-label="اسمع">🔊</button></div>
+            <div class="mt-daycard"><b>${name(list[i])}</b></div>
+            <div class="mt-rep mt-days">${list.map((k, j) => `<span class="${j === i ? 'on' : ''}">${name(k)}</span>`).join('')}</div>`;
+          const sj = A.sj1(R.scene.querySelector('#sj'));
+          const wrong = U.shuffle(list.filter(k => k !== ans && k !== list[i])).slice(0, 2);
+          R.choices(U.shuffle([ans].concat(wrong)), ans, { html: v => `<b>${name(v)}</b>`, btnCls: 'txt', label: v => name(v), okSay: v => [v] });
+          const ask = () => { R.ask([months ? 'm_mo_after' : before ? 'm_day_before' : 'm_day_after', list[i]], { force: true }); if (sj) sj.talk(1800); };
+          A.on(R.scene.querySelector('.mt-ear'), 'click', () => { A.sfx.tap(); ask(); });
+          R.okAnim = () => { const sp = R.scene.querySelectorAll('.mt-days span')[list.indexOf(ans)]; if (sp) { sp.classList.add('ok'); A.pop(sp); } };
+          ask();
+        },
+      });
+    },
+  };
+
   MATH.register({
     id: 'measure', order: 5, name: 'القياس والساعة', icon: '📏', color: '#f08a24', voice: 'm_s_measure', minAge: 5,
-    rec: a => a >= 5 && a <= 8, activities: [longer, heavy, clock],
+    rec: a => a >= 5 && a <= 8, activities: [longer, heavy, clock, week],
   });
 })(window);

@@ -415,6 +415,97 @@
     destroy() { this.siraj && this.siraj.destroy(); }
   }
 
+  /* ---------- حفلة سراج: أضواء المدينة + كلام وقفز ورقص في برنامج واحد ---------- */
+  // الهدف قائمة مختلطة: 'red' / 'off' (مصباح) و 'say:..' / 'wave' / 'jump' / 'dance' (سراج). خطة بالصور فوق، والمصابيح بالترتيب
+  const isLight = a => a === 'off' || !!LC()[a];
+  const partyChip = a => (a === 'off' ? '<i class="lt-chip off"></i>' : LC()[a] ? `<i class="lt-chip" style="background:${LC()[a]}"></i>` : a === 'dance' ? '💃' : talkChip(a));
+  class PartyStage {
+    constructor(el, level, color) { this.el = el; this.level = level; this.color = color; }
+    mount() {
+      const t = this.level.target || [], free = this.level.free;
+      const lamps = free ? Array(this.level.lamps || 6).fill('') : t.filter(isLight);
+      this.el.innerHTML = `<div class="lights-stage party-stage${t.length ? ' has-plan' : ''}">
+        ${t.length ? `<div class="plan">${t.map((a, i) => `<span class="pc" data-i="${i}">${partyChip(a)}</span>`).join('<i>←</i>')}</div>` : ''}
+        <div class="lt-row" style="--n:${lamps.length}">${lamps.map((c, i) => `<div class="lt" data-i="${i}" style="--want:${LC()[c] || '#2a2d4a'}">
+          <div class="lt-bulb"></div><div class="lt-post"></div>${c ? `<div class="lt-want ${c === 'off' ? 'off' : ''}"></div>` : ''}</div>`).join('')}</div>
+        <div class="lt-ground"></div><div class="say-bubble" id="sayBubble"></div><div class="siraj-holder lt-siraj"></div></div>`;
+      this.siraj = Siraj.create(this.el.querySelector('.lt-siraj'), this.color);
+      this.reset();
+    }
+    reset() {
+      this.actions = []; this.lit = 0; this.bubble('');
+      this.el.querySelectorAll('.lt').forEach(l => { l.className = 'lt'; l.style.removeProperty('--on'); });
+      this.el.querySelectorAll('.pc').forEach(c => c.classList.remove('ok', 'bad'));
+      if (this.siraj) this.siraj.setChest('#ffd23e');
+    }
+    bubble(t) {
+      const b = this.el.querySelector('#sayBubble');
+      if (!b) return;
+      b.textContent = t; b.classList.toggle('show', !!t);
+      if (t) gsap.fromTo(b, { scale: 0.6 }, { scale: 1, duration: 0.35, ease: 'back.out(2.5)' });
+    }
+    mark() {
+      const k = this.actions.length - 1, c = this.el.querySelector(`.pc[data-i="${k}"]`);
+      if (!c) return;
+      c.classList.add(this.level.target[k] === this.actions[k] ? 'ok' : 'bad');
+      gsap.fromTo(c, { scale: 1.3 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
+    }
+    async exec(o) {
+      if (o.op === 'loop' || o.op === 'call') { await sleep(110); return true; }
+      if (o.op === 'light' || o.op === 'off') {
+        const c = o.op === 'off' ? 'off' : o.arg, k = this.lit++;
+        this.actions.push(c); this.mark();
+        this.siraj.setChest(c === 'off' ? '#3a3d58' : LC()[c]);
+        const l = this.el.querySelector(`.lt[data-i="${k}"]`);
+        if (l) {
+          const want = this.level.free ? c : this.level.target.filter(isLight)[k];
+          l.classList.add(c === 'off' ? 'dark' : 'on', want === c ? 'ok' : 'bad');
+          if (c !== 'off') l.style.setProperty('--on', LC()[c]);
+          gsap.fromTo(l.querySelector('.lt-bulb'), { scale: 0.6 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
+        } else gsap.fromTo(this.el.querySelector('.lt-row'), { x: -6 }, { x: 0, duration: 0.3, ease: 'elastic.out(3,0.3)' });
+        if (c === 'off') Sfx.tap(); else Sfx.spark();
+        await sleep(380);
+      } else if (o.op === 'say') {
+        this.actions.push('say:' + o.arg); this.mark();
+        this.bubble(String(o.arg));
+        const i = Talk.key(o.arg);
+        Voice.play(i >= 0 ? 'ph_' + i : 'ph_x', i >= 0 ? SIRAJ_TEXTS.PHRASES[i][1] : String(o.arg), undefined, OUT);
+        await this.siraj.talk(950); await sleep(200); this.bubble('');
+      } else if (o.op === 'wave') { this.actions.push('wave'); this.mark(); Sfx.tap(); await done(this.siraj.wave()); }
+      else if (o.op === 'jump') { this.actions.push('jump'); this.mark(); Sfx.hop(); await done(this.siraj.jump()); Sfx.land(); }
+      else if (o.op === 'dance') {
+        this.actions.push('dance'); this.mark();
+        // المدينة كلها ترقص معه: المصابيح المضاءة تهتز
+        Sfx.spark();
+        gsap.fromTo(this.el.querySelectorAll('.lt.on .lt-bulb'), { y: 0 }, { y: -10, duration: 0.2, yoyo: true, repeat: 3, stagger: 0.05, ease: 'sine.inOut' });
+        await done(this.siraj.dance());
+      }
+      return true;
+    }
+    result() {
+      const t = this.level.target, a = this.actions;
+      if (this.level.free) return a.length ? { ok: true } : { ok: false, reason: 'party_short' };
+      const ok = t.length === a.length && t.every((x, i) => x === a[i]);
+      if (ok) return { ok };
+      return { ok, reason: a.length < t.length ? 'party_short' : a.length > t.length ? 'party_long' : 'party_order' };
+    }
+    // وضع الصغار: الضغطة الغلط ترجع خطوة واحدة
+    wrong() { if (this.level.free) return null; const k = this.actions.length - 1; return k >= this.level.target.length ? 'party_long' : this.actions[k] !== this.level.target[k] ? 'party_order' : null; }
+    pop() {
+      const k = this.actions.length - 1, a = this.actions.pop(), c = this.el.querySelector(`.pc[data-i="${k}"]`);
+      if (c) c.classList.remove('ok', 'bad');
+      if (isLight(a)) { const l = this.el.querySelector(`.lt[data-i="${--this.lit}"]`); if (l) { l.className = 'lt'; l.style.removeProperty('--on'); } }
+    }
+    celebrate() {
+      Sfx.light();
+      gsap.fromTo(this.el.querySelectorAll('.lt-bulb'), { y: 0 }, { y: -14, duration: 0.22, yoyo: true, repeat: 3, stagger: 0.07, ease: 'sine.inOut' });
+      const r = this.el.getBoundingClientRect();
+      FX.burst(r.left + r.width / 2, r.top + r.height / 2, 40, (this.level.target || []).filter(c => LC()[c]).map(c => LC()[c]).concat(['#fff', '#ff6b9a']));
+      return done(this.siraj.dance()).then(() => done(this.siraj.happy()));
+    }
+    destroy() { this.siraj && this.siraj.destroy(); }
+  }
+
   /* ---------- صناديق الذاكرة ---------- */
   // كل متغيّر صندوق عليه اسمه بالإنجليزي، وجواه حبات بعدد الرقم. علامة 🎯 تبيّن الرقم المطلوب.
   const vEmoji = n => Blocks.VARS[n] || '📦';
@@ -563,7 +654,7 @@
     };
   })();
 
-  root.Stages = { talk: TalkStage, draw: DrawStage, path: PathStage, lights: LightsStage, vars: VarsStage, preview };
+  root.Stages = { talk: TalkStage, draw: DrawStage, path: PathStage, lights: LightsStage, vars: VarsStage, party: PartyStage, preview };
   root.FX = FX;
   root.Talk = Talk;
 })(window);

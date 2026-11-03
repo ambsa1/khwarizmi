@@ -107,6 +107,16 @@
           .to(all, { y: -60, scaleY: 1.1, scaleX: 0.94, duration: 0.3, ease: 'power2.out' })
           .to(all, { y: 0, scaleY: 1, scaleX: 1, duration: 0.3, ease: 'bounce.out' });
       },
+      // رقصة الحفلة: يهتز يميناً ويساراً ويرفع ذراعيه، ثم لفّة صغيرة
+      dance() {
+        setMouthShape('open');
+        return tl({ onComplete: () => setMouthShape('smile') })
+          .to([armL, armR], { rotation: i => (i ? -140 : 140), duration: 0.2, ease: 'back.out(2)' }, 0)
+          .to(all, { rotation: -12, x: -8, duration: 0.18, ease: 'sine.inOut' }, 0)
+          .to(all, { rotation: 12, x: 8, duration: 0.2, yoyo: true, repeat: 3, ease: 'sine.inOut' })
+          .to(all, { rotation: 0, x: 0, scaleX: 1, duration: 0.25, ease: 'back.out(2)' })
+          .to([armL, armR], { rotation: 0, duration: 0.25 }, '<');
+      },
       happy() {
         setMouthShape('open');
         return tl({ onComplete: () => setMouthShape('smile') })

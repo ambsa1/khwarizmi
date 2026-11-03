@@ -23,6 +23,8 @@
     box: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 11l12-6 12 6v13l-12 6-12-6z" fill="#fff"/><path d="M4 11l12 6 12-6M16 17v13" stroke="#b07a2a" stroke-width="2" fill="none"/></svg>',
     book: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 6c5-1 9 0 12 3 3-3 7-4 12-3v20c-5-1-9 0-12 3-3-3-7-4-12-3z" fill="#fff"/><path d="M16 9v20" stroke="#c2185b" stroke-width="2"/></svg>',
     call: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M6 8l18 8-18 8 4-8z" fill="#fff"/></svg>',
+    // رقصة: نوتة موسيقية مع شرارات
+    dance: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M13 24V7l12-3v16" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="24.5" r="4.5" fill="#fff"/><circle cx="21.5" cy="20.5" r="4.5" fill="#fff"/><path d="M4 6l1.5 3M28 10l2-2M3 14l3-1" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
   };
 
   const COLORS = { talk: '#e8579a', act: '#f08a24', move: '#3d8bff', pen: '#16a865', loop: '#8b5cf6', start: '#ffb400', light: '#4b4f6e', box: '#c27c0e', func: '#d6336c' };
@@ -67,6 +69,8 @@
       { type: 'field_dropdown', name: 'TEXT', options: T.PHRASES.map(p => [p[2] + ' ' + p[0], p[0]]) }], colour: COLORS.talk }, stmt),
     Object.assign({ type: 'siraj_wave', message0: '%1 wave()', args0: [icon(ico.wave)], colour: COLORS.act }, stmt),
     Object.assign({ type: 'siraj_jump', message0: '%1 jump()', args0: [icon(ico.jump)], colour: COLORS.act }, stmt),
+    // حفلة سراج: رقصة (لفّة وهزّة)
+    Object.assign({ type: 'siraj_dance', message0: '%1 dance()', args0: [icon(ico.dance)], colour: COLORS.act }, stmt),
     Object.assign({ type: 'pen_forward', message0: '%1 forward( %2 )', args0: [icon(ico.pen),
       { type: 'field_dropdown', name: 'N', options: nums(1, 4) }], colour: COLORS.pen }, stmt),
     Object.assign({ type: 'pen_right', message0: '%1 right( %2 )', args0: [icon(ico.right), { type: 'field_dropdown', name: 'A', options: [['90', '90']] }], colour: COLORS.pen }, stmt),
@@ -123,6 +127,7 @@
   G.siraj_say = b => `say(${JSON.stringify(b.getFieldValue('TEXT'))})\n`;
   G.siraj_wave = () => 'wave()\n';
   G.siraj_jump = () => 'jump()\n';
+  G.siraj_dance = () => 'dance()\n';
   G.pen_forward = b => `forward(${b.getFieldValue('N')})\n`;
   G.pen_right = b => `right(${b.getFieldValue('A')})\n`;
   G.pen_left = b => `left(${b.getFieldValue('A')})\n`;
@@ -267,7 +272,7 @@
   function clearGhost(ws) {
     if (!alive(ws) || !ws.__ghost) return;
     const g = ws.getBlockById(ws.__ghost);
-    ws.__ghostGone = ws.__ghost; ws.__ghost = null;
+    ws.__ghostGone = ws.__ghost; ws.__ghost = null; ws.__gap = false;
     if (!g || g.isDeadOrDying()) return;
     Blockly.Events.disable();
     try { g.dispose(true); } finally { Blockly.Events.enable(); }
@@ -303,6 +308,55 @@
     } catch (e) { if (g) g.dispose(false); g = null; } finally { Blockly.Events.enable(); }
     if (!g) return null;
     ws.__ghost = g.id;
+    tint(ws);
+    if (ws.__fit) ws.__fit(g); else reveal(ws, g);
+    return g;
+  }
+
+  /* الفراغ (مراحل "أكمل البرنامج"): البرنامج جاهز وفيه بطاقة واحدة ناقصة في مكان رقم gap من الحل.
+     يظهر مكانها شبح مخطّط بعلامة استفهام (ما يقول اسم البطاقة)، وأي بطاقة من القائمة تدخل مكانه.
+     يرجع الشبح لو البرنامج الحالي = الحل ناقص تلك البطاقة، وإلا null (الطفل عدّل، فالفراغ اختفى) */
+  function showGap(ws, solution, gap) {
+    clearGhost(ws);
+    if (!alive(ws) || !ws.rendered) return null;
+    const s = flatSol(solution), w = s[gap];
+    if (!w) return null;
+    const want = s.filter((x, i) => i !== gap), a = flatWs(ws);
+    const same = a.length === want.length && want.every((x, i) => a[i].type === x.type && a[i].d === x.d
+      && Object.entries(x.fields).every(([k, v]) => String(a[i].b.getFieldValue(k)) === String(v)));
+    if (!same) return null;
+    let conn;
+    if (gap === 0) conn = startOf(ws).nextConnection;
+    else {
+      const prev = a[gap - 1];
+      if (w.d > prev.d) conn = prev.b.getInput('DO').connection;
+      else { let b = prev.b; for (let k = prev.d; k > w.d && b; k--) b = b.getSurroundParent(); conn = b && b.nextConnection; }
+    }
+    if (!conn) return null;
+    let g = null;
+    Blockly.Events.disable();
+    try {
+      g = ws.newBlock(w.type);
+      g.initSvg();
+      for (const [f, v] of Object.entries(w.fields)) g.setFieldValue(String(v), f);
+      g.setDisabledReason(true, 'SIRAJ_GHOST');
+      g.setMovable(false); g.setEditable(false); g.setDeletable(false);
+      g.getSvgRoot().classList.add('siraj-ghost', 'siraj-gap');
+      g.render();
+      // لو بعده بطاقات: نفصلها، نوصّل الشبح، ثم نرجّعها تحته
+      const next = conn.targetBlock();
+      if (next) next.previousConnection.disconnect();
+      conn.connect(g.previousConnection);
+      if (next) g.nextConnection.connect(next.previousConnection);
+      // علامة استفهام فوق البطاقة بدل كلامها (مخفي بالـ CSS)
+      const q = document.createElementNS(SVGNS, 'text');
+      q.setAttribute('class', 'siraj-gap-q'); q.textContent = '?';
+      const hw = g.getHeightWidth();
+      q.setAttribute('x', hw.width / 2); q.setAttribute('y', hw.height / 2 + 9);
+      g.getSvgRoot().appendChild(q);
+    } catch (e) { if (g) g.dispose(false); g = null; } finally { Blockly.Events.enable(); }
+    if (!g) return null;
+    ws.__ghost = g.id; ws.__gap = true;
     tint(ws);
     if (ws.__fit) ws.__fit(g); else reveal(ws, g);
     return g;
@@ -395,7 +449,8 @@
     div.addEventListener('pointerdown', e => {
       const t = e.target.closest ? e.target : null;
       const g = t && t.closest('.blocklyFlyout .blocklyDraggable'), gh = t && t.closest('.siraj-ghost');
-      down = g || gh ? { id: g ? g.getAttribute('data-id') : null, ghost: !!gh && !g, x: e.clientX, y: e.clientY, p: e.pointerId, sel: cursor && ws.getBlockById(cursor) } : null;
+      // شبح الفراغ (علامة الاستفهام) مش بطاقة تُضاف بالضغط: الطفل يختار من القائمة
+      down = g || gh ? { id: g ? g.getAttribute('data-id') : null, ghost: !!gh && !g && !gh.classList.contains('siraj-gap'), x: e.clientX, y: e.clientY, p: e.pointerId, sel: cursor && ws.getBlockById(cursor) } : null;
     }, true);
     div.addEventListener('pointercancel', () => { down = null; }, true);
     // يضيف بطاقة جديدة (بنفس قيم الحقول) عند هذا الوصل
@@ -436,10 +491,13 @@
       }
       const src = fw.getBlockById(id);
       if (!src) return;
+      // فراغ في البرنامج: البطاقة الجديدة تدخل مكانه (الشبح يتشال، والبطاقات اللي بعده ترجع تتوصّل)
+      const gap = ws.__gap && ws.__ghost && ws.getBlockById(ws.__ghost);
+      const gapConn = gap && !gap.isDeadOrDying() ? gap.previousConnection.targetConnection : null;
       clearGhost(ws); // الشبح ما ياخدش مكان البطاقة الحقيقية
       if (ws.remainingCapacity() < 1) { on({ full: true }); return; }
       // البطاقة الجديدة تاخد نفس قيم بطاقة القائمة (لون الضوء، اسم الصندوق، اسم الكلمة...)
-      addAt(target(ws, sel && !sel.isDeadOrDying() ? sel : null, src.type), src.type, fieldsOf(src));
+      addAt(gapConn || target(ws, sel && !sel.isDeadOrDying() ? sel : null, src.type), src.type, fieldsOf(src));
     }, true);
 
     ws.addChangeListener(e => {
@@ -622,6 +680,6 @@
   root.Blocks = {
     DEFS, COLORS, LIGHTS, LIGHT_DOT, VARS, FUNCS, makeWorkspace, dispose, compile, python: toPython, countBlocks, startOf,
     load, opsOf, countOf, diff, glow, glowTool, clearGlow, clear, lineOf, peek, showTool,
-    ghost: showGhost, clearGhost, reveal, bugOn, BUG, tint,
+    ghost: showGhost, gap: showGap, stepAt: (list, i) => (flatSol(list)[i] || {}).step, clearGhost, reveal, bugOn, BUG, tint,
   };
 })(window);

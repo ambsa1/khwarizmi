@@ -98,8 +98,57 @@
     },
   };
 
+  /* ---------- القسمة بالتساوي (وزّع على الأطباق) ---------- */
+  const share = {
+    id: 'share', name: 'وزّع بالتساوي', icon: '🍽️', minAge: 8,
+    mount(el, A) {
+      const a = A.age, N = 5, em = U.shuffle(['🍪', '🍓', '🍩', '🍒', '🍬', '🥕']);
+      return A.game({
+        rounds: N, cls: 'mt-g-share', intro: ['m_share_tip'],
+        round(r, R) {
+          const g = R.last ? U.rand(3, 5) : U.rand(2, a <= 8 ? 4 : 5), k = R.last ? U.rand(3, 6) : U.rand(1, a <= 8 ? 5 : 6), n = g * k;
+          const e = em[r % em.length];
+          R.scene.innerHTML = MATH.objs(n, e) + `<div class="mt-plates" id="pl">${Array.from({ length: g }, () => `<span class="mt-plate"><span class="mt-plate-in" style="--k:${Math.ceil(Math.sqrt(k))}"></span></span>`).join('')}</div>` + U.eqHtml([n, '÷', g, '=', '?']);
+          const box = R.scene.querySelector('.mt-objs'), pl = R.scene.querySelector('#pl');
+          R.fit = () => { A.fitGrid(box, n, 56, 22); A.fitGrid(pl, g, 110, 54); };
+          if (root.gsap) gsap.from(box.children, { scale: 0, duration: 0.25, stagger: 0.02, ease: 'back.out(2)', clearProps: 'transform' });
+          const set = new Set([k]);
+          [k + 1, k - 1, g, k + 2, n - g].forEach(v => { if (set.size < 4 && v > 0) set.add(v); });
+          R.choices(U.shuffle([...set]), k, { html: big, okSay: () => U.eqKeys(n, '÷', g, k) });
+          R.okAnim = () => {
+            const q = R.scene.querySelector('.mt-eq .q'); if (q) { q.textContent = k; q.classList.remove('q'); q.classList.add('ans'); }
+            [...box.children].forEach((o, i) => { o.style.visibility = 'hidden'; const p = pl.children[i % g]; if (p) p.querySelector('.mt-plate-in').insertAdjacentHTML('beforeend', `<i>${e}</i>`); });
+            A.sfx.snap && A.sfx.snap();
+          };
+          R.ask(U.eqKeys(n, '÷', g).slice(0, -1).concat(['m_share_q']), { text: U.eqText(n, '÷', g) });
+        },
+      });
+    },
+  };
+
+  /* ---------- العامل المفقود (٣ × ? = ١٢) ---------- */
+  const factor = {
+    id: 'factor', name: 'الرقم المختفي', icon: '🔍', minAge: 8,
+    mount(el, A) {
+      const a = A.age, N = 5;
+      return A.game({
+        rounds: N, cls: 'mt-g-factor', intro: ['m_factor_tip'],
+        round(r, R) {
+          const g = R.last ? U.rand(3, 9) : a <= 8 ? U.pick([2, 3, 4, 5, 10]) : U.rand(2, 10), k = U.rand(2, R.last ? 9 : a <= 8 ? 6 : 10), ans = g * k;
+          R.scene.innerHTML = '<span class="mt-sj sm" id="sj"></span>' + U.eqHtml([g, '×', '?', '=', ans], 'xl');
+          const s = A.sj1(R.scene.querySelector('#sj'));
+          const set = new Set([k]);
+          [k + 1, k - 1, k + 2, ans - g, k + g].forEach(v => { if (set.size < 4 && v > 0) set.add(v); });
+          R.choices(U.shuffle([...set]), k, { html: big, okSay: () => U.eqKeys(g, '×', k, ans) });
+          R.okAnim = () => { const q = R.scene.querySelector('.mt-eq .q'); if (q) { q.textContent = k; q.classList.remove('q'); q.classList.add('ans'); } if (s) s.jump(); };
+          R.ask(['m_miss'], { text: `${g} × ? = ${ans}` });
+        },
+      });
+    },
+  };
+
   MATH.register({
     id: 'mult', order: 4, name: 'الضرب', icon: '✖️', color: '#8b5cf6', voice: 'm_s_mult', minAge: 8,
-    rec: a => a >= 8, activities: [groups, tables],
+    rec: a => a >= 8, activities: [groups, tables, share, factor],
   });
 })(window);

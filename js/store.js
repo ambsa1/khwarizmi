@@ -44,6 +44,7 @@
       gender: p.gender === 'g' ? 'g' : 'b', color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#3d8bff',
       progress, seen, certs, created: num(p.created, now()), last: num(p.last, 0),
       total: num(p.total, 0, 1e9), day, daySec: num(p.daySec, 0, 864e2),
+      studio: Array.isArray(p.studio) ? p.studio.filter(isObj).slice(0, 6) : undefined, // استوديو سراج: مشاريع الطفل (js/studio/core.js يتحقّق من محتواها)
     };
   }
 

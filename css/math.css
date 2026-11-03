@@ -316,6 +316,48 @@
 .mt-s-speed .mt-objs { background: rgba(255,255,255,.1); border-radius: 22px; }
 .mt-s-speed .mt-bub { background: #fff; }
 
+/* ---------- الأنشطة الجديدة ---------- */
+.mt-s-puzzle .mt-stage { background: radial-gradient(120% 80% at 50% 0%, #f7ffff, #d2f3f5); }
+/* اختيارات بكلمات (زوجي/فردي، أيام الأسبوع) */
+.mt-ch.txt { font-size: clamp(22px, 6vmin, 30px); min-width: 96px; padding: 0 16px; }
+.mt-ch.txt b { padding-bottom: 4px; }
+/* زوجي أم فردي */
+.mt-eo-num { font: 800 clamp(40px, 12vmin, 72px)/1 var(--head); background: #fff; border-radius: 20px; padding: 8px 24px; box-shadow: 0 5px 0 rgba(0,0,0,.08); flex: none; }
+.mt-objs.pairs .mt-obj.pa { background: rgba(61,139,255,.2); } .mt-objs.pairs .mt-obj.pb { background: rgba(240,83,63,.2); }
+/* مسائل كلامية: الذاهب يبهت */
+.mt-obj.gone { opacity: .25; filter: grayscale(1); }
+/* أيام الأسبوع */
+.mt-daycard { background: #fff; border-radius: 22px; padding: 10px 28px; box-shadow: 0 5px 0 rgba(0,0,0,.08); flex: none; }
+.mt-daycard b { font: 800 clamp(30px, 9vmin, 54px)/1.3 var(--head); color: #c25a00; }
+.mt-rep.mt-days { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; font-size: clamp(13px, 3.4vmin, 18px); color: #7a6a52; max-width: 640px; }
+.mt-days span { padding: 2px 6px; border-radius: 8px; }
+.mt-days span.on { background: var(--gold); color: var(--ink); }
+.mt-days span.ok { background: #3ee08a; color: #fff; }
+/* أيّ بيتزا؟ */
+.mt-choices.mt-pzs { gap: 10px; }
+.mt-pzb.mt-ch { width: clamp(84px, 24vmin, 140px); height: clamp(84px, 24vmin, 140px); min-width: 0; padding: 6px; border-radius: 50%; }
+.mt-pzb .mt-pizza { width: 100%; height: 100%; }
+/* الباقي */
+.mt-paidbig { display: flex; align-items: center; justify-content: center; }
+.mt-paidbig .mt-coin { transform: scale(1.3); margin: 10px; }
+/* سودوكو الأشكال */
+.mt-sdk { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 5px; width: min(100%, 52vmin, 320px); aspect-ratio: 1; padding: 8px; background: #fff; border-radius: 20px; box-shadow: 0 6px 0 rgba(0,0,0,.08); flex: none; }
+.mt-sdk span { display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #eef1fb; padding: 9%; }
+.mt-sdk span .mt-shape { width: 100%; height: 100%; }
+.mt-sdk span.q { background: #fff8de; box-shadow: 0 0 0 3px var(--gold); animation: mtq 1.2s ease-in-out infinite; }
+.mt-sdk span.q b { font: 800 clamp(24px, 7vmin, 40px) var(--head); color: #c9971c; }
+.mt-sdk span.hid { background: #dfe3f0; }
+/* آلة القاعدة */
+.mt-rules { display: flex; flex-direction: column; gap: 8px; padding: 12px 18px; background: rgba(255,255,255,.75); border-radius: 24px; flex: none; }
+.mt-rl { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.mt-rl b, .mt-rl i { font: 800 clamp(22px, 6vmin, 36px)/1 var(--head); font-style: normal; }
+.mt-rl b { min-width: 1.6em; padding: 6px 10px; background: #fff; border-radius: 14px; text-align: center; box-shadow: 0 3px 0 rgba(0,0,0,.08); }
+.mt-rl i { color: #14b8c4; }
+.mt-rl.q b { background: #fff8de; color: #c9971c; box-shadow: 0 0 0 3px var(--gold); min-width: 3em; animation: mtq 1.2s ease-in-out infinite; }
+.mt-rl.ans b { background: #3ee08a; color: #fff; animation: none; box-shadow: none; }
+/* ميزان الأعداد */
+.mt-mbox.num { width: auto; min-width: clamp(56px, 16vmin, 96px); padding: 0 10px; font-size: clamp(22px, 6.5vmin, 42px); white-space: nowrap; direction: ltr; }
+
 /* الفوز */
 .mt-win { position: absolute; inset: 0; z-index: 60; background: rgba(15,16,45,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .mt-wcard { background: var(--paper); border-radius: 30px; padding: 18px 20px; width: 100%; max-width: 380px; max-height: 100%; overflow: auto; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.35); color: var(--ink); }

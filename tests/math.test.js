@@ -54,6 +54,9 @@ function checkTexts() {
   // المفاتيح المبنية بالكود: الأشكال، الساعات، والأرقام حتى ١٠٠
   for (const s of ['circle', 'square', 'triangle', 'rect', 'star', 'heart', 'diamond']) for (const p of ['m_sh_', 'm_shq_']) if (!T[p + s]) fail('missing ' + p + s);
   for (let h = 1; h <= 12; h++) if (!T['m_h_' + h]) fail('missing m_h_' + h);
+  for (let d = 1; d <= 7; d++) if (!T['m_d_' + d]) fail('missing m_d_' + d);
+  for (let m = 1; m <= 12; m++) if (!T['m_mo_' + m]) fail('missing m_mo_' + m);
+  for (const s of ['circle', 'square', 'triangle', 'star', 'heart']) if (!T['m_sh_' + s]) fail('missing m_sh_' + s + ' (sudoku)');
   global.window = { SIRAJ_TEXTS: { NUMS }, MATH_TEXTS: T, gsap: undefined };
   global.window.window = global.window;
   const numKeys = n => (n <= 20 ? ['n_' + n] : n >= 100 ? ['m_t_100'] : n % 10 ? ['n_' + (n % 10), 'm_wt_' + (n - n % 10)] : ['m_t_' + n]);
@@ -119,6 +122,14 @@ function layoutProblems() {
     return pg;
   };
   const acts = pg => pg.evaluate(() => MATH.sections.flatMap(s => s.activities.map(a => [s.id, a.id])));
+  // كل نشاط متوقَّع موجود في MATH.sections (المصدر الوحيد لقائمة الأنشطة)
+  const EXPECTED = ['count', 'tapnum', 'more', 'order', 'evenodd', 'compare', 'shapes', 'pattern', 'sort', 'addobj', 'subobj', 'numline', 'addnum', 'story', 'twostep',
+    'groups', 'tables', 'share', 'factor', 'longer', 'heavy', 'clock', 'week', 'pizza', 'shop', 'fraccmp', 'change', 'rocket', 'sudoku', 'rule', 'balance'];
+  const checkActs = async pg => {
+    const ids = (await acts(pg)).map(x => x[1]);
+    EXPECTED.forEach(id => { if (!ids.includes(id)) fail(`activity missing from MATH.sections: ${id}`); });
+    if (new Set(ids).size !== ids.length) fail('duplicate activity ids: ' + ids.join(','));
+  };
   const shot = (pg, name) => pg.screenshot({ path: path.join(SHOTS, name + '.png') });
   // يحل الجولات حتى يصل لجولة التحدّي الأخيرة
   const toChallenge = pg => pg.evaluate(async () => {
@@ -184,6 +195,7 @@ function layoutProblems() {
     for (const [bname, opts] of engines) {
       for (const age of AGES) {
         const pg = await open(bname, opts, `age=${age}&fast=5`, `play a${age}`);
+        await checkActs(pg);
         let n = 0;
         for (const [sid, id] of await acts(pg)) {
           const r = await pg.evaluate(async i => {

@@ -156,8 +156,62 @@
     },
   };
 
+  /* ---------- مسائل كلامية (قصة قصيرة + صورة) ---------- */
+  const story = {
+    id: 'story', name: 'مسائل كلامية', icon: '📖', minAge: 6,
+    mount(el, A) {
+      const a = A.age, N = 5, max = a <= 6 ? 10 : a <= 7 ? 12 : 20, em = U.shuffle(MATH.OBJ);
+      return A.game({
+        rounds: N, cls: 'mt-g-story', intro: ['m_st_tip'],
+        round(r, R) {
+          const minus = r === 1 || r === 3 || (R.last && Math.random() < 0.5);
+          let x, y, s;
+          if (minus) { x = U.rand(3, max); y = U.rand(1, x - 1); s = x - y; } else { x = U.rand(1, max - 1); y = U.rand(1, max - x); s = x + y; }
+          const e = em[r % em.length];
+          R.scene.innerHTML = `<div class="mt-ear-row sm"><span class="mt-sj" id="sj"></span><button class="mt-ear" aria-label="اسمع">🔊</button></div>` +
+            (minus ? `<div class="mt-addrow" dir="ltr"><div class="mt-grp">${MATH.objs(x, e)}</div></div>` : `<div class="mt-addrow" dir="ltr"><div class="mt-grp">${MATH.objs(x, e)}</div><i class="mt-op">+</i><div class="mt-grp">${MATH.objs(y, e)}</div></div>`);
+          const sj = A.sj1(R.scene.querySelector('#sj'));
+          const box = R.scene.querySelector('.mt-addrow');
+          R.fit = () => box.querySelectorAll('.mt-objs').forEach(g => A.fitGrid(g, g.children.length, 70, 18));
+          if (minus) A.later(() => { [...box.querySelectorAll('.mt-obj')].slice(x - y).forEach(o => o.classList.add('gone')); A.sfx.hop && A.sfx.hop(); }, 900);
+          MATH.tapCount(A, R, box);
+          const keys = ['m_st_a'].concat(A.num(x), [minus ? 'm_st_c' : 'm_st_b'], A.num(y), [minus ? 'm_left' : 'm_st_q']);
+          const ask = () => { R.ask(keys, { force: true, text: U.eqText(x, minus ? '−' : '+', y) }); if (sj) sj.talk(2500); };
+          A.on(R.scene.querySelector('.mt-ear'), 'click', () => { A.sfx.tap(); ask(); });
+          R.choices(U.near(s, 4, 0, max + 2, 2), s, { html: big, okSay: () => U.eqKeys(x, minus ? '−' : '+', y, s) });
+          ask();
+        },
+      });
+    },
+  };
+
+  /* ---------- خطوتان (٣ + ٤ − ٢) ---------- */
+  const twostep = {
+    id: 'twostep', name: 'خطوتان', icon: '🪜', minAge: 8,
+    mount(el, A) {
+      const a = A.age, N = 5, max = a <= 8 ? 20 : 50;
+      return A.game({
+        rounds: N, cls: 'mt-g-two', intro: ['m_two_tip'],
+        round(r, R) {
+          const op2 = r % 2 === 0 ? '−' : '+';
+          const x = U.rand(2, Math.floor(max / 2)), y = U.rand(1, Math.floor(max / 2));
+          const mid = x + y;
+          const z = op2 === '−' ? U.rand(1, mid - 1) : U.rand(1, Math.max(1, max - mid));
+          const ans = op2 === '−' ? mid - z : mid + z;
+          R.scene.innerHTML = '<span class="mt-sj sm" id="sj"></span>' + U.eqHtml([x, '+', y, op2, z, '=', '?']);
+          const s = A.sj1(R.scene.querySelector('#sj'));
+          const set = new Set([ans]);
+          [ans + 1, ans - 1, mid, ans + 2, ans - 2].forEach(v => { if (set.size < 4 && v >= 0 && v !== ans) set.add(v); });
+          R.choices(U.shuffle([...set]), ans, { html: big, okSay: () => A.num(ans) });
+          R.okAnim = () => { const q = R.scene.querySelector('.mt-eq .q'); if (q) { q.textContent = ans; q.classList.remove('q'); q.classList.add('ans'); } if (s) s.jump(); };
+          R.ask(A.num(x).concat(['m_plus'], A.num(y), [op2 === '−' ? 'm_minus' : 'm_plus'], A.num(z), ['m_eq_q']), { text: `${x} + ${y} ${op2} ${z} = ?` });
+        },
+      });
+    },
+  };
+
   MATH.register({
     id: 'add', order: 3, name: 'الجمع والطرح', icon: '➕', color: '#16a865', voice: 'm_s_add', minAge: 5,
-    rec: a => a >= 5, activities: [addobj, subobj, numline, addnum],
+    rec: a => a >= 5, activities: [addobj, subobj, numline, addnum, story, twostep],
   });
 })(window);

@@ -35,16 +35,16 @@
     const t = Math.floor(n / 10) * 10, u = n % 10;
     return u ? ['n_' + u, 'm_wt_' + t] : ['m_t_' + t];
   }
-  const OPK = { '+': 'm_plus', '-': 'm_minus', '−': 'm_minus', '×': 'm_times' };
+  const OPK = { '+': 'm_plus', '-': 'm_minus', '−': 'm_minus', '×': 'm_times', '÷': 'm_div' };
   // مسألة كاملة بالصوت: ٣ زائد ٢ يساوي كم؟ (أو يساوي ٥ لو res موجود)
   function eqKeys(a, op, b, res) {
     return numKeys(a).concat([OPK[op]], numKeys(b), res == null ? ['m_eq_q'] : ['m_eq'].concat(numKeys(res)));
   }
-  const OPS = { '+': '+', '-': '−', '−': '−', '×': '×' };
+  const OPS = { '+': '+', '-': '−', '−': '−', '×': '×', '÷': '÷' };
   const eqText = (a, op, b, res) => `${a} ${OPS[op]} ${b} = ${res == null ? '?' : res}`;
   // المسألة مكتوبة بمربعات كبيرة (من الشمال لليمين مثل الكتب)
   function eqHtml(parts, cls) {
-    return `<div class="mt-eq ${cls || ''}" dir="ltr">${parts.map(p => (p === '?' ? '<b class="q">?</b>' : /^[+\-−×=]$/.test(String(p)) ? `<i>${OPS[p] || p}</i>` : `<b>${p}</b>`)).join('')}</div>`;
+    return `<div class="mt-eq ${cls || ''}" dir="ltr">${parts.map(p => (p === '?' ? '<b class="q">?</b>' : /^[+\-−×÷=]$/.test(String(p)) ? `<i>${OPS[p] || p}</i>` : `<b>${p}</b>`)).join('')}</div>`;
   }
   // كسر مكتوب فوق بعض
   const frac = (a, b) => `<span class="mt-frac"><b>${a}</b><i>${b}</i></span>`;
@@ -108,7 +108,7 @@
     }
     function bubble(t) {
       const b = rootEl.querySelector('.mt-bub-t'); if (!b || !t) return;
-      b.textContent = /^[\d\s+\-−×=?:]+$/.test(t) ? LRI + t + PDI : t;
+      b.textContent = /^[\d\s+\-−×÷=?:<>→]+$/.test(t) ? LRI + t + PDI : t;
       if (hasGsap()) gsap.fromTo(b, { opacity: 0.2 }, { opacity: 1, duration: 0.3 });
     }
 

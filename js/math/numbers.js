@@ -152,8 +152,56 @@
     },
   };
 
+  /* ---------- زوجي أم فردي ---------- */
+  const evenodd = {
+    id: 'evenodd', name: 'زوجي أم فردي', icon: '👯', minAge: 6,
+    mount(el, A) {
+      const a = A.age, N = 6;
+      const [lo, hi] = a <= 6 ? [1, 10] : a <= 7 ? [1, 20] : [10, 99];
+      const em = U.shuffle(OBJ);
+      let prev = -1;
+      return A.game({
+        rounds: N, cls: 'mt-g-eo', intro: ['m_eo_tip'],
+        round(r, R) {
+          let n; do { n = R.last && a >= 8 ? U.rand(50, 99) : U.rand(lo, hi); } while (n === prev);
+          prev = n;
+          const showObj = n <= 20;
+          R.scene.innerHTML = `<div class="mt-eo-num"><b dir="ltr">${n}</b></div>` + (showObj ? objs(n, em[r % em.length], 'pairs') : '');
+          const box = R.scene.querySelector('.mt-objs');
+          if (box) { R.fit = () => A.fitGrid(box, n, 80, 30); MATH.tapCount(A, R, box); }
+          const ans = n % 2 === 0 ? 'e' : 'o';
+          R.choices(['e', 'o'], ans, { html: v => `<b>${v === 'e' ? 'زوجي' : 'فردي'}</b>`, btnCls: 'txt', label: v => (v === 'e' ? 'زوجي' : 'فردي'), okSay: v => (v === 'e' ? ['m_even'] : ['m_odd']) });
+          R.okAnim = () => { if (box) [...box.children].forEach((o, i) => { o.classList.add(i % 2 ? 'pb' : 'pa'); }); };
+          R.ask(A.num(n).concat(['m_eo_q']), { text: String(n) });
+        },
+      });
+    },
+  };
+
+  /* ---------- أكبر أم أصغر (< > =) ---------- */
+  const compare = {
+    id: 'compare', name: 'علامة المقارنة', icon: '🐊', minAge: 7,
+    mount(el, A) {
+      const a = A.age, N = 6, hi = a <= 7 ? 20 : 99;
+      return A.game({
+        rounds: N, cls: 'mt-g-cmp', intro: ['m_cmp_tip'],
+        round(r, R) {
+          let x = U.rand(1, hi), y = U.rand(1, hi);
+          if (r === 2 || (R.last && Math.random() < 0.4)) y = x; // يساوي
+          else if (a >= 8 && r >= 3 && x !== y) { const t = U.rand(1, 9), u = U.rand(0, 9); if (t !== u) { x = t * 10 + u; y = u * 10 + t; } }
+          const ans = x > y ? '>' : x < y ? '<' : '=';
+          R.scene.innerHTML = '<span class="mt-sj sm" id="sj"></span>' + U.eqHtml([x, '?', y], 'xl');
+          const s = A.sj1(R.scene.querySelector('#sj'));
+          R.choices(U.shuffle(['<', '>', '=']), ans, { okSay: v => A.num(x).concat([v === '>' ? 'm_cmp_gt' : v === '<' ? 'm_cmp_lt' : 'm_eq'], A.num(y)) });
+          R.okAnim = () => { const q = R.scene.querySelector('.mt-eq .q'); if (q) { q.textContent = ans; q.classList.remove('q'); q.classList.add('ans'); } if (s) s.jump(); };
+          R.ask(['m_cmp_q'], { text: `${x} ? ${y}` });
+        },
+      });
+    },
+  };
+
   MATH.register({
     id: 'count', order: 1, name: 'الأعداد', icon: '🔢', color: '#3d8bff', voice: 'm_s_count', minAge: 3,
-    rec: a => a <= 6, activities: [count, tapnum, more, order],
+    rec: a => a <= 6, activities: [count, tapnum, more, order, evenodd, compare],
   });
 })(window);

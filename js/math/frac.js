@@ -89,8 +89,51 @@
     },
   };
 
+  /* ---------- أيّ بيتزا؟ (تعرّف على الكسر من الصورة) ---------- */
+  const FR = { '1/2': [2, 1, 'm_fr_half'], '1/4': [4, 1, 'm_fr_q'], '3/4': [4, 3, 'm_fr_3q'], '1/3': [3, 1, 'm_fr_third'], '2/3': [3, 2, 'm_fr_2third'] };
+  const fraccmp = {
+    id: 'fraccmp', name: 'أيّ بيتزا؟', icon: '🧀', minAge: 8,
+    mount(el, A) {
+      const a = A.age, N = 5;
+      const pool = a >= 9 ? Object.keys(FR) : ['1/2', '1/4', '3/4'];
+      const plan = U.shuffle(pool).concat(U.shuffle(pool));
+      return A.game({
+        rounds: N, cls: 'mt-g-frc',
+        round(r, R) {
+          const f = plan[r], k = R.last ? Math.min(4, pool.length) : 3;
+          const opts = U.shuffle([f].concat(U.shuffle(pool.filter(x => x !== f)).slice(0, k - 1)));
+          R.scene.innerHTML = `<div class="mt-pz-goal">${U.frac(...f.split('/'))}</div>`;
+          R.choices(opts, f, { btnCls: 'mt-pzb', cls: 'mt-pzs', html: v => MATH.art.pizza(FR[v][0], Array.from({ length: FR[v][1] }, (_, i) => i), { gap: true }), label: v => v, okSay: v => [FR[v][2]] });
+          R.ask(['m_frc_q', FR[f][2]], { text: f });
+        },
+      });
+    },
+  };
+
+  /* ---------- الباقي (دفعنا ١٠ والثمن ٧) ---------- */
+  const change = {
+    id: 'change', name: 'الباقي', icon: '💰', minAge: 8,
+    mount(el, A) {
+      const a = A.age, N = 5, items = U.shuffle(ITEMS);
+      return A.game({
+        rounds: N, cls: 'mt-g-chg', intro: ['m_chg_tip'],
+        round(r, R) {
+          const paid = a <= 8 ? (R.last ? 20 : 10) : R.last ? 50 : U.pick([10, 20]);
+          const price = U.rand(1, paid - 1), ans = paid - price;
+          R.scene.innerHTML = `<div class="mt-shop"><div class="mt-item-card"><span class="mt-goods">${items[r % items.length]}</span><span class="mt-tag" dir="ltr">${price}</span></div>
+            <div class="mt-paidbig">${MATH.art.coin(paid)}</div></div>` + U.eqHtml([paid, '−', price, '=', '?']);
+          const set = new Set([ans]);
+          [ans + 1, ans - 1, price, ans + 10, ans + 2].forEach(v => { if (set.size < 4 && v > 0 && v !== ans) set.add(v); });
+          R.choices(U.shuffle([...set]), ans, { html: v => `<b dir="ltr">${v}</b>`, okSay: () => U.eqKeys(paid, '−', price, ans) });
+          R.okAnim = () => { const q = R.scene.querySelector('.mt-eq .q'); if (q) { q.textContent = ans; q.classList.remove('q'); q.classList.add('ans'); } };
+          R.ask(['m_chg'].concat(A.num(paid), ['m_chg2'], A.num(price), ['m_chg_q']), { text: U.eqText(paid, '−', price) });
+        },
+      });
+    },
+  };
+
   MATH.register({
     id: 'frac', order: 6, name: 'الكسور والنقود', icon: '🍕', color: '#d9a400', voice: 'm_s_frac', minAge: 8,
-    rec: a => a >= 8, activities: [pizza, shop],
+    rec: a => a >= 8, activities: [pizza, shop, fraccmp, change],
   });
 })(window);

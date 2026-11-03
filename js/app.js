@@ -42,6 +42,7 @@
     if (window.CW && CW.destroy) CW.destroy(); // لو عالم الكمبيوتر مفتوح، يقفل نفسه
     if (window.EN && window.EN.destroy) window.EN.destroy(); // وكذلك الإنجليزية
     if (window.MATH && MATH.destroy) MATH.destroy(); // والرياضيات
+    if (window.STUDIO && STUDIO.destroy) STUDIO.destroy(); // والاستوديو
     closeModal();
     gsap.killTweensOf(app.querySelectorAll('*')); // حركات عناصر الشاشة القديمة ما تفضل شغّالة
     Voice.stop();
@@ -160,6 +161,7 @@
           <div class="skyline">${list.map(([t, ti]) => `<button class="bld" data-act="tjump" data-t="${ti}" style="--tc:${t.color}" aria-label="${esc(t.name)}">
             <span class="roof">${t.icon}</span><span class="wins">${t.levels.map(l => `<i class="${Store.solved(p, l.id) ? 'on' : ''}" data-id="${l.id}"></i>`).join('')}</span></button>`).join('')}</div>
           <div class="city-count">💡 <bdi>${lit} / ${all.length}</bdi></div></div>
+        ${(p.age || 0) >= 7 && window.STUDIO ? `<button class="studio-door" data-act="studio"><span class="ti">🎬</span><span><h3>اسْتوديو سِراج</h3><p>اصنع عرضك الخاص بالبطاقات التي تعرفها</p></span><span class="n">${(p.studio || []).length ? (p.studio || []).length + ' 🎞' : ''}</span></button>` : ''}
         ${list.map(([t, ti]) => {
           const next = t.levels.findIndex(l => !Store.solved(p, l.id));
           return `<div class="track" id="tr-${ti}" style="--tc:${t.color}">
@@ -235,7 +237,7 @@
       S.ws = Blocks.makeWorkspace($('#ws'), flyOrder(t, L), L.max, onWs);
       if (L.preset) { Blocks.load(S.ws, L.preset, Blocks.startOf(S.ws).nextConnection); S.ws.clearUndo(); }
       S.bugAt = null;
-      updateCode(); placeBug();
+      showGap(); updateCode(); placeBug();
       later(() => { if (S.ws && !S.running) Blocks.peek(S.ws); }, 1600); // على التلفون: لمحة إن فيه بطاقات أكثر في القائمة
     }
     // الهدف أولاً، ثم النصيحة، في تسلسل واحد عشان ما يقطع بعض
@@ -243,8 +245,19 @@
     if (lit) seq.push(line('little'));
     else if (L.tip) seq.push(line(L.tip));
     if (L.predict && !lit) { later(() => predict(L, kind, seq), 350); return; }
+    // أول مرحلة في المسار (مرة واحدة لكل طفل): بطاقة الفكرة أولاً، والهدف بعد ما يضغط "هيا نجرب"
+    if (li === 0 && !lit && SAY['idea_' + t.id] && !(p.seen && p.seen['idea:' + t.id])) { later(() => ideaCard(t, seq), 350); return; }
     later(() => Voice.playSeq(seq, { pri: 'instruction' }), 350);
     if (!lit && L.tip) later(() => toast(SAY[key(L.tip)], 'tip'), 2600);
+  }
+  // بطاقة الفكرة: جملة واحدة + رمز المسار + صوت، تظهر مرة واحدة لكل طفل (محفوظة في player.seen)
+  function ideaCard(t, seq) {
+    if (S.screen !== 'level') return;
+    Store.setSeen(S.player, 'idea:' + t.id, true);
+    S.ideaSeq = seq;
+    showModal(`<div class="idea-ico">${t.icon}</div><h2>${esc(t.name)}</h2><p class="idea-txt">${esc(plain(SAY[key('idea_' + t.id)]))}</p>
+      <div class="w-acts"><button class="run" data-act="idea-ok">▶ ${plain(SAY.idea_go)}</button></div>`, true);
+    say('idea_' + t.id, { pri: 'instruction' });
   }
 
   // ترتيب قائمة البطاقات: بطاقات الحل الجديدة أولاً، ثم بطاقات الحل، ثم الباقي،
@@ -302,7 +315,12 @@
     if (e.field === 'C' && EN[e.value]) Voice.playSeq([['en_' + e.value, EN[e.value], 'en'], ['c_' + e.value, SIRAJ_TEXTS.COLORS[e.value]]], NAME);
     if (e.field === 'V' && EN[e.value]) Voice.play('en_' + e.value, EN[e.value], 'en', NAME);
     if (e.field === 'N' && SIRAJ_TEXTS.NUMS[+e.value]) Voice.play('n_' + e.value, SIRAJ_TEXTS.NUMS[+e.value], undefined, NAME);
-    if (!S.running) { S.failId = null; updateCode(); placeBug(); }
+    if (!S.running) { S.failId = null; showGap(); updateCode(); placeBug(); }
+  }
+  // أكمل البرنامج: شبح بعلامة استفهام مكان البطاقة الناقصة (يرجع كل ما يرجع البرنامج لحالته الناقصة)
+  function showGap() {
+    const L = level();
+    if (L.gap != null && S.ws && L.solution) Blocks.gap(S.ws, L.solution, L.gap);
   }
 
   /* ---------- صيد الحشرات: دعسوقة صغيرة قاعدة على البطاقة الغلط، والطفل يمسكها لما يصلّح البرنامج ---------- */
@@ -525,6 +543,11 @@
       const k = S.stage.hint(Blocks.opsOf(L.solution));
       if (k) { toast(SAY[key(k)], 'tip'); say(k, ho); return; }
     }
+    // أكمل البرنامج: البطاقة الناقصة تلمع في القائمة (الشبح نفسه ما يقول اسمها)
+    if (L.gap != null && S.ws.__gap) {
+      const step = Blocks.stepAt(L.solution, L.gap);
+      if (step) { Blocks.glowTool(S.ws, step); toast(SAY[key('hint_next')], 'tip', Blocks.lineOf(step)); say('hint_next', ho); return; }
+    }
     const d = Blocks.diff(S.ws, L.solution);
     if (!d) return;
     const k = { field: 'hint_field', wrong: 'hint_wrong', next: 'hint_next', extra: 'hint_extra' }[d.kind];
@@ -621,7 +644,7 @@
   const vEm = n => Blocks.VARS[n] || '📦';
   const LICON = {
     say: o => { const p = SIRAJ_TEXTS.PHRASES.find(x => x[0] === o.arg); return `${p ? p[2] : '💬'}<small>${esc(o.arg)}</small>`; },
-    wave: () => '🙋', jump: () => '🦘', up: () => '⬆️', down: () => '⬇️', left: () => '⬅️', right: () => '➡️',
+    wave: () => '🙋', jump: () => '🦘', dance: () => '💃', up: () => '⬆️', down: () => '⬇️', left: () => '⬅️', right: () => '➡️',
     light: () => '💡', off: () => '🌑',
     set: o => `${vEm(o.name)}<small>= ${o.arg}</small>`, add: o => `${vEm(o.name)}<small>${o.arg > 0 ? '+' : '−'}${Math.abs(o.arg)}</small>`,
     sayvar: o => `💬<small>${vEm(o.name)}</small>`,
@@ -778,6 +801,20 @@
         back: () => renderSections(),
       });
     },
+    // استوديو سراج: نفس العقد، بدون نجوم، والرجوع لخريطة البرمجة
+    studio: () => {
+      Sfx.tap();
+      if (!window.STUDIO || !STUDIO.render) { say('soon'); return; }
+      cleanup(); S.screen = 'studio'; S.lock = Date.now() + 350;
+      const p = S.player;
+      STUDIO.render(app, {
+        player: p,
+        playSeq: (items, o) => Voice.playSeq(items, o),
+        say: (k, t, o) => Voice.play(k, t, undefined, o),
+        sfx: Sfx, Siraj, fx: FX,
+        back: () => renderTracks(),
+      });
+    },
     tracks: () => { Voice.stop(); renderTracks(); },
     level: t => {
       if (t.classList.contains('locked')) { Sfx.oops(); return; }
@@ -793,6 +830,13 @@
     'hint-only': () => { closeModal(); hint(true); },
     sol: () => showSolution(),
     pred: t => pickPredict(t),
+    'idea-ok': () => {
+      closeModal(); Sfx.tap();
+      if (S.screen !== 'level') return;
+      const L = level(), seq = S.ideaSeq || [['goal_' + L.id, L.goal]];
+      Voice.playSeq(seq, { pri: 'instruction', force: true });
+      if (L.tip) later(() => toast(SAY[key(L.tip)], 'tip'), 2200);
+    },
     tjump: t => { const el = $('#tr-' + t.dataset.t); Sfx.tap(); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); gsap.fromTo(el, { scale: 1.04 }, { scale: 1, duration: 0.5, delay: 0.3 }); } },
     lb: t => littleTap(+t.dataset.i),
     // احفظ رسمتي (اللعب الحر): صورة PNG بخلفية بيضاء

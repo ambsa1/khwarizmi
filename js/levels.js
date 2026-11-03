@@ -5,6 +5,7 @@
    tip: نصيحة صوتية تظهر في أول المرحلة (مفتاح من texts.js). stage: نوع المسرح لو مختلف عن المسار.
    must: بطاقات لازم تُستعمل (وإلا يطلب سراج استعمالها). preset: برنامج جاهز يظهر عند فتح المرحلة (فيه حشرة أو للتعديل).
    predict: {choices, answer} صور يختار منها الطفل ماذا سيحدث قبل تشغيل البرنامج الجاهز.
+   gap: رقم بطاقة ناقصة من الحل (أكمل البرنامج): البرنامج يظهر جاهزاً وفي مكانها شبح بعلامة استفهام، والطفل يختارها فقط.
    مختبر بايثون (kind: 'py'): solution نص بايثون، starter نص البداية، keys أزرار إضافية، mustPy كلمات لازم تُكتب.
    ترتيب المراحل في القائمة هو ترتيب اللعب. لا تغيّر id أي مرحلة، لأن تقدّم الأطفال محفوظ به. */
 (function (root) {
@@ -29,12 +30,17 @@
           target: ['say:مرحبا'] },
         { id: 't2', goal: 'أُلَوِّحُ، ثُمَّ أَقولُ: مَرْحَبا!', blocks: ['siraj_say', 'siraj_wave'], best: 2,
           target: ['wave', 'say:مرحبا'] },
+        // أكمل البرنامج (gap): البرنامج جاهز وناقص بطاقة واحدة في مكان رقم gap من الحل؛ الطفل يختارها فقط
+        { id: 't2g', gap: 1, goal: 'بِطاقَةٌ ناقِصَة! أَقْفِزُ، ثُمَّ أَقولُ: مَرْحَبا!', blocks: ['siraj_say', 'siraj_wave', 'siraj_jump'], tip: 'gap_tip',
+          target: ['jump', 'say:مرحبا'], solution: ['siraj_jump', say('مرحبا')] },
         { id: 't2b', goal: 'أُريدُ أَنْ أَقولَ: أَنا سِراج!', blocks: ['siraj_say'], best: 1, tip: 'pick_word',
           target: ['say:أنا سراج'] },
         { id: 't3', goal: 'مَرْحَبا، ثُمَّ أَنا سِراج، ثُمَّ أَقْفِزُ!', blocks: ['siraj_say', 'siraj_wave', 'siraj_jump'], best: 3,
           target: ['say:مرحبا', 'say:أنا سراج', 'jump'] },
         { id: 't4', goal: 'هِيب هِيب ثَلاثَ مَرّاتٍ، ثُمَّ هُرّاي!', blocks: ['siraj_say', 'siraj_jump', 'siraj_repeat'], best: 3, max: 3, tip: 'loop_in',
           target: ['say:هيب هيب', 'say:هيب هيب', 'say:هيب هيب', 'say:هرّاي'] },
+        { id: 't4g', gap: 1, goal: 'التَّكْرارُ فارِغ! هِيب هِيب ثَلاثًا، ثُمَّ هُرّاي!', blocks: ['siraj_say', 'siraj_jump', 'siraj_repeat'], tip: 'gap_tip',
+          target: ['say:هيب هيب', 'say:هيب هيب', 'say:هيب هيب', 'say:هرّاي'], solution: [rep(3, [say('هيب هيب')]), say('هرّاي')] },
         { id: 't5', goal: 'أُلَوِّحُ وَأَقْفِزُ، مَرَّتَيْن!', blocks: ['siraj_wave', 'siraj_jump', 'siraj_repeat'], max: 3, tip: 'loop_in',
           target: ['wave', 'jump', 'wave', 'jump'], solution: [rep(2, ['siraj_wave', 'siraj_jump'])] },
         { id: 't6', goal: 'مَرْحَبا، ثُمَّ ثَلاثُ قَفَزات، ثُمَّ شُكْراً!', blocks: ['siraj_say', 'siraj_jump', 'siraj_repeat'], max: 5,
@@ -56,6 +62,8 @@
           target: ['red'], solution: [lt('red')] },
         { id: 'l2', goal: 'أَحْمَر، ثُمَّ أَخْضَر!', blocks: ['light_on:red', 'light_on:green'],
           target: ['red', 'green'], solution: [lt('red'), lt('green')] },
+        { id: 'l2g', gap: 1, goal: 'مِصْباحٌ ناقِص! أَحْمَر، أَصْفَر، أَخْضَر!', blocks: ['light_on:red', 'light_on:yellow', 'light_on:green'], tip: 'gap_tip',
+          target: ['red', 'yellow', 'green'], solution: [lt('red'), lt('yellow'), lt('green')] },
         { id: 'l3', goal: 'إِشارَةُ المُرور: أَحْمَر، أَصْفَر، أَخْضَر!', blocks: ['light_on:red', 'light_on:yellow', 'light_on:green'],
           target: ['red', 'yellow', 'green'], solution: [lt('red'), lt('yellow'), lt('green')] },
         { id: 'l4', goal: 'أَحْمَر، ثُمَّ أُطْفِئُ، ثُمَّ أَحْمَر!', blocks: ['light_on:red', 'light_off'],
@@ -63,6 +71,8 @@
         { id: 'l5', goal: 'أَزْرَق، ثُمَّ بَنَفْسَجِيّ!', blocks: ['light_on'], tip: 'pick_word',
           target: ['blue', 'purple'], solution: [lt('blue'), lt('purple')] },
         { id: 'l6', goal: 'أَرْمِشُ بِالأَصْفَرِ ثَلاثَ مَرّات!', blocks: ['light_on:yellow', 'light_off', 'siraj_repeat'], max: 3, tip: 'loop_in',
+          target: times(3, ['yellow', 'off']), solution: [rep(3, [lt('yellow'), OFF])] },
+        { id: 'l6g', gap: 2, goal: 'الرَّمْشُ ناقِص! أُضيءُ ثُمَّ أُطْفِئُ، ثَلاثًا!', blocks: ['light_on:yellow', 'light_off', 'siraj_repeat'], tip: 'gap_tip',
           target: times(3, ['yellow', 'off']), solution: [rep(3, [lt('yellow'), OFF])] },
         { id: 'l7', goal: 'أَحْمَر، أَخْضَر، أَزْرَق... مَرَّتَيْن!', blocks: ['light_on', 'siraj_repeat'], max: 4,
           target: times(2, ['red', 'green', 'blue']), solution: [rep(2, [lt('red'), lt('green'), lt('blue')])] },
@@ -80,12 +90,16 @@
           start: [0, 0, 0], target: [[0, 0, 3, 0]] },
         { id: 'd2', goal: 'أُريدُ هذا الشَّكْل!', blocks: ['pen_forward', 'pen_right'], best: 3,
           start: [0, 0, 0], target: [[0, 0, 2, 0], [2, 0, 2, 2]] },
+        { id: 'd2g', gap: 1, goal: 'اللَّفَّةُ ناقِصَة! أُريدُ هذا الشَّكْل!', blocks: ['pen_forward', 'pen_right', 'pen_left'], tip: 'gap_tip',
+          start: [0, 0, 0], target: [[0, 0, 2, 0], [2, 0, 2, 2]], solution: [fw(2), R, fw(2)] },
         { id: 'd2b', goal: 'وَالآنَ إِلى اليَسار!', blocks: ['pen_forward', 'pen_left'], best: 3,
           start: [0, 0, 0], target: [[0, 0, 2, 0], [2, 0, 2, -2]] },
         { id: 'd3', goal: 'أُريدُ مُرَبَّعًا!', blocks: ['pen_forward', 'pen_right'], best: 7,
           start: [0, 0, 0], target: sq(0, 0, 2) },
         { id: 'd4', goal: 'مُرَبَّعٌ بِثَلاثِ بِطاقاتٍ فَقَط!', blocks: ['pen_forward', 'pen_right', 'siraj_repeat'], best: 3, max: 3, tip: 'loop_in',
           start: [0, 0, 0], target: sq(0, 0, 2) },
+        { id: 'd4g', gap: 2, goal: 'التَّكْرارُ ناقِصٌ بِطاقَة! أُريدُ مُرَبَّعًا!', blocks: ['pen_forward', 'pen_right', 'siraj_repeat'], tip: 'gap_tip',
+          start: [0, 0, 0], target: sq(0, 0, 2), solution: [rep(4, [fw(2), R])] },
         { id: 'd5', goal: 'أُريدُ دَرَجًا!', blocks: ['pen_forward', 'pen_right', 'pen_left', 'siraj_repeat'], best: 5, max: 6,
           start: [0, 0, 0], target: [[0, 0, 1, 0], [1, 0, 1, -1], [1, -1, 2, -1], [2, -1, 2, -2], [2, -2, 3, -2], [3, -2, 3, -3]] },
         { id: 'd6', goal: 'أُريدُ مُسْتَطيلًا طَويلًا!', blocks: ['pen_forward', 'pen_right', 'siraj_repeat'],
@@ -115,10 +129,14 @@
           grid: ['R.s.L'] },
         { id: 'p1b', goal: 'الشَّرارَةُ، ثُمَّ المِصْباح!', blocks: ['go_up', 'go_right'], best: 4,
           grid: ['..L', '.s.', 'R..'] },
+        { id: 'p1g', gap: 1, goal: 'خَطْوَةٌ ناقِصَة! الشَّرارَةُ، ثُمَّ المِصْباح!', blocks: ['go_up', 'go_right'], tip: 'gap_tip',
+          grid: ['..L', '.s.', 'R..'], solution: ['go_right', 'go_up', 'go_right', 'go_up'] },
         { id: 'p2', goal: 'ثَلاثُ شَرارات، ثُمَّ المِصْباح!', blocks: ['go_up', 'go_down', 'go_left', 'go_right'], best: 7,
           grid: ['....L', '.#.#s', '.s.s.', 'R....'] },
         { id: 'p3', goal: 'طَريقٌ طَويلٌ بِبِطاقَتَيْنِ فَقَط!', blocks: ['go_right', 'siraj_repeat'], best: 2, max: 2, tip: 'loop_in',
           grid: ['R.s.s.s.L'] },
+        { id: 'p3g', gap: 1, goal: 'التَّكْرارُ فارِغ! أَمْشي إِلى المِصْباح!', blocks: ['go_right', 'go_up', 'siraj_repeat'], tip: 'gap_tip',
+          grid: ['R.s.s.s.L'], solution: [rep(8, ['go_right'])] },
         { id: 'p4', goal: 'هَيّا نَصْعَدُ الدَّرَج!', blocks: ['go_up', 'go_right', 'siraj_repeat'], best: 4, max: 4,
           grid: ['###.L', '##.s#', '#.s##', 'R.###'] },
         { id: 'p5', goal: 'أَمْشي، ثُمَّ أَصْعَدُ، بِتَكْرارَيْن!', blocks: ['go_up', 'go_right', 'siraj_repeat'], max: 4,
@@ -136,6 +154,8 @@
         { id: 'v1', goal: 'أَضَعُ ثَلاثَ تُفّاحاتٍ في الصُّنْدوق!', blocks: ['var_set:apples'], tip: 'var_tip',
           vars: ['apples'], target: { apples: 3 }, solution: [vset('apples', 3)] },
         { id: 'v2', goal: 'أَضَعُ خَمْسَة، ثُمَّ أَقولُ ما في الصُّنْدوق!', blocks: ['var_set:apples', 'var_say:apples'],
+          vars: ['apples'], target: { apples: 5 }, says: [5], solution: [vset('apples', 5), vsay('apples')] },
+        { id: 'v2g', gap: 1, goal: 'بِطاقَةٌ ناقِصَة! أَضَعُ خَمْسَة، ثُمَّ أَقولُها!', blocks: ['var_set:apples', 'var_say:apples', 'var_add:apples'], tip: 'gap_tip',
           vars: ['apples'], target: { apples: 5 }, says: [5], solution: [vset('apples', 5), vsay('apples')] },
         { id: 'v3', goal: 'أَقولُ اثْنان، ثُمَّ أَزيدُ واحِدًا وَأَقول!', blocks: ['var_set:apples', 'var_add:apples', 'var_say:apples'], must: ['var_add'],
           vars: ['apples'], target: { apples: 3 }, says: [2, 3], solution: [vset('apples', 2), vsay('apples'), vadd('apples', 1), vsay('apples')] },
@@ -162,6 +182,8 @@
         { id: 'f2', stage: 'talk', goal: 'أَرْقُصُ مَرَّتَيْن!', blocks: ['func_call:dance', 'siraj_wave', 'siraj_jump'], must: ['func_def', 'func_call'],
           preset: [def('dance', ['siraj_wave', 'siraj_jump'])], target: ['wave', 'jump', 'wave', 'jump'],
           solution: [def('dance', ['siraj_wave', 'siraj_jump']), call('dance'), call('dance')] },
+        { id: 'f2g', gap: 3, stage: 'talk', goal: 'نِداءٌ ناقِص! أَرْقُصُ مَرَّتَيْن!', blocks: ['func_call:dance', 'siraj_wave', 'siraj_jump'], must: ['func_def', 'func_call'], tip: 'gap_tip',
+          target: ['wave', 'jump', 'wave', 'jump'], solution: [def('dance', ['siraj_wave', 'siraj_jump']), call('dance'), call('dance')] },
         { id: 'f3', stage: 'talk', goal: 'أُحَيّي ثَلاثَةَ أَصْدِقاء!', blocks: ['func_def:hello', 'func_call:hello', 'siraj_wave', 'siraj_say'], must: ['func_def', 'func_call'],
           target: times(3, ['wave', 'say:مرحبا']), solution: [def('hello', ['siraj_wave', say('مرحبا')]), call('hello'), call('hello'), call('hello')] },
         { id: 'f4', stage: 'lights', goal: 'كَلِمَةٌ جَديدَةٌ لِلرَّمْش، وَأَرْمِشُ ثَلاثاً!', blocks: ['func_def:blink', 'func_call:blink', 'light_on:yellow', 'light_off', 'siraj_repeat'], must: ['func_def', 'func_call'],
@@ -184,6 +206,8 @@
           preset: [say('مرحبا'), 'siraj_jump'], target: ['say:مرحبا', 'wave'], solution: [say('مرحبا'), 'siraj_wave'] },
         { id: 'b2', stage: 'lights', goal: 'إِشارَتي فيها حَشَرَة: أَحْمَر، أَصْفَر، أَخْضَر!', blocks: ['light_on'], tip: 'bug_tip',
           preset: [lt('red'), lt('red'), lt('green')], target: ['red', 'yellow', 'green'], solution: [lt('red'), lt('yellow'), lt('green')] },
+        { id: 'b2g', gap: 3, stage: 'lights', goal: 'الحَشَرَةُ أَكَلَتْ بِطاقَة! أَخْضَرُ في النِّهايَة!', blocks: ['light_on', 'light_off', 'siraj_repeat'], tip: 'gap_tip',
+          target: times(2, ['blue', 'off']).concat(['green']), solution: [rep(2, [lt('blue'), OFF]), lt('green')] },
         { id: 'b3', stage: 'draw', goal: 'مُرَبَّعي مَكْسور! أَيْنَ الحَشَرَة؟', blocks: ['pen_forward', 'pen_right'], tip: 'bug_tip',
           preset: [fw(2), R, fw(2), R, fw(1), R, fw(2)], start: [0, 0, 0], target: sq(0, 0, 2), solution: [fw(2), R, fw(2), R, fw(2), R, fw(2)] },
         { id: 'b4', stage: 'path', goal: 'اصْطَدَمْتُ بِصُنْدوق! التَّرْتيبُ فيهِ حَشَرَة.', blocks: ['go_up', 'go_right', 'siraj_repeat'], tip: 'bug_tip',
@@ -200,6 +224,33 @@
         { id: 'b9', stage: 'draw', goal: 'نافِذَتي ناقِصَة! أَيْنَ الحَشَرَة؟', blocks: ['pen_forward', 'pen_right', 'siraj_repeat'], tip: 'bug_tip',
           preset: [rep(4, [rep(3, [fw(1), R]), R])], start: [0, 0, 0], target: [].concat(sq(0, 0, 1), sq(-1, 0, 1), sq(-1, -1, 1), sq(0, -1, 1)),
           solution: [rep(4, [rep(4, [fw(1), R]), R])] },
+      ],
+    },
+    {
+      // حفلة سراج: نخلط كل ما تعلّمناه (أضواء + كلام + قفز + تكرار) وبطاقة واحدة جديدة: الرقصة
+      id: 'party', name: 'حفلة سراج', icon: '🎉', color: '#e04fb0',
+      idea: 'نخلط كل ما تعلّمناه: أضواء وكلام ورقص!',
+      levels: [
+        { id: 'pa1', goal: 'أُضيءُ الأَحْمَر، ثُمَّ أَرْقُص!', blocks: ['light_on:red', 'siraj_dance'], tip: 'party_tip',
+          target: ['red', 'dance'], solution: [lt('red'), 'siraj_dance'] },
+        { id: 'pa2', goal: 'هِيب هِيب، ثُمَّ أَخْضَر، ثُمَّ أَقْفِز!', blocks: ['siraj_say', 'light_on:green', 'siraj_jump'],
+          target: ['say:هيب هيب', 'green', 'jump'], solution: [say('هيب هيب'), lt('green'), 'siraj_jump'] },
+        { id: 'pa2g', gap: 1, goal: 'بِطاقَةٌ ناقِصَة! أَحْمَر، أَصْفَر، ثُمَّ أَرْقُص!', blocks: ['light_on:red', 'light_on:yellow', 'siraj_dance'], tip: 'gap_tip',
+          target: ['red', 'yellow', 'dance'], solution: [lt('red'), lt('yellow'), 'siraj_dance'] },
+        { id: 'pa3', goal: 'أُلَوِّحُ، ثُمَّ أَضْواءُ قَوْسِ قُزَح!', blocks: ['siraj_wave', 'light_on'], tip: 'pick_word',
+          target: ['wave', 'red', 'yellow', 'green', 'blue', 'purple'], solution: ['siraj_wave', lt('red'), lt('yellow'), lt('green'), lt('blue'), lt('purple')] },
+        { id: 'pa4', goal: 'ضَوْءٌ أَزْرَقُ وَقَفْزَة، ثَلاثَ مَرّات!', blocks: ['light_on:blue', 'siraj_jump', 'siraj_repeat'], max: 3, tip: 'loop_in',
+          target: times(3, ['blue', 'jump']), solution: [rep(3, [lt('blue'), 'siraj_jump'])] },
+        { id: 'pa5', goal: 'أَرْمِشُ بِالبَنَفْسَجِيِّ مَرَّتَيْن، ثُمَّ هُرّاي!', blocks: ['light_on:purple', 'light_off', 'siraj_say', 'siraj_repeat'], max: 4,
+          target: times(2, ['purple', 'off']).concat(['say:هرّاي']), solution: [rep(2, [lt('purple'), OFF]), say('هرّاي')] },
+        { id: 'pa6', goal: 'لِكُلِّ ضَوْءٍ أَصْفَرَ رَقْصَة، أَرْبَعَ مَرّات!', blocks: ['light_on:yellow', 'siraj_dance', 'siraj_repeat'], max: 3,
+          target: times(4, ['yellow', 'dance']), solution: [rep(4, [lt('yellow'), 'siraj_dance'])] },
+        { id: 'pa7', goal: 'أَرْقُصُ وَأُضيءُ الأَخْضَرَ مَرَّتَيْن، ثُمَّ شُكْراً!', blocks: ['siraj_dance', 'light_on:green', 'siraj_say', 'siraj_repeat'], max: 4,
+          target: times(2, ['dance', 'green']).concat(['say:شكرا']), solution: [rep(2, ['siraj_dance', lt('green')]), say('شكرا')] },
+        { id: 'pa8', goal: 'مَرْحَبا، ثُمَّ ثَلاثَةُ أَضْواءٍ حَمْراءَ بِقَفْزَة، ثُمَّ أَرْقُص!', blocks: ['siraj_say', 'light_on:red', 'siraj_jump', 'siraj_dance', 'siraj_repeat'], max: 5,
+          target: ['say:مرحبا'].concat(times(3, ['red', 'jump']), ['dance']), solution: [say('مرحبا'), rep(3, [lt('red'), 'siraj_jump']), 'siraj_dance'] },
+        { id: 'pa9', free: true, goal: 'حَفْلَةٌ حُرَّة! أَيُّ عَرْضٍ يُعْجِبُني!', blocks: ['light_on', 'light_off', 'siraj_say', 'siraj_jump', 'siraj_dance', 'siraj_repeat'], tip: 'free_tip',
+          lamps: 6, target: [], solution: [lt('red'), 'siraj_dance', say('هرّاي'), lt('purple'), 'siraj_jump', OFF] },
       ],
     },
     {
@@ -254,8 +305,15 @@
   };
   const count = list => list.reduce((n, s) => n + 1 + (Array.isArray(s) && s[2] ? count(s[2]) : 0), 0);
   const pyLines = s => s.split('\n').filter(l => l.trim() && !l.trim().startsWith('#')).length;
+  // الحل بدون البطاقة رقم gap (ترتيب القراءة: البطاقة ثم ما بداخلها): هذا هو البرنامج الجاهز في مراحل "أكمل البرنامج"
+  const without = (list, gap) => {
+    let i = -1;
+    const go = l => l.flatMap(s => { i++; const [t, f, inner] = Array.isArray(s) ? s : [s]; if (i === gap) return []; return inner ? [[t, f, go(inner)]] : [s]; });
+    return go(list);
+  };
   TRACKS.forEach(t => t.levels.forEach(l => {
     if (!l.solution && SOL[l.id]) l.solution = SOL[l.id];
+    if (l.gap != null && l.solution && !l.preset) l.preset = without(l.solution, l.gap);
     if (t.kind) l.kind = t.kind;
     if (l.best == null && l.solution) l.best = typeof l.solution === 'string' ? pyLines(l.solution) : count(l.solution);
   }));
