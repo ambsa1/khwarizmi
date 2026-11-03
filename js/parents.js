@@ -1,4 +1,4 @@
-/* لوحة الأهل: سؤال حساب + رقم سري (تُقبل الأرقام العربية)، تقدّم كل طفل، الوقت، الحذف والتصفير،
+/* لوحة الأهل: رقم مكتوب بالكلمات + رقم سري (تُقبل الأرقام العربية)، تقدّم كل طفل، الوقت، الحذف والتصفير،
    الصوت، حد اللعب اليومي، النسخ الاحتياطي والنقل بين الأجهزة، ووضع العائلة. يعتمد على window.App */
 (function () {
   'use strict';
@@ -17,13 +17,23 @@
     if (Store.hasPin()) pinPrompt();
     else gate(false, () => setPin(true));
   }
-  // سؤال حساب للكبار. الصعب (لنسيان الرقم): ثلاثة أرقام × رقمين
+  // بوابة الكبار بدون حساب: رقم مكتوب بالكلمات، والكبير يكتبه بالأرقام. الصغار ما بيقدروا يقروه،
+  // وكتابة مكانات الرقم بالترتيب الصحيح صعبة على من يقرأ للتو. عند نسيان الرقم السري: رقم من أربع خانات
+  const ONES = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
+  const TENS = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+  const HUNDREDS = ['', 'مئة', 'مئتان', 'ثلاثمئة', 'أربعمئة', 'خمسمئة', 'ستمئة', 'سبعمئة', 'ثمانمئة', 'تسعمئة'];
+  const THOUSANDS = ['', 'ألف', 'ألفان', 'ثلاثة آلاف', 'أربعة آلاف', 'خمسة آلاف', 'ستة آلاف', 'سبعة آلاف', 'ثمانية آلاف', 'تسعة آلاف'];
+  const pick = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  function gateNumber(hard) {
+    const th = hard ? pick(1, 9) : 0, h = pick(1, 9), t = pick(2, 9), o = pick(1, 9);
+    const words = [THOUSANDS[th], HUNDREDS[h], ONES[o], TENS[t]].filter(Boolean).join(' و');
+    return { n: th * 1000 + h * 100 + t * 10 + o, words };
+  }
   function gate(hard, then) {
-    const a = hard ? 120 + Math.floor(Math.random() * 380) : 6 + Math.floor(Math.random() * 4);
-    const b = hard ? 13 + Math.floor(Math.random() * 25) : 12 + Math.floor(Math.random() * 8);
-    gateAns = a * b; gateThen = then;
-    A().showModal(`<h2>🔒 للكبار</h2><p>كم يساوي <bdi dir="ltr">${a} × ${b}</bdi>؟</p>
-      <input id="pGate" inputmode="numeric" class="inp" autocomplete="off" aria-label="الجواب"><p class="err" id="pErr"></p>
+    const q = gateNumber(hard);
+    gateAns = q.n; gateThen = then;
+    A().showModal(`<h2>🔒 للكبار</h2><p>اكتب هذا الرقم بالأرقام:</p><p class="p-gate-w">${q.words}</p>
+      <input id="pGate" inputmode="numeric" class="inp" autocomplete="off" aria-label="الرقم بالأرقام"><p class="err" id="pErr"></p>
       <div class="w-acts"><button class="sq" data-p="close" aria-label="إلغاء">✕</button><button class="run" data-p="gate">دخول</button></div>`);
     focus('pGate');
   }
@@ -227,5 +237,5 @@
     if (e.target.id === 'pFile') importFile(e.target.files && e.target.files[0]);
   });
 
-  window.Parents = { open, panel, gate };
+  window.Parents = { open, panel, gate, gateNumber };
 })();

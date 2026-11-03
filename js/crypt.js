@@ -8,9 +8,11 @@
   const C = root.crypto && root.crypto.subtle ? root.crypto : typeof require === 'function' ? require('crypto').webcrypto : null;
   const S = () => { if (!C || !C.subtle) throw new Error('nocrypto'); return C.subtle; };
 
-  // ننظّف الرمز: أرقام عربية أو فارسية تتحول لإنجليزية، ونشيل المسافات
-  const norm = s => String(s || '').normalize('NFC').trim()
-    .replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660).replace(/[۰-۹]/g, d => d.charCodeAt(0) - 0x6F0).replace(/\s+/g, '');
+  // ننظّف الرمز: أرقام عربية أو فارسية تتحول لإنجليزية، ونشيل المسافات والتشكيل والتطويل،
+  // ونوحّد أشكال الألف والياء، عشان "سما" و"سمآ" و"سمى" تكون نفس الرمز
+  const norm = s => String(s || '').normalize('NFC').trim().toLowerCase()
+    .replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660).replace(/[۰-۹]/g, d => d.charCodeAt(0) - 0x6F0).replace(/\s+/g, '')
+    .replace(/[ً-ْٰـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي');
 
   const enc = s => new TextEncoder().encode(s);
   const dec = b => new TextDecoder().decode(b);

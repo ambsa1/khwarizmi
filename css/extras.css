@@ -166,6 +166,7 @@
 .p-seg button { flex: 1 0 auto; min-width: 64px; padding: 9px 8px; border-radius: 12px; background: #f2ecdf; font-weight: 700; font-size: 15px; }
 .p-seg button.on { background: var(--gold); color: var(--ink); box-shadow: 0 3px 0 #c98f00; }
 .p-help p { margin: 4px 0; line-height: 1.7; font-size: 15px; }
+.p-gate-w { font-size: 22px; font-weight: 800; line-height: 1.6; margin: 4px 0 10px; }
 .p-link { margin-top: 12px; color: #2b62c9; text-decoration: underline; font-size: 15px; }
 .p-danger { background: linear-gradient(#ff7a66, #e0442e) !important; box-shadow: 0 5px 0 #a8301f !important; font-size: 21px !important; }
 .m-card .sq.wide { width: auto; flex: 1; font-size: 18px; font-weight: 700; }

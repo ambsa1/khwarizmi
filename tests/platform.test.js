@@ -1,7 +1,7 @@
 // رمز العائلة من ملف محلي غير منشور
 const FAMILY_CODE = (() => { try { return require('fs').readFileSync(require('path').join(__dirname, '..', 'tools', 'family-code.local.txt'), 'utf8').trim(); } catch (e) { return ''; } })();
 // اختبار ميزات المنصة:  node tests/platform.test.js  (من المجلد الرئيسي)
-// لوحة الأهل (سؤال الحساب + الرقم السري بأرقام عربية)، النسخ والاسترجاع مع الدمج، البيانات التالفة،
+// لوحة الأهل (رقم بالكلمات + الرقم السري بأرقام عربية)، النسخ والاسترجاع مع الدمج، البيانات التالفة،
 // وضع العائلة وركن العائلة، الموسوعة، الشهادة، الملصقات والألقاب، وتذكير الراحة بعد انتهاء الوقت.
 const http = require('http');
 const fs = require('fs');
@@ -21,6 +21,15 @@ const BASE = 'http://localhost:8797/index.html?test=1';
 const KEY = 'khwarizmi.v1';
 // أسماء أطفال العائلة لا تظهر في الصور المحفوظة
 const HIDE_NAMES = '.player b, .x-kid-main b, .bar .t, .p-kid h4 { filter: blur(7px); }';
+
+// يقرأ رقم بوابة الأهل المكتوب بالكلمات (مثل «ألفان وثلاثمئة وخمسة وأربعون»)
+const WORDS = [
+  [['واحد', 1], ['اثنان', 2], ['ثلاثة', 3], ['أربعة', 4], ['خمسة', 5], ['ستة', 6], ['سبعة', 7], ['ثمانية', 8], ['تسعة', 9]],
+  [['عشرون', 20], ['ثلاثون', 30], ['أربعون', 40], ['خمسون', 50], ['ستون', 60], ['سبعون', 70], ['ثمانون', 80], ['تسعون', 90]],
+  [['مئة', 100], ['مئتان', 200], ['ثلاثمئة', 300], ['أربعمئة', 400], ['خمسمئة', 500], ['ستمئة', 600], ['سبعمئة', 700], ['ثمانمئة', 800], ['تسعمئة', 900]],
+  [['ألف', 1000], ['ألفان', 2000], ['ثلاثة آلاف', 3000], ['أربعة آلاف', 4000], ['خمسة آلاف', 5000], ['ستة آلاف', 6000], ['سبعة آلاف', 7000], ['ثمانية آلاف', 8000], ['تسعة آلاف', 9000]],
+].flat();
+const wordsToNum = s => s.trim().split(' و').reduce((n, w) => n + ((WORDS.find(([k]) => k === w.trim()) || [0, NaN])[1]), 0);
 
 let bad = 0;
 const errors = [];
@@ -58,9 +67,10 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
   {
     const pg = await open();
     await pg.click('.corner'); await wait(pg);
-    const q = await pg.textContent('.m-card bdi');
-    const [a, b] = q.split('×').map(s => +s.trim());
-    const ar = String(a * b).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+    const q = await pg.textContent('.p-gate-w');
+    const qn = wordsToNum(q);
+    check(qn >= 121 && qn <= 999, 'gate shows a 3-digit number in words', q);
+    const ar = String(qn).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
     await pg.fill('#pGate', '1'); await pg.click('[data-p="gate"]');
     check(/غير صحيح/.test(await pg.textContent('#pErr')), 'gate rejects wrong answer');
     await pg.fill('#pGate', ar); await pg.click('[data-p="gate"]'); await wait(pg);
@@ -77,11 +87,10 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
     await pg.click('[data-act="home"]'); await wait(pg);
     await pg.click('.corner'); await wait(pg);
     await pg.click('[data-p="forgot"]'); await wait(pg);
-    const hq = await pg.textContent('.m-card bdi');
-    check(+hq.split('×')[0] >= 120, 'forgot PIN → harder gate', hq);
+    const hq = await pg.textContent('.p-gate-w');
+    check(wordsToNum(hq) >= 1000, 'forgot PIN → 4-digit number gate', hq);
     // حد اللعب والصوت
-    const [x, y] = hq.split('×').map(s => +s.trim());
-    await pg.fill('#pGate', String(x * y)); await pg.click('[data-p="gate"]'); await wait(pg);
+    await pg.fill('#pGate', String(wordsToNum(hq))); await pg.click('[data-p="gate"]'); await wait(pg);
     await pg.fill('#pPin1', '4321'); await pg.fill('#pPin2', '4321'); await pg.click('[data-p="pin-save"]'); await wait(pg);
     await pg.click('[data-p="limit"][data-m="45"]');
     await pg.uncheck('#pVoice');
