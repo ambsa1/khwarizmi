@@ -392,8 +392,8 @@
 /* ---------- اللابتوب (≥1024 بالعرض): القوائم على عرض الشاشة ببطاقات أكبر، والنشاط أكبر ----------
    (آخر الملف عشان يغلب قواعد الشاشات القصيرة فوق) */
 @media (min-width: 1024px) and (orientation: landscape) {
-  .mt.mt-home, .mt.mt-list { max-width: 1400px; }
-  .mt-grid { max-width: 1400px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 20px; padding-top: 12px; }
+  .mt.mt-home, .mt.mt-list { max-width: 1700px; }
+  .mt-grid { max-width: 1700px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 24px; padding-top: 12px; }
   .mt-sec { min-height: 210px; gap: 8px; border-radius: 32px; }
   .mt-sec-ic { font-size: 70px; }
   .mt-sec b, .mt-act b { font-size: 23px; }

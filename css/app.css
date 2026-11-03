@@ -48,7 +48,8 @@ input { font: inherit; }
 
 /* الشاشة الرئيسية */
 .home { flex: 1; overflow: auto; padding: 10px 16px calc(40px + env(safe-area-inset-bottom)); padding-top: max(10px, env(safe-area-inset-top)); position: relative; } /* الآيفون: شريط الساعة شفاف فوق اللعبة */
-.logo { text-align: center; }
+.logo { text-align: center; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; cursor: default; }
+.logo img, .logo svg { -webkit-user-drag: none; pointer-events: none; }
 .hero { width: 150px; height: 170px; margin: 6px auto 0; filter: drop-shadow(0 0 30px rgba(255,200,60,.35)); }
 .logo h1 { font-family: var(--head); font-weight: 800; font-size: 40px; margin: 2px 0 0; color: var(--glow); text-shadow: 0 0 24px rgba(255,197,49,.55), 0 3px 0 rgba(0,0,0,.25); }
 .logo p { margin: 0; color: #c7cbf3; font-size: 16px; }

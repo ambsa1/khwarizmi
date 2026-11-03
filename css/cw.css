@@ -404,7 +404,7 @@
 /* ---------- اللابتوب (≥1024 بالعرض): القوائم على عرض الشاشة ببطاقات أكبر ----------
    (آخر الملف عشان يغلب قواعد .cw-sec/.cw-act الأساسية فوق) */
 @media (min-width: 1024px) and (orientation: landscape) {
-  .cw-grid { max-width: 1400px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 20px; padding-top: 12px; }
+  .cw-grid { max-width: 1700px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 24px; padding-top: 12px; }
   .cw-sec { min-height: 210px; gap: 8px; border-radius: 32px; } .cw-act { min-height: 200px; gap: 8px; padding-top: 18px; }
   .cw-sec-ic { font-size: 70px; }
   .cw-sec b, .cw-act b { font-size: 23px; }

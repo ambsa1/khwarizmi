@@ -171,6 +171,17 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
   const bl = await pg.evaluate(() => Voice.log.filter(x => x.ev === 'start').map(x => x.k));
   check(bl.length <= 1, 'balloons: popping is SFX, at most one praise line', JSON.stringify(bl));
 
+  // تعليمة السؤال الجديد ما تقطع "أحسنت": تنتظره يخلص ثم تبدأ
+  const w = await pg.evaluate(async () => {
+    Voice._reset(); Voice.now = () => Date.now();
+    Voice.play('retry', 'x', undefined, { pri: 'feedback' });
+    const b = Voice.play('goal_t2', 'x', undefined, { pri: 'instruction' });
+    const busy = Voice.busy(), waited = Voice.log.slice(-1)[0].ev === 'wait';
+    await new Promise(r => setTimeout(r, 4500));
+    return { b, busy, waited, started: Voice.log.some(x => x.ev === 'start' && x.k === 'goal_t2'), cut: Voice.log.some(x => x.ev === 'stop' && x.k === 'retry') };
+  });
+  check(w.b && w.busy === 3 && w.waited && w.started && !w.cut, 'instruction waits for feedback to finish, then plays (no cut)', JSON.stringify(w));
+
   const ov2 = await pg.evaluate(() => ({ overlap: __inv.overlap, max: __inv.maxAudio }));
   check(ov2.overlap === 0, 'no audio overlap during the whole voice run', JSON.stringify(ov2));
 

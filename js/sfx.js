@@ -48,7 +48,7 @@
 
   const player = new Audio();
   player.preload = 'auto';
-  let token = 0, voices = null, cur = null, wd = null, lastAmbient = -1e9;
+  let token = 0, voices = null, cur = null, wd = null, lastAmbient = -1e9, pending = null;
   const last = new Map(), memo = {}, picked = {}, log = [];
   const onced = new Set(); // جمل "مرة واحدة" في الجلسة (ترحيب القسم وأسماء القوائم): قيلت فعلاً فما تتعاد
   const blobs = {}; // أصوات مفكوكة التشفير في الذاكرة (ترحيب العائلة): مفتاح → رابط blob
@@ -74,7 +74,7 @@
   }
   function stop() {
     token++;
-    clearTimeout(wd);
+    clearTimeout(wd); pending = null;
     if (cur) note(cur.keys, 'stop');
     cur = null;
     player.onended = player.onerror = null;
@@ -101,6 +101,8 @@
       // cut: رد على إجابة الطفل نفسها (هو جاوب السؤال، فالتعليمة خلاص انتهت)
       // اسم بطاقة جديد ما يقطع اسماً شغّالاً (عشان الزوج إنجليزي + عربي ما يتقسم)
       if (cur && (cur.pri > pri || (cur.pri === PRI.name && pri === PRI.name)) && !o.cut) { note(sig(items), 'drop', { why: 'busy' }); return false; }
+      // تعليمة السؤال الجديد ما تقطع رد سراج على الإجابة ("أحسنت"): تنتظره يخلص ثم تبدأ (آخر تعليمة بس هي اللي تنتظر)
+      if (cur && cur.pri === PRI.feedback && pri === PRI.instruction && !o.cut) { pending = { items, opts: Object.assign({}, o, { pri: 'instruction' }) }; note(sig(items), 'wait'); return true; }
       items = items.filter(([k]) => {
         if (t - (last.has(k) ? last.get(k) : -1e9) < (o.cool || COOL)) return false;
         const c = cls(k);
@@ -117,7 +119,11 @@
     const next = () => {
       if (my !== token) return;
       clearTimeout(wd);
-      if (i >= items.length) { note(cur && cur.keys, 'end'); cur = null; return; }
+      if (i >= items.length) {
+        note(cur && cur.keys, 'end'); cur = null;
+        if (pending) { const p = pending; pending = null; setTimeout(() => { if (my === token) playSeq(p.items, p.opts); }, 250); }
+        return;
+      }
       const [key, text, lang] = items[i++];
       last.set(key, now());
       if (o.once) onced.add(key);

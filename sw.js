@@ -5,15 +5,13 @@ const { version, files } = self.PRECACHE;
 const CACHE = 'khwarizmi-' + version;
 const fresh = u => new Request(u, { cache: 'reload' });
 
-// الصوت مسموح يفشل (يكمل لاحقاً)؛ أي ملف غيره لازم يتخزّن، وإلا التثبيت يفشل ويُعاد في الفتحة الجاية
+// التثبيت خفيف: الملفات الأساسية بس (بدون الصوت) عشان النسخة الجديدة تتفعّل في ثوانٍ؛ الصوت يتكمّل بعدها في الخلفية
 const isVoice = u => /^voice\/.+\.(mp3|bin)$/.test(u);
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
-    const c = await caches.open(CACHE);
+    const c = await caches.open(CACHE), core = files.filter(u => !isVoice(u));
     // نخزّن الملفات ستة ستة، عشان التلفونات الضعيفة ما تتعب
-    for (let i = 0; i < files.length; i += 6) {
-      await Promise.all(files.slice(i, i + 6).map(u => (isVoice(u) ? c.add(fresh(u)).catch(() => {}) : c.add(fresh(u)))));
-    }
+    for (let i = 0; i < core.length; i += 6) await Promise.all(core.slice(i, i + 6).map(u => c.add(fresh(u))));
     await self.skipWaiting();
   })());
 });
@@ -64,6 +62,14 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate' && !full) e.waitUntil(fill());
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
+    // الصفحة نفسها: من الشبكة أولاً (لو الإنترنت موجود تظهر آخر نسخة فوراً)، ومن المخزن لو ما فيه إنترنت أو الشبكة بطيئة
+    if (req.mode === 'navigate') {
+      try {
+        const res = await Promise.race([fetch(req), new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), 3000))]);
+        if (res && res.status === 200) { c.put('./', res.clone()); return res; }
+      } catch (err) { /* نكمل من المخزن */ }
+      return (await c.match('./')) || (await c.match('index.html')) || fetch(req);
+    }
     // نتجاهل ?v=N في البحث، لأن البصمة نفسها بتضمن النسخة الصحيحة
     const hit = await c.match(req, { ignoreSearch: true });
     if (hit) return hit;

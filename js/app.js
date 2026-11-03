@@ -88,14 +88,17 @@
         <button class="corner" data-act="parents" aria-label="للأهل">🔒</button>
       </div>`, 'night');
     live($('#hero'), '#3d8bff');
-    // مدخل سري لوضع العائلة: ضغطة طويلة (ثانيتين) على الشعار تفتح صندوق الرمز، بدون أي أثر ظاهر للناس
+    // مدخل سري لوضع العائلة: ضغطة طويلة (ثانيتين) على الشعار، أو سبع ضغطات سريعة عليه، بدون أي أثر ظاهر للناس
     const lg = $('.logo');
     if (lg && window.Parents && Parents.familyPrompt) {
-      let hold = 0;
-      const start = () => { clearTimeout(hold); hold = setTimeout(() => { if (S.screen === 'home') Parents.familyPrompt(); }, 2000); };
+      let hold = 0, taps = [];
+      const openIt = () => { clearTimeout(hold); taps = []; if (S.screen === 'home' && !Store.familyReady()) Parents.familyPrompt(); };
+      const start = e => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); clearTimeout(hold); hold = setTimeout(openIt, 2000); };
       const stop = () => clearTimeout(hold);
-      lg.addEventListener('pointerdown', start); lg.addEventListener('pointerup', stop); lg.addEventListener('pointerleave', stop); lg.addEventListener('pointercancel', stop);
+      lg.addEventListener('pointerdown', start); lg.addEventListener('pointerup', stop); lg.addEventListener('pointercancel', stop);
+      lg.addEventListener('click', () => { const t = Date.now(); taps = taps.filter(x => t - x < 3000).concat(t); if (taps.length >= 7) openIt(); });
       lg.addEventListener('contextmenu', e => e.preventDefault());
+      lg.addEventListener('dragstart', e => e.preventDefault());
     }
     // صور الأطفال (وضع العائلة): أول ما تتفك نعيد رسم الشاشة الرئيسية مرة واحدة
     if (Store.familyPics) Store.familyPics(() => { if (S.screen === 'home' && !S.lock2) { S.lock2 = 1; renderHome(); S.lock2 = 0; } });
