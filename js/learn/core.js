@@ -128,8 +128,8 @@
         <header class="bar"><button class="ib" data-lr="exit" aria-label="رجوع">→</button>
           <span class="lr-bsj" id="lrSj"></span><span class="t">📘 دفتر البرمجة</span><span class="chip">⭐ ${LEARN.pages.reduce((a, p) => a + stars(LEARN.saveKey(p.id)), 0)}</span></header>
         <div class="lr-scroll"><div class="lr-list">
-          ${LEARN.pages.map(p => { const st = stars(LEARN.saveKey(p.id)); return `<button class="lr-item ${st ? 'done' : ''} ${p.minAge > age ? 'dim' : ''}" data-lr="page" data-page="${p.id}">
-            <i class="lr-lamp ${st ? 'on' : ''}"></i><span class="lr-item-ic">${p.icon}</span><b>${esc(p.title)}</b>
+          ${LEARN.pages.map((p, i) => { const st = stars(LEARN.saveKey(p.id)), prev = i ? LEARN.pages[i - 1] : null, locked = prev && !stars(LEARN.saveKey(prev.id)) && !st; return `<button class="lr-item ${st ? 'done' : ''} ${p.minAge > age ? 'dim' : ''} ${locked ? 'locked' : ''}" data-lr="${locked ? 'locked' : 'page'}" data-page="${p.id}">
+            <i class="lr-lamp ${st ? 'on' : ''}"></i><span class="lr-item-ic">${locked ? '🔒' : p.icon}</span><b>${esc(p.title)}</b>
             <span class="lr-st">${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span></button>`; }).join('')}
         </div></div>`, 'night lr-home');
       barSj = miniSiraj(rootEl.querySelector('#lrSj'));

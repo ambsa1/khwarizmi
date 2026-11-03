@@ -17,6 +17,7 @@
 }
 .lr-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px 10px; min-height: 140px; border-radius: 24px; color: #fff;
   background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.07)); border: 2px solid rgba(255,255,255,.16); box-shadow: 0 6px 0 rgba(0,0,0,.2); }
+.lr-item.locked { opacity: .45; filter: grayscale(.6); }
 .lr-item:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
 .lr-item.done { border-color: rgba(255,214,90,.7); }
 .lr-item.dim { filter: saturate(.6); opacity: .85; }

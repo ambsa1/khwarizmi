@@ -5,7 +5,7 @@
 
   const KEY = 'khwarizmi.v1';
   // بيانات أطفال العائلة مشفّرة برمز العائلة (tools/family.js)، فأسماؤهم لا تظهر في الكود المنشور
-  const FAMILY_ENC = 'AfJ2o2STBZpK/vsLyxyYHKPJCSB0T1Q2bX8TTuvvljG603TD/yfkHS8UjlDHF1c54srhQr2QPi5CRXKOVmwvosxTcU/6oRgnia5mfOHuhm/yliOaQPcqogvZnkHavaKrO+Xs7LoHoVYElqpje7jyuP3R12hcvr57LHf7bRGZLJ/fNftjBt7HGy1UnD/yBuqpgDxKD0ncTONoTDiRrl2QtmanYWgFlFLBYHsRVcwoAZLqt/mTYnecA5uejVISaJjaDA7/qE5l2VzeUv+no5gMub8DUNL4VNN7cmk279WXlWXWhm05kTdZ0m8ghirVdFW6voYPQbi7sPnF5Eu8KHzv0gr8pIPuQLxEdv58RX/9waNdjNPxCOqgskRsVd9EzeUxb10HRM+cz/deAucP4oIHt5PFYdtND8Bf3hla0G59SYWnBbFUOZyhUrbJ20QN51D9CKyGnZ5cmbG6EXjdk1zi3VY0snyKW/+RaPgsHaIuOJYlTzzpZmbjSjBy+TSmfROo8IJ5GARVHTP0Ir/7hm6/5Ts5n7K7aplwxOs3AVHGtoAnFW9BuunRM9VN6Z2LPo0c25Trcd2cue7glH0ioqecXk2st0YpA99Hye9NRi8p3QrKSHmWZNpqbA7506hgCGZjfNCuWdDxJfbiv/VDscQ=';
+  const FAMILY_ENC = 'AXSmhFOEpnaAYTjzx1lKTjHMvY006oSIhQH0DCoqbIvxk+Y2HhhYUXIvXAhNdaIPz3zH8PzYZWxFDKx7T1NzW/0BdoF1YvZ9/DN+yhgWeBhlzkPUbPrOhtenPt7tTD+IEQzWCTJ+uoZ4S85vF5VoUuCM/NDo8SPCrZie2+QtCR0z0XvWPkH89B95Vx8idDm++B4C5OcEkcJIaE2Vhisd+RpvbxSdIez7F5mi2QeMFSARHJH+Me4sRxbnAU1sMRU5mEsWkGQgoCd2tfkRfrApp40KbDZdp57U0LcehZVUlrt6L1nqILwJnZtklBU3SpMuNDAdoCJlOQZnNAAyBuqC0IWFYjdGRlotIKPCJmzrkvKDnR861CSeHHl+iF0u06VldvRREG8dHkIX9rvyaaMrDgkYB+o8VLO/5C7E+hZmjin4xF7JOu1rrBhqX9c2YM8nuWfRlEL0w9saDqrXUCfpozsDID5POLv0NzboJ3iWvnNh7qVgAc6gcq7DIToqxhwabpjWxtViMtzuFnI4JqyOcLSuRA1VfkWa825s6Q1UQyK65Jwn+tCzUA6ELF3mLvbxqBzZdu4uk7GIlmIIBDvvMeTVSHAFfQ==';
   const APP = 'khwarizmi';
   const LIMITS = [0, 15, 30, 45, 60, 90]; // دقائق اللعب في اليوم (0 = بدون حد)
   const MAX_PLAYERS = 40;
@@ -61,7 +61,8 @@
         const seenIds = new Set();
         data.players = (Array.isArray(raw.players) ? raw.players : []).map(clean).filter(p => p && !seenIds.has(p.id) && seenIds.add(p.id)).slice(0, MAX_PLAYERS);
         data.family = raw.family === true;
-        if (data.family && typeof raw.fk === 'string' && /^[A-Za-z0-9+/]{43}=$/.test(raw.fk)) data.fk = raw.fk;
+        // المفتاح المحفوظ يصلح فقط لنفس النسخة المشفّرة؛ لو اتغيّرت (إعادة تشفير) نطلب الرمز من جديد بدل ما تفشل الصور والتحيّات بصمت
+        if (data.family && typeof raw.fk === 'string' && /^[A-Za-z0-9+/]{43}=$/.test(raw.fk) && raw.fsig === FAMILY_ENC.slice(0, 12)) { data.fk = raw.fk; data.fsig = raw.fsig; }
         data.famHidden = raw.famHidden === true;
         const s = isObj(raw.settings) ? raw.settings : {};
         data.settings.voice = s.voice !== false;
@@ -113,7 +114,7 @@
       let fam = null;
       try { fam = JSON.parse(o.text); } catch (e) { return false; }
       if (!fam || fam.ok !== 'siraj' || !Array.isArray(fam.family)) return false;
-      data.family = true; data.fk = o.key; data.famHidden = false;
+      data.family = true; data.fk = o.key; data.fsig = FAMILY_ENC.slice(0, 12); data.famHidden = false;
       for (const f of fam.family) if (!data.players.some(p => p.fid === f.fid)) addPlayer(Object.assign({}, f));
       save();
       familyVoices();

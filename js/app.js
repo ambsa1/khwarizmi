@@ -172,7 +172,7 @@
   function learnDoor(p) {
     if (!learnOn(p)) return '';
     const pages = LEARN.pages || [], done = pages.filter(pg => p.progress[LEARN.saveKey ? LEARN.saveKey(pg.id) : 'lr:' + pg.id]).length;
-    return `<button class="studio-door learn-door" data-act="learn" data-page="notebook"><span class="ti">📖</span><span><h3>دَفْتَر البَرْمَجَة</h3><p>شنو البرمجة؟ ودروس، وعلى اللابتوب، وامتحان</p></span><span class="n"><bdi>${done} / ${pages.length}</bdi></span></button>`;
+    return `<button class="studio-door learn-door" data-act="learn" data-page="notebook"><span class="ti">📖</span><span><h3>دفتر البرمجة</h3><p>شنو البرمجة؟ ودروس، وعلى اللابتوب، وامتحان</p></span><span class="n"><bdi>${done} / ${pages.length}</bdi></span></button>`;
   }
   function lessonBtn(p, tid) {
     const pg = LESSON_OF[tid];
@@ -824,7 +824,8 @@
       S.player = Store.getPlayer(t.dataset.id);
       if (!S.player) return renderHome();
       renderSections();
-      Voice.playSeq((S.player.hi ? [['hi_' + S.player.fid, S.player.hi]] : []).concat([line('sections')]));
+      // ترحيب الطفل باسمه في كل مرة يضغط خانته (force: ما يتأثر بعدّاد "سمعها ثلاث مرات" ولا بالتكرار)
+      Voice.playSeq((S.player.hi ? [['hi_' + S.player.fid, S.player.hi]] : []).concat([line('sections')]), S.player.hi ? { force: true, again: true } : undefined);
     },
     sections: () => renderSections(),
     code: () => { renderTracks(); say('tracks'); },
