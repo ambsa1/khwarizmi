@@ -62,6 +62,7 @@
         data.players = (Array.isArray(raw.players) ? raw.players : []).map(clean).filter(p => p && !seenIds.has(p.id) && seenIds.add(p.id)).slice(0, MAX_PLAYERS);
         data.family = raw.family === true;
         if (data.family && typeof raw.fk === 'string' && /^[A-Za-z0-9+/]{43}=$/.test(raw.fk)) data.fk = raw.fk;
+        data.famHidden = raw.famHidden === true;
         const s = isObj(raw.settings) ? raw.settings : {};
         data.settings.voice = s.voice !== false;
         data.settings.limit = LIMITS.includes(s.limit) ? s.limit : 30;
@@ -112,14 +113,18 @@
       let fam = null;
       try { fam = JSON.parse(o.text); } catch (e) { return false; }
       if (!fam || fam.ok !== 'siraj' || !Array.isArray(fam.family)) return false;
-      data.family = true; data.fk = o.key;
+      data.family = true; data.fk = o.key; data.famHidden = false;
       for (const f of fam.family) if (!data.players.some(p => p.fid === f.fid)) addPlayer(Object.assign({}, f));
       save();
       familyVoices();
       return true;
     })().finally(() => { unlocking = null; }));
   }
-  const familyReady = () => data.family && !!data.fk;
+  const familyReady = () => data.family && !!data.fk && !data.famHidden;
+  // إخفاء وضع العائلة: الجهاز يرجع "عام" (أطفال العائلة وتقدّمهم محفوظين لكن مخفيين)، والرجوع بالرمز من جديد
+  function hideFamily() { if (!data.family) return; data.famHidden = true; delete data.fk; save(); }
+  // اللاعبون الظاهرون: في وضع العائلة أطفال العائلة فقط، وفي الوضع العام الباقون فقط
+  const visiblePlayers = () => data.players.filter(p => (familyReady() ? !!p.fid : !p.fid));
   // ترحيب كل طفل باسمه: ملف مشفّر voice/hi_<fid>.bin → يُفك بالمفتاح المحفوظ → رابط blob يشغّله Voice
   const heard = {};
   function familyVoices() {
@@ -226,7 +231,7 @@
   function setSeen(p, k, v) { if (p && safeKey(k)) { p.seen[k] = v; save(); } }
 
   root.Store = {
-    load, save, addPlayer, getPlayer, removePlayer, resetPlayer, enableFamily, familyReady, familyVoices, familyPics, picOf, win, stars, solved, cwWin, cwSolved,
+    load, save, addPlayer, getPlayer, removePlayer, resetPlayer, enableFamily, familyReady, hideFamily, visiblePlayers, familyVoices, familyPics, picOf, win, stars, solved, cwWin, cwSolved,
     addTime, todaySec, setLimit, LIMITS, setPin, checkPin, hasPin, pinOk, digits,
     exportAll, exportOne, importData, backupDue, requestPersist, setSeen, today,
     get data() { return data; }, get settings() { return data.settings; }, get saveFailed() { return saveFailed; },

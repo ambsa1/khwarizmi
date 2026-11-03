@@ -436,7 +436,7 @@
     return `<div class="x-lockup" role="img" aria-label="خوارزمي"><img class="x-mark" src="icons/logo.svg" alt="" draggable="false"><h1 class="x-word">خوارزمي</h1></div>`;
   }
   function homeExtra() {
-    return Store.data.family ? '<button class="x-fam-btn" data-x="family">🏠 ركن العائلة</button>' : '';
+    return Store.familyReady() ? '<button class="x-fam-btn" data-x="family">🏠 ركن العائلة</button>' : '';
   }
   function sectionsRow(p) {
     if (!p) return '';

@@ -53,6 +53,13 @@
       <button class="p-link" data-p="forgot">نسيت الرقم السري؟</button>`);
     focus('pPin');
   }
+  // صندوق رمز العائلة (المدخل السري من الشعار): بدون أي ذكر للعائلة قبل كتابة الرمز
+  function familyPrompt() {
+    if (Store.familyReady()) return;
+    A().showModal(`<h2>🔑</h2><input id="pFam" class="inp" autocomplete="off" aria-label="الرمز"><p class="err" id="pFamErr"></p>
+      <div class="w-acts"><button class="sq" data-p="close" aria-label="إلغاء">✕</button><button class="run" data-p="family">دخول</button></div>`);
+    focus('pFam');
+  }
   const err = t => { const e = $('#pErr'); if (e) { e.textContent = t; gsap.fromTo(e, { x: -6 }, { x: 0, duration: 0.4, ease: 'elastic.out(1, .3)' }); } };
   function message(title, text) {
     A().showModal(`<h2>${title}</h2><p>${text}</p><div class="w-acts"><button class="run" data-p="close">حسناً</button></div>`);
@@ -100,13 +107,15 @@
           <button class="p-btn red" data-p="delete" data-id="${esc(p.id)}">🗑 حذف</button></div></div></div>`;
     };
     const canShare = !!(navigator.canShare && window.File);
+    // في الوضع العام ما يظهر أي أثر لأطفال العائلة
+    const shown = Store.visiblePlayers ? Store.visiblePlayers() : d.players;
     A().S.screen = 'parents';
     A().screen(`<div class="sky"></div>
       <header class="bar"><button class="ib" data-act="home" aria-label="رجوع">→</button><span class="t">لوحة الأهل</span></header>
       <div class="x-scroll p-panel">
         ${notices.map(n => `<div class="p-note">${n}</div>`).join('')}
         <section class="p-card"><h3>🧒 الأطفال على هذا الجهاز (${d.players.length})</h3>
-          ${d.players.length ? d.players.map(kid).join('') : '<p class="p-muted">لا يوجد أطفال بعد.</p>'}</section>
+          ${shown.length ? shown.map(kid).join('') : '<p class="p-muted">لا يوجد أطفال بعد.</p>'}</section>
         <section class="p-card"><h3>⚙️ الإعدادات</h3>
           <label class="p-row"><span>🔊 صوت سراج</span><input type="checkbox" id="pVoice" class="p-switch" ${set.voice ? 'checked' : ''}></label>
           <div class="p-row col"><span>⏱ وقت اللعب في اليوم</span>
@@ -120,10 +129,9 @@
             <button class="p-btn blue" data-p="import">📥 استرجاع من ملف</button></div>
           <small class="p-muted">آخر نسخة: ${d.lastBackup ? new Date(d.lastBackup).toLocaleDateString('ar-EG') : 'لم تُحفظ بعد'}</small>
           <input type="file" id="pFile" accept=".json,application/json,text/plain" hidden></section>
-        <section class="p-card"><h3>🏠 وضع العائلة</h3>
-          ${Store.familyReady() ? '<p class="ok">✔ وضع العائلة مفعّل على هذا الجهاز</p>'
-            : `<p class="p-muted">${d.family ? 'اكتب رمز العائلة مرة واحدة لتشغيل الترحيب بالأسماء.' : 'إن كان لديك رمز العائلة فاكتبه هنا.'}</p><input id="pFam" class="inp" autocomplete="off" aria-label="رمز العائلة"><p class="err" id="pFamErr"></p>
-              <button class="p-btn wide" data-p="family">تفعيل</button>`}</section>
+        ${Store.familyReady() ? `<section class="p-card"><h3>🏠 وضع العائلة</h3><p class="ok">✔ وضع العائلة مفعّل على هذا الجهاز</p>
+          <p class="p-muted">الإخفاء يرجّع الجهاز للوضع العام (لاعبون عاديون) ويخفي الأسماء والصور، والتقدّم يبقى محفوظاً. للرجوع: اضغط مطوّلاً على الشعار في الشاشة الرئيسية واكتب الرمز.</p>
+          <button class="p-btn wide" data-p="fam-hide">🙈 إخفاء وضع العائلة</button></section>` : ''}
         <section class="p-card p-help"><h3>❓ مساعدة</h3>
           <p>• <b>التثبيت:</b> من قائمة المتصفح اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».</p>
           <p>• <b>بدون إنترنت:</b> بعد أول فتح تعمل اللعبة بدون إنترنت.</p>
@@ -214,12 +222,12 @@
       const b = document.querySelector('[data-p="family"]'), e = $('#pFamErr');
       if (b) b.disabled = true; if (e) e.textContent = '…';
       Store.enableFamily(val('pFam')).then(ok => {
-        if (!onPanel()) return;
-        if (ok) { panel(); message('✔ تم', 'وضع العائلة مفعّل.'); return; }
+        if (ok) { A().closeModal(); A().renderHome(); message('✔ تم', 'وضع العائلة مفعّل.'); return; }
         const e2 = $('#pFamErr'), b2 = document.querySelector('[data-p="family"]');
         if (e2) e2.textContent = 'الرمز غير صحيح'; if (b2) b2.disabled = false;
       });
     },
+    'fam-hide': () => confirmBox('إخفاء وضع العائلة؟ الجهاز يرجع للوضع العام، والتقدّم يبقى محفوظاً، والرجوع بالضغط المطوّل على الشعار وكتابة الرمز.', '🙈 إخفاء', () => { Store.hideFamily(); A().renderHome(); }),
   };
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-p]');
@@ -237,5 +245,5 @@
     if (e.target.id === 'pFile') importFile(e.target.files && e.target.files[0]);
   });
 
-  window.Parents = { open, panel, gate, gateNumber };
+  window.Parents = { open, panel, gate, gateNumber, familyPrompt };
 })();

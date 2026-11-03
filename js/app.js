@@ -74,7 +74,8 @@
   /* ---------- الشاشة الرئيسية ---------- */
   function renderHome() {
     S.player = null; S.screen = 'home';
-    const ps = Store.data.players.slice().sort((a, b) => (a.fid || 'z').localeCompare(b.fid || 'z'));
+    // وضع العائلة: الأربعة فقط بدون "لاعب جديد"، والوضع العام: اللاعبون العاديون فقط
+    const fam = Store.familyReady(), ps = (Store.visiblePlayers ? Store.visiblePlayers() : Store.data.players).slice().sort((a, b) => (a.fid || 'z').localeCompare(b.fid || 'z'));
     screen(`<div class="sky"></div>
       <div class="home">
         <div class="logo"><div class="hero" id="hero"></div>${window.Extras ? Extras.logo() : '<h1>خوارزمي</h1>'}<p>ساعد سراج يرجّع النور للمدينة</p></div>
@@ -82,11 +83,20 @@
         <div class="players">
           ${ps.map(p => `<button class="player ${p.fid ? 'fam' : ''}" data-act="pick" data-id="${esc(p.id)}">
             <span class="pic">${Store.picOf(p) ? `<img class="pfp" src="${Store.picOf(p)}" alt="">` : mini(p.color)}</span><b>${esc(p.name) || '&nbsp;'}</b><small>⭐ ${Store.stars(p)}</small></button>`).join('')}
-          <button class="player add" data-act="new"><span class="plus">＋</span><b>لاعب جديد</b></button>
+          ${fam ? '' : '<button class="player add" data-act="new"><span class="plus">＋</span><b>لاعب جديد</b></button>'}
         </div>${window.Extras ? Extras.homeExtra() : ''}
         <button class="corner" data-act="parents" aria-label="للأهل">🔒</button>
       </div>`, 'night');
     live($('#hero'), '#3d8bff');
+    // مدخل سري لوضع العائلة: ضغطة طويلة (ثانيتين) على الشعار تفتح صندوق الرمز، بدون أي أثر ظاهر للناس
+    const lg = $('.logo');
+    if (lg && window.Parents && Parents.familyPrompt) {
+      let hold = 0;
+      const start = () => { clearTimeout(hold); hold = setTimeout(() => { if (S.screen === 'home') Parents.familyPrompt(); }, 2000); };
+      const stop = () => clearTimeout(hold);
+      lg.addEventListener('pointerdown', start); lg.addEventListener('pointerup', stop); lg.addEventListener('pointerleave', stop); lg.addEventListener('pointercancel', stop);
+      lg.addEventListener('contextmenu', e => e.preventDefault());
+    }
     // صور الأطفال (وضع العائلة): أول ما تتفك نعيد رسم الشاشة الرئيسية مرة واحدة
     if (Store.familyPics) Store.familyPics(() => { if (S.screen === 'home' && !S.lock2) { S.lock2 = 1; renderHome(); S.lock2 = 0; } });
     gsap.from('.player', { y: 30, opacity: 0, stagger: 0.06, duration: 0.5, ease: 'back.out(2)' });

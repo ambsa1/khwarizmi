@@ -146,6 +146,11 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
     check(!(await pg.$('.x-fam-btn')), 'family corner hidden when family mode off');
     await pg.click('.corner'); await wait(pg);
     await pg.fill('#pPin', '2222'); await pg.click('[data-p="pin-ok"]'); await wait(pg);
+    check(!(await pg.$('#pFam')) && !/العائلة/.test(await pg.textContent('.p-panel')), 'public mode: no family trace in parents panel');
+    await pg.click('[data-act="home"]'); await wait(pg);
+    // المدخل السري: ضغطة طويلة على الشعار
+    await pg.dispatchEvent('.logo', 'pointerdown'); await wait(pg, 2300);
+    check(!!(await pg.$('#pFam')), 'long-press on logo opens the family code box');
     await pg.fill('#pFam', 'خطأ'); await pg.click('[data-p="family"]');
     await pg.waitForFunction(() => /غير صحيح/.test((document.querySelector('#pFamErr') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => {});
     check(/غير صحيح/.test(await pg.textContent('#pFamErr')), 'wrong family code rejected');
@@ -162,6 +167,18 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
     await pg.evaluate(() => App.renderHome()); await wait(pg, 700);
     const fam = await pg.evaluate(() => document.querySelectorAll('.player.fam').length);
     check(fam === 4, 'family mode shows 4 kids', String(fam));
+    check(!(await pg.$('.player.add')), 'family mode: no "new player" tile');
+    // الإخفاء: الجهاز يرجع عام (بدون أطفال العائلة ولا ركن العائلة)، والرجوع بالرمز يرجّع التقدّم
+    await pg.evaluate(() => { Store.addPlayer({ name: 'ضيف', age: 6, gender: 'b' }); Store.win(Store.data.players.filter(p => p.fid)[0], 't1', 3); Store.hideFamily(); App.renderHome(); }); await wait(pg, 500);
+    const pub = await pg.evaluate(() => ({ fam: document.querySelectorAll('.player.fam').length, all: document.querySelectorAll('.player:not(.add)').length, add: !!document.querySelector('.player.add'), corner: !!document.querySelector('.x-fam-btn'), ready: Store.familyReady() }));
+    check(pub.fam === 0 && pub.all === 1 && pub.add && !pub.corner && !pub.ready, 'hidden family → public home: guest only, add tile, no corner', JSON.stringify(pub));
+    await pg.evaluate(() => Parents.familyPrompt()); await wait(pg);
+    await pg.fill('#pFam', FAMILY_CODE); await pg.click('[data-p="family"]');
+    await pg.waitForFunction(() => Store.familyReady(), null, { timeout: 8000 }).catch(() => {});
+    await wait(pg, 500);
+    const back = await pg.evaluate(() => ({ fam: document.querySelectorAll('.player.fam').length, kept: Store.data.players.filter(p => p.fid)[0].progress.t1, guest: Store.data.players.filter(p => !p.fid).length }));
+    check(back.fam === 4 && back.kept === 3 && back.guest === 1, 'family restored with progress kept, guest still stored', JSON.stringify(back));
+    await pg.evaluate(() => { const g = Store.data.players.find(p => !p.fid); if (g) Store.removePlayer(g.id); App.renderHome(); }); await wait(pg, 300);
     await pg.evaluate(() => { const k = Store.data.players.filter(p => p.fid); ['t1', 't2', 'd1'].forEach(id => Store.win(k[0], id, 3)); Store.win(k[1], 't1', 2); Store.win(k[2], 'p1', 3); });
     await pg.addStyleTag({ content: HIDE_NAMES });
     await shot(pg, 'home-family');
