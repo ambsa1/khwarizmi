@@ -81,12 +81,14 @@
         <h2 class="who">من سيلعب اليوم؟</h2>
         <div class="players">
           ${ps.map(p => `<button class="player ${p.fid ? 'fam' : ''}" data-act="pick" data-id="${esc(p.id)}">
-            <span class="pic">${mini(p.color)}</span><b>${esc(p.name) || '&nbsp;'}</b><small>⭐ ${Store.stars(p)}</small></button>`).join('')}
+            <span class="pic">${Store.picOf(p) ? `<img class="pfp" src="${Store.picOf(p)}" alt="">` : mini(p.color)}</span><b>${esc(p.name) || '&nbsp;'}</b><small>⭐ ${Store.stars(p)}</small></button>`).join('')}
           <button class="player add" data-act="new"><span class="plus">＋</span><b>لاعب جديد</b></button>
         </div>${window.Extras ? Extras.homeExtra() : ''}
         <button class="corner" data-act="parents" aria-label="للأهل">🔒</button>
       </div>`, 'night');
     live($('#hero'), '#3d8bff');
+    // صور الأطفال (وضع العائلة): أول ما تتفك نعيد رسم الشاشة الرئيسية مرة واحدة
+    if (Store.familyPics) Store.familyPics(() => { if (S.screen === 'home' && !S.lock2) { S.lock2 = 1; renderHome(); S.lock2 = 0; } });
     gsap.from('.player', { y: 30, opacity: 0, stagger: 0.06, duration: 0.5, ease: 'back.out(2)' });
   }
 
@@ -152,7 +154,7 @@
   // كل مسار عمارة في المدينة، وكل مرحلة نافذة فيها. المرحلة المحلولة تنوّر نافذتها.
   // دفتر البرمجة (الدروس) من عمر ٨: باب فوق الخريطة، وزر "الدرس" في رأس كل مسار له درس
   const LESSON_OF = { talk: 'lesson:seq', lights: 'lesson:seq', draw: 'lesson:loops', vars: 'lesson:vars', cond: 'lesson:cond', funcs: 'lesson:funcs', bugs: 'lesson:bugs', errs: 'lesson:bugs', io: 'lesson:io', proj: 'lesson:io', pylab: 'laptop' };
-  const learnOn = p => (p.age || 0) >= 8 && window.LEARN && LEARN.render;
+  const learnOn = p => (p.age || 0) >= 7 && window.LEARN && LEARN.render;
   function learnDoor(p) {
     if (!learnOn(p)) return '';
     const pages = LEARN.pages || [], done = pages.filter(pg => p.progress[LEARN.saveKey ? LEARN.saveKey(pg.id) : 'lr:' + pg.id]).length;

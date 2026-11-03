@@ -388,3 +388,45 @@
 }
 /* آيفون (شاشة كاملة / من الشاشة الرئيسية): أزرار النشاط ما تقعدش تحت شريط الرجوع للبيت */
 .mt-play { padding-bottom: env(safe-area-inset-bottom); }
+
+/* ---------- اللابتوب (≥1024 بالعرض): القوائم على عرض الشاشة ببطاقات أكبر، والنشاط أكبر ----------
+   (آخر الملف عشان يغلب قواعد الشاشات القصيرة فوق) */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .mt.mt-home, .mt.mt-list { max-width: 1400px; }
+  .mt-grid { max-width: 1400px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 20px; padding-top: 12px; }
+  .mt-sec { min-height: 210px; gap: 8px; border-radius: 32px; }
+  .mt-sec-ic { font-size: 70px; }
+  .mt-sec b, .mt-act b { font-size: 23px; }
+  .mt-lamps i { width: 12px; height: 12px; }
+  .mt-act { min-height: 200px; gap: 8px; padding-top: 18px; }
+  .mt-act-ic { width: 86px; height: 86px; font-size: 48px; border-radius: 26px; }
+  .mt-st { font-size: 17px; }
+  .mt-age { font-size: 14px; }
+  /* النشاط: مشهد واختيارات أكبر (الحد الأعلى 1100 يفضل كما هو) */
+  .mt.mt-play { max-width: 1100px; }
+  .mt-bub-t { font-size: 20px; }
+  .mt-game { gap: 14px; padding: 30px 16px 16px; }
+  .mt-scene { max-width: 1000px; gap: 14px; }
+  .mt-s-speed .mt-scene { max-width: 900px; } /* الصاروخ: المسار مثبّت على يسار المشهد، فالعرض الأوسع يداخله مع الأشياء */
+  .mt-choices { max-width: 820px; gap: 16px; }
+  .mt-ch { min-width: 96px; height: 90px; padding: 0 18px; font-size: 44px; border-radius: 26px; }
+  .mt-g-tapnum .mt-choices.many .mt-ch { min-width: 100px; }
+  .mt-eq b, .mt-eq i { font-size: clamp(26px, 7vmin, 56px); }
+  .mt-eq.xl b, .mt-eq.xl i { font-size: clamp(40px, 12vmin, 92px); }
+  .mt-sj { width: clamp(70px, 20vmin, 160px); }
+  .mt-ear { width: 86px; height: 86px; font-size: 38px; }
+  .mt-ear-row.sm .mt-ear { width: 66px; height: 66px; font-size: 30px; }
+  .mt-hop { height: 72px; }
+  .mt-train-wrap { max-width: 820px; } .mt-car { max-width: 110px; }
+  .mt-patrow { max-width: 860px; }
+  .mt-choices.mt-bins { max-width: 900px; }
+  .mt-nl { max-width: 860px; }
+  .mt-pickt-row { max-width: 680px; }
+  .mt-ladder { width: min(100%, 640px); }
+  .mt-prow.mt-ch { max-width: 820px; }
+  .mt-clockbox { max-height: 440px; }
+  .mt-pz-box { max-height: 460px; }
+  .mt-sdk { width: min(100%, 52vmin, 400px); }
+  .mt-tokb.mt-ch { width: 96px; height: 96px; }
+  .mt-scene.mt-trays.nums .mt-ch.mt-tray { max-width: 280px; max-height: 280px; }
+}

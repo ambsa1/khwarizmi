@@ -50,6 +50,7 @@
   player.preload = 'auto';
   let token = 0, voices = null, cur = null, wd = null, lastAmbient = -1e9;
   const last = new Map(), memo = {}, picked = {}, log = [];
+  const onced = new Set(); // جمل "مرة واحدة" في الجلسة (ترحيب القسم وأسماء القوائم): قيلت فعلاً فما تتعاد
   const blobs = {}; // أصوات مفكوكة التشفير في الذاكرة (ترحيب العائلة): مفتاح → رابط blob
   const has = k => { if (!voices) voices = new Set(root.SIRAJ_VOICE || []); return voices.has(k) || !!blobs[k]; };
   const enabled = () => !(root.Store && Store.settings && Store.settings.voice === false);
@@ -82,11 +83,16 @@
   }
   const sig = items => items.map(i => i[0]).join('+');
 
-  // items: [[المفتاح، النص، اللغة]] ، opts: { pri, force (بالطلب)، cut (رد على إجابة الطفل)، again (ناتج برنامج يتكرر)، cool (مدة منع التكرار)، onLine }
+  // items: [[المفتاح، النص، اللغة]] ، opts: { pri, force (بالطلب)، cut (رد على إجابة الطفل)، again (ناتج برنامج يتكرر)، cool (مدة منع التكرار)،
+  //        once (الجملة تُقال مرة واحدة فقط في الجلسة — ترحيب القسم/القائمة؛ زر 🔊 force يتجاوزها)، onLine }
   function playSeq(items, opts) {
     const o = typeof opts === 'function' ? { onLine: opts } : opts || {};
     if (!enabled() || document.hidden) { stop(); return false; }
     items = (items || []).filter(i => i && i[0]);
+    if (o.once && !o.force) {
+      items = items.filter(i => !onced.has(i[0]));
+      if (!items.length) { note('', 'drop', { why: 'once' }); return false; }
+    }
     if (!items.length) return false;
     const t = now(), pri = PRI[o.pri] || Math.max(...items.map(i => PRI[cls(i[0])]));
     if (o.force) {
@@ -114,6 +120,7 @@
       if (i >= items.length) { note(cur && cur.keys, 'end'); cur = null; return; }
       const [key, text, lang] = items[i++];
       last.set(key, now());
+      if (o.once) onced.add(key);
       if (cls(key) === 'ambient') lastAmbient = now();
       if (cls(key) === 'name') count(key);
       note(key, 'start', { pri });
@@ -148,7 +155,8 @@
     now: () => Date.now(),
     who: null, // app.js: دالة ترجع اللاعب الحالي (لعدّادات الأسماء)
     log,
+    resetOnce: () => onced.clear(), // جمل "مرة واحدة" تُقال من جديد (مثلاً لاعب آخر دخل)
     // للاختبار: نبدأ من جديد
-    _reset() { stop(); last.clear(); lastAmbient = -1e9; Object.keys(memo).forEach(k => delete memo[k]); log.length = 0; },
+    _reset() { stop(); last.clear(); onced.clear(); lastAmbient = -1e9; Object.keys(memo).forEach(k => delete memo[k]); log.length = 0; },
   };
 })(window);

@@ -63,7 +63,7 @@
       const V = root.Voice;
       const instr = opts.pri ? opts.pri === 'instruction' : !V || !V.cls || list.some(k => V.cls(k) === 'instruction');
       if (!opts.noReplay && instr) lastSeq = { list, opts: Object.assign({}, opts, { force: true }) };
-      const vo = { pri: opts.pri, force: opts.force, cool: opts.cool, cut: opts.cut != null ? opts.cut : opts.pri === 'feedback' };
+      const vo = { pri: opts.pri, force: opts.force, cool: opts.cool, once: opts.once, cut: opts.cut != null ? opts.cut : opts.pri === 'feedback' };
       try {
         if (ctx.playSeq) ctx.playSeq(items, vo);
         else if (ctx.play) ctx.play(items, vo);
@@ -128,7 +128,7 @@
         </div></div>`, 'night en-home');
       barSj = miniSiraj(rootEl.querySelector('#enSj'));
       if (hasGsap()) gsap.from(rootEl.querySelectorAll('.en-sec'), { y: 30, opacity: 0, scale: 0.9, stagger: 0.05, duration: 0.45, ease: 'back.out(1.8)', clearProps: 'transform,opacity' });
-      speak(['en2_hello', 'en2_pick'], { quiet: true });
+      speak(['en2_hello', 'en2_pick'], { quiet: true, once: true }); // الترحيب مرة واحدة في الجلسة
     }
 
     /* ---------- قائمة الأنشطة ---------- */
@@ -147,7 +147,7 @@
         </div></div>`, 'night en-list');
       barSj = miniSiraj(rootEl.querySelector('#enSj'));
       if (hasGsap()) gsap.from(rootEl.querySelectorAll('.en-act'), { y: 24, opacity: 0, stagger: 0.04, duration: 0.4, ease: 'back.out(1.8)', clearProps: 'transform,opacity' });
-      if (!silent) speak([sec.voice, 'en2_pick'], { quiet: true });
+      if (!silent) speak([sec.voice, 'en2_pick'], { quiet: true, once: true }); // اسم القسم مرة واحدة لكل قسم في الجلسة
     }
 
     /* ---------- النشاط ---------- */

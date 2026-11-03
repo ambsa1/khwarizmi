@@ -9,11 +9,6 @@
 
 /* ---------- القوائم ---------- */
 .cw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; max-width: 900px; margin: 0 auto; }
-/* اللابتوب: الأقسام والأنشطة أكبر وعلى عرض أوسع */
-@media (min-width: 1024px) and (orientation: landscape) {
-  .cw-grid { max-width: 1180px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 18px; padding-top: 12px; }
-  .cw-sec { min-height: 190px; } .cw-act { min-height: 170px; }
-}
 .cw-sec { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 156px; padding: 14px 8px 12px;
   border-radius: 28px; color: #fff; background: var(--sc); background-image: linear-gradient(160deg, rgba(255,255,255,.26), rgba(0,0,0,.2)); box-shadow: 0 7px 0 rgba(0,0,0,.25); overflow: hidden; }
 .cw-sec::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 10%, rgba(255,255,255,.3), transparent 45%); pointer-events: none; }
@@ -405,3 +400,15 @@
 @media (prefers-reduced-motion: reduce) { .cw * { transition: none !important; } }
 /* آيفون (شاشة كاملة / من الشاشة الرئيسية): أزرار النشاط ما تقعدش تحت شريط الرجوع للبيت */
 .cw-play { padding-bottom: env(safe-area-inset-bottom); }
+
+/* ---------- اللابتوب (≥1024 بالعرض): القوائم على عرض الشاشة ببطاقات أكبر ----------
+   (آخر الملف عشان يغلب قواعد .cw-sec/.cw-act الأساسية فوق) */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .cw-grid { max-width: 1400px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 20px; padding-top: 12px; }
+  .cw-sec { min-height: 210px; gap: 8px; border-radius: 32px; } .cw-act { min-height: 200px; gap: 8px; padding-top: 18px; }
+  .cw-sec-ic { font-size: 70px; }
+  .cw-sec b, .cw-act b { font-size: 23px; }
+  .cw-act-ic { width: 86px; height: 86px; font-size: 48px; border-radius: 26px; }
+  .cw-st { font-size: 17px; }
+  .cw-lamps i { width: 12px; height: 12px; }
+}

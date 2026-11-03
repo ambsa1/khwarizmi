@@ -217,7 +217,7 @@
           ${P.studio.length ? '' : '<p class="st-hint">اضْغَطْ «عَرْضٌ جَديد» وَاصْنَعْ أَوَّلَ عَرْضٍ لَك!</p>'}
           <p class="st-count">${AR(P.studio.length)} / ${AR(MAX)}</p>
         </div>`, 'st-shelf');
-      if (!seen('st_intro')) { markSeen('st_intro'); later(() => speak(['st_hello', 'st_pick', 'st_cards']), 400); }
+      if (!seen('st_intro')) { markSeen('st_intro'); later(() => speak(['st_hello', 'st_pick', 'st_cards'], { pri: 'instruction', once: true }), 400); }
     }
 
     /* ---------- المحرّر ---------- */

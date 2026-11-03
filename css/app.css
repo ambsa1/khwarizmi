@@ -60,7 +60,9 @@ input { font: inherit; }
   display: flex; flex-direction: column; align-items: center; gap: 2px; color: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.18); }
 .player:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.18); }
 .player.fam { border-color: rgba(255,214,90,.55); background: linear-gradient(180deg, rgba(255,214,90,.22), rgba(255,255,255,.06)); }
-.player .pic { width: 74px; height: 84px; }
+.player .pic { width: 74px; height: 84px; display: flex; align-items: center; justify-content: center; }
+/* صورة الطفل الحقيقية (وضع العائلة): دائرة بإطار ذهبي */
+.pfp { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; border: 3px solid #ffd23e; box-shadow: 0 4px 12px rgba(0,0,0,.35); background: #1b2350; }
 .player b { font-family: var(--head); font-size: 20px; }
 .player small { color: var(--glow); font-weight: 700; }
 .player.add { border-style: dashed; background: transparent; box-shadow: none; justify-content: center; min-height: 140px; }

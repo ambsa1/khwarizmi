@@ -64,7 +64,7 @@
       const V = root.Voice, instr = opts && opts.pri ? opts.pri === 'instruction' : !V || !V.cls || list.some(k => typeof k !== 'string' || V.cls(vkey(k)) === 'instruction');
       if (!(opts && opts.noReplay) && instr) lastSeq = list;
       // في الأنشطة كل "نتيجة" هي رد على ضغطة الطفل، فتقطع سؤال الجولة
-      const vo = opts ? { pri: opts.pri, force: opts.force, cool: opts.cool, cut: opts.cut != null ? opts.cut : opts.pri === 'feedback' } : undefined;
+      const vo = opts ? { pri: opts.pri, force: opts.force, cool: opts.cool, once: opts.once, cut: opts.cut != null ? opts.cut : opts.pri === 'feedback' } : undefined;
       try {
         if (ctx.playSeq) ctx.playSeq(items, vo);
         else if (ctx.play) ctx.play(items, vo);
@@ -127,7 +127,7 @@
         </div></div>`, 'night cw-home');
       barSj = miniSiraj(rootEl.querySelector('#cwSj'));
       if (hasGsap()) gsap.from(rootEl.querySelectorAll('.cw-sec'), { y: 30, opacity: 0, scale: 0.9, stagger: 0.06, duration: 0.45, ease: 'back.out(1.8)' });
-      speak(['cw_hello', 'cw_pick_sec'], { quiet: true });
+      speak(['cw_hello', 'cw_pick_sec'], { quiet: true, once: true }); // الترحيب مرة واحدة في الجلسة (الرجوع من قائمة ما يعيده)
     }
 
     /* ---------- قائمة الأنشطة ---------- */
@@ -147,7 +147,7 @@
         </div></div>`, 'night cw-list');
       barSj = miniSiraj(rootEl.querySelector('#cwSj'));
       if (hasGsap()) gsap.from(rootEl.querySelectorAll('.cw-act'), { y: 24, opacity: 0, stagger: 0.05, duration: 0.4, ease: 'back.out(1.8)' });
-      if (!silent) speak([sec.voice, 'cw_pick_game'], { quiet: true });
+      if (!silent) speak([sec.voice, 'cw_pick_game'], { quiet: true, once: true }); // اسم القسم مرة واحدة لكل قسم في الجلسة
     }
 
     /* ---------- النشاط ---------- */

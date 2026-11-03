@@ -90,7 +90,7 @@
     if (Store.backupDue()) notices.push('💾 لم تُحفظ نسخة احتياطية منذ أكثر من أسبوع. احفظ نسخة الآن واحتفظ بها في مكان آمن. <button class="p-btn gold" data-p="backup">💾 احفظ نسخة الآن</button>');
     const kid = p => {
       const c = counts(p), all = c.lvAll + c.cwAll + c.enAll + c.mtAll, pct = all ? Math.round((c.lv + c.cw + c.en + c.mt) / all * 100) : 0;
-      return `<div class="p-kid"><span class="pic">${A().mini(p.color)}</span><div class="p-kid-main">
+      return `<div class="p-kid"><span class="pic">${Store.picOf && Store.picOf(p) ? `<img class="pfp" src="${Store.picOf(p)}" alt="">` : A().mini(p.color)}</span><div class="p-kid-main">
         <h4><bdi>${esc(p.name) || 'بدون اسم'}</bdi> <small>${p.gender === 'g' ? '👧' : '👦'} ${p.age} سنوات</small></h4>
         <div class="p-stats"><span>⭐ ${Store.stars(p)}</span><span>💡 <bdi dir="ltr">${c.lv} / ${c.lvAll}</bdi> مرحلة</span>${c.cwAll ? `<span>💻 <bdi dir="ltr">${c.cw} / ${c.cwAll}</bdi> نشاط</span>` : ''}${c.enAll ? `<span>🔤 <bdi dir="ltr">${c.en} / ${c.enAll}</bdi> إنجليزي</span>` : ''}${c.mtAll ? `<span>🔢 <bdi dir="ltr">${c.mt} / ${c.mtAll}</bdi> رياضيات</span>` : ''}
           <span>⏱ اليوم ${mins(Store.todaySec(p))} د</span><span>⌛ المجموع ${timeText(p.total)}</span><span>📅 ${ago(p.last)}</span></div>

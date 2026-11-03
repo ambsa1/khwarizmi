@@ -252,7 +252,7 @@
     const total = ps.reduce((a, p) => a + Store.stars(p), 0);
     const lamps = p => groups(p).reduce((a, g) => a + doneIn(p, g), 0), all = p => groups(p).reduce((a, g) => a + g.ids.length, 0);
     const body = `<div class="x-fam-total"><span class="x-bigstar">⭐</span><b>${total}</b><p>نجوم عائلتنا معاً</p></div>
-      <div class="x-kids">${ps.map(p => `<div class="x-kid" style="--pc:${esc(p.color)}"><span class="pic">${A().mini(p.color)}</span>
+      <div class="x-kids">${ps.map(p => `<div class="x-kid" style="--pc:${esc(p.color)}"><span class="pic">${Store.picOf && Store.picOf(p) ? `<img class="pfp" src="${Store.picOf(p)}" alt="">` : A().mini(p.color)}</span>
         <div class="x-kid-main"><b><bdi>${esc(p.name) || '&nbsp;'}</bdi></b><div class="x-cities">${CITIES.map(([k, ic]) => { const c = city(p, groups(p).filter(g => g.key[0] === k)); return c ? `<div class="x-cty" data-k="${k}"><span>${ic}</span>${c}</div>` : ''; }).join('')}</div><small>💡 ${frac(lamps(p), all(p))} · ${TITLES[titleIdx(p)][1]} ${esc(titleName(p))}</small></div></div>`).join('')}</div>`;
     go('family', '🏠 ركن العائلة', body, 'x_family');
     gsap.from('.x-kid', { y: 24, opacity: 0, stagger: 0.1, duration: 0.45, ease: 'back.out(1.6)' });

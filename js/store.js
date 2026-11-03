@@ -135,6 +135,22 @@
     }
   }
 
+  // صورة كل طفل: voice/pic_<fid>.bin مشفّر بنفس المفتاح → رابط blob في الذاكرة فقط (لا يُحفظ)، ثم onPic() لإعادة الرسم
+  const pics = {};
+  const picOf = p => (p && p.fid && typeof pics['pic_' + p.fid] === 'string' ? pics['pic_' + p.fid] : '');
+  function familyPics(onPic) {
+    if (!familyReady() || typeof fetch !== 'function') return;
+    for (const p of data.players) {
+      const k = 'pic_' + p.fid;
+      if (!p.fid || !/^\w+$/.test(p.fid) || pics[k]) continue;
+      pics[k] = 1;
+      fetch('voice/' + k + '.bin').then(r => (r.ok ? r.arrayBuffer() : null))
+        .then(b => b && Crypt.openBytes(b, data.fk))
+        .then(m => { if (!m) { delete pics[k]; return; } pics[k] = URL.createObjectURL(new Blob([m], { type: 'image/png' })); if (onPic) onPic(p); })
+        .catch(() => { delete pics[k]; });
+    }
+  }
+
   function win(p, levelId, stars) {
     if (!p || !safeKey(levelId)) return;
     p.progress[levelId] = Math.max(p.progress[levelId] || 0, Math.max(0, Math.min(3, stars | 0)));
@@ -210,7 +226,7 @@
   function setSeen(p, k, v) { if (p && safeKey(k)) { p.seen[k] = v; save(); } }
 
   root.Store = {
-    load, save, addPlayer, getPlayer, removePlayer, resetPlayer, enableFamily, familyReady, familyVoices, win, stars, solved, cwWin, cwSolved,
+    load, save, addPlayer, getPlayer, removePlayer, resetPlayer, enableFamily, familyReady, familyVoices, familyPics, picOf, win, stars, solved, cwWin, cwSolved,
     addTime, todaySec, setLimit, LIMITS, setPin, checkPin, hasPin, pinOk, digits,
     exportAll, exportOne, importData, backupDue, requestPersist, setSeen, today,
     get data() { return data; }, get settings() { return data.settings; }, get saveFailed() { return saveFailed; },

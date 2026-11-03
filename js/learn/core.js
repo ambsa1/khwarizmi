@@ -78,7 +78,7 @@
       const items = list.map(k => { const kk = vkey(k); return [kk, TXT()[kk] || '']; }).filter(i => i[1]);
       if (!items.length) return '';
       if (!o.noReplay && o.pri !== 'feedback') lastSeq = { list, o: Object.assign({}, o, { force: true }) };
-      const vo = { pri: o.pri || 'instruction', force: o.force, cut: o.cut != null ? o.cut : o.pri === 'feedback' };
+      const vo = { pri: o.pri || 'instruction', force: o.force, once: o.once, cut: o.cut != null ? o.cut : o.pri === 'feedback' };
       try {
         if (ctx.playSeq) ctx.playSeq(items, vo);
         else if (ctx.play) ctx.play(items, vo);
@@ -134,7 +134,7 @@
         </div></div>`, 'night lr-home');
       barSj = miniSiraj(rootEl.querySelector('#lrSj'));
       if (hasGsap()) gsap.from(rootEl.querySelectorAll('.lr-item'), { y: 24, opacity: 0, stagger: 0.04, duration: 0.4, ease: 'back.out(1.8)', clearProps: 'transform,opacity' });
-      speak(['lr_hello', 'lr_pick'], { quiet: true });
+      speak(['lr_hello', 'lr_pick'], { quiet: true, once: true }); // الترحيب مرة واحدة في الجلسة (الرجوع من صفحة ما يعيده)
     }
 
     /* ---------- إطار الصفحة ---------- */
