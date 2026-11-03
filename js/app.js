@@ -43,6 +43,7 @@
     if (window.EN && window.EN.destroy) window.EN.destroy(); // وكذلك الإنجليزية
     if (window.MATH && MATH.destroy) MATH.destroy(); // والرياضيات
     if (window.STUDIO && STUDIO.destroy) STUDIO.destroy(); // والاستوديو
+    if (window.LEARN && LEARN.destroy) LEARN.destroy(); // ودفتر البرمجة
     closeModal();
     gsap.killTweensOf(app.querySelectorAll('*')); // حركات عناصر الشاشة القديمة ما تفضل شغّالة
     Voice.stop();
@@ -149,6 +150,20 @@
 
   /* ---------- خريطة البرمجة: مدينة تنوّر ---------- */
   // كل مسار عمارة في المدينة، وكل مرحلة نافذة فيها. المرحلة المحلولة تنوّر نافذتها.
+  // دفتر البرمجة (الدروس) من عمر ٨: باب فوق الخريطة، وزر "الدرس" في رأس كل مسار له درس
+  const LESSON_OF = { talk: 'lesson:seq', lights: 'lesson:seq', draw: 'lesson:loops', vars: 'lesson:vars', cond: 'lesson:cond', funcs: 'lesson:funcs', bugs: 'lesson:bugs', errs: 'lesson:bugs', io: 'lesson:io', proj: 'lesson:io', pylab: 'laptop' };
+  const learnOn = p => (p.age || 0) >= 8 && window.LEARN && LEARN.render;
+  function learnDoor(p) {
+    if (!learnOn(p)) return '';
+    const pages = LEARN.pages || [], done = pages.filter(pg => p.progress[LEARN.saveKey ? LEARN.saveKey(pg.id) : 'lr:' + pg.id]).length;
+    return `<button class="studio-door learn-door" data-act="learn" data-page="notebook"><span class="ti">📖</span><span><h3>دَفْتَر البَرْمَجَة</h3><p>شنو البرمجة؟ ودروس، وعلى اللابتوب، وامتحان</p></span><span class="n"><bdi>${done} / ${pages.length}</bdi></span></button>`;
+  }
+  function lessonBtn(p, tid) {
+    const pg = LESSON_OF[tid];
+    if (!pg || !learnOn(p)) return '';
+    const done = !!p.progress[LEARN.saveKey ? LEARN.saveKey(pg) : 'lr:' + pg];
+    return `<button class="lesson-btn ${done ? 'done' : ''}" data-act="learn" data-page="${pg}" aria-label="الدرس">${done ? '✅' : '📖'} الدرس</button>`;
+  }
   // مختبر بايثون (كتابة الكود) يظهر من عمر ٨ سنين، والكلمات والحشرات من عمر ٥ (tracksFor في levels.js)
   function renderTracks() {
     const p = S.player;
@@ -161,11 +176,12 @@
           <div class="skyline">${list.map(([t, ti]) => `<button class="bld" data-act="tjump" data-t="${ti}" style="--tc:${t.color}" aria-label="${esc(t.name)}">
             <span class="roof">${t.icon}</span><span class="wins">${t.levels.map(l => `<i class="${Store.solved(p, l.id) ? 'on' : ''}" data-id="${l.id}"></i>`).join('')}</span></button>`).join('')}</div>
           <div class="city-count">💡 <bdi>${lit} / ${all.length}</bdi></div></div>
+        ${learnDoor(p)}
         ${(p.age || 0) >= 7 && window.STUDIO ? `<button class="studio-door" data-act="studio"><span class="ti">🎬</span><span><h3>اسْتوديو سِراج</h3><p>اصنع عرضك الخاص بالبطاقات التي تعرفها</p></span><span class="n">${(p.studio || []).length ? (p.studio || []).length + ' 🎞' : ''}</span></button>` : ''}
         ${list.map(([t, ti]) => {
           const next = t.levels.findIndex(l => !Store.solved(p, l.id));
           return `<div class="track" id="tr-${ti}" style="--tc:${t.color}">
-            <div class="track-head"><span class="ti">${t.icon}</span><span><h3>${t.name}</h3><p>${t.idea}</p></span></div>
+            <div class="track-head"><span class="ti">${t.icon}</span><span><h3>${t.name}</h3><p>${t.idea}</p></span>${lessonBtn(p, t.id)}</div>
             <div class="track-lamps">${t.levels.map((l, li) => {
               const st = p.progress[l.id] || 0, open = li === 0 || Store.solved(p, t.levels[li - 1].id) || st > 0;
               return `<button class="lv ${st ? 'done' : ''} ${open ? '' : 'locked'} ${li === next ? 'next' : ''}" data-act="level" data-t="${ti}" data-l="${li}">
@@ -216,7 +232,8 @@
       <section class="editor ${lit ? 'little' : ''} ${py ? 'pyed' : ''}" id="editor">
         ${lit ? `<div class="strip ${rtl}" id="strip"></div><div class="lpal ${rtl}" id="lpal"></div>`
           : py ? '' : `<div class="ws" id="ws" dir="ltr"></div>
-             <div class="py ${showCode() ? '' : 'folded'}" id="pyBox"><button class="py-head" data-act="py">🐍 Python <span id="cnt"></span></button><pre id="py" dir="ltr"></pre></div>`}
+             <div class="py ${showCode() ? '' : 'folded'}" id="pyBox"><button class="py-head" data-act="py">🐍 Python <span id="cnt"></span></button>
+               <div class="py-main"><pre id="py" dir="ltr"></pre>${showCode() ? `<div class="py-real"><span>${esc(plain(SAY.py_real))}</span><button class="py-copy" data-act="pycopy" aria-label="خد كودك">📋 خد كودك</button></div>` : ''}</div></div>`}
       </section>
       ${lit ? '' : `<footer class="controls"><button class="run" id="run" data-act="run">▶ شغّل</button>
         ${py ? '' : '<button class="sq" data-act="del" aria-label="احذف البطاقة">🗑</button><button class="sq" data-act="undo" aria-label="تراجع">↶</button>'}
@@ -262,7 +279,7 @@
 
   // ترتيب قائمة البطاقات: بطاقات الحل الجديدة أولاً، ثم بطاقات الحل، ثم الباقي،
   // عشان على التلفون (القائمة بالعرض) البطاقة المهمة تبان من غير سحب
-  const stepTypes = list => list.flatMap(s => (Array.isArray(s) ? [s[0]].concat(s[2] ? stepTypes(s[2]) : []) : [s]));
+  const stepTypes = list => list.flatMap(s => (Array.isArray(s) ? [s[0]].concat(s[2] ? stepTypes(s[2]) : [], s[3] ? stepTypes(s[3]) : []) : [s]));
   function flyOrder(t, L) {
     const ty = s => s.split(':')[0], li = t.levels.indexOf(L);
     // متى ظهرت البطاقة أول مرة في المسار (الأحدث = الفكرة اللي الطفل بيتدرّب عليها الآن)
@@ -315,6 +332,7 @@
     if (e.field === 'C' && EN[e.value]) Voice.playSeq([['en_' + e.value, EN[e.value], 'en'], ['c_' + e.value, SIRAJ_TEXTS.COLORS[e.value]]], NAME);
     if (e.field === 'V' && EN[e.value]) Voice.play('en_' + e.value, EN[e.value], 'en', NAME);
     if (e.field === 'N' && SIRAJ_TEXTS.NUMS[+e.value]) Voice.play('n_' + e.value, SIRAJ_TEXTS.NUMS[+e.value], undefined, NAME);
+    if (e.field === 'COND' && SAY['cond_' + e.value]) Voice.play('cond_' + e.value, SAY['cond_' + e.value], undefined, NAME);
     if (!S.running) { S.failId = null; showGap(); updateCode(); placeBug(); }
   }
   // أكمل البرنامج: شبح بعلامة استفهام مكان البطاقة الناقصة (يرجع كل ما يرجع البرنامج لحالته الناقصة)
@@ -371,6 +389,44 @@
     const pre = $('#py'), el = pre.querySelector('.cur, .bad');
     if (el) pre.scrollTop = el.offsetTop - pre.clientHeight / 2;
   }
+  /* "خد كودك": نسخة بايثون حقيقية تشتغل لوحدها. كلمات اللعبة (say, light, jump...) تتعرّف كدوال صغيرة في أول الملف
+     (اللي البرنامج بيستعملها فقط)، وحالة المصباح والصناديق من بداية المرحلة */
+  const PY_HELPERS = [
+    ['say', 'def say(t):\n    print(t)'],
+    ['wave', 'def wave():\n    print("wave 👋")'], ['jump', 'def jump():\n    print("jump 🦘")'], ['dance', 'def dance():\n    print("dance 💃")'],
+    ['light', 'lamp = "off"\n\ndef light(c):\n    global lamp\n    lamp = c\n    print("light:", c)'],
+    ['off', 'def off():\n    global lamp\n    lamp = "off"\n    print("light: off")'],
+    ['lamp_off', 'def lamp_off():\n    return lamp == "off"'], ['lamp_on', 'def lamp_on():\n    return lamp != "off"'],
+    ['forward', 'def forward(n):\n    print("forward", n)'], ['right', 'def right(a):\n    print("turn right", a)'], ['left', 'def left(a):\n    print("turn left", a)'],
+    ['move_up', 'def move_up():\n    print("move up")'], ['move_down', 'def move_down():\n    print("move down")'],
+    ['move_left', 'def move_left():\n    print("move left")'], ['move_right', 'def move_right():\n    print("move right")'],
+  ];
+  function realPython(L, lines) {
+    const code = lines.join('\n'), used = n => new RegExp('\\b' + n + '\\(').test(code), init = L.init || {};
+    const out = ['# ' + plain(L.goal), '# خوارزمي → بايثون الحقيقي'];
+    const need = new Set(PY_HELPERS.map(h => h[0]).filter(used));
+    if (need.has('lamp_off') || need.has('lamp_on') || need.has('off')) need.add('light'); // دالة light هي اللي تعرّف المتغيّر lamp
+    PY_HELPERS.forEach(([n, src]) => { if (need.has(n)) out.push(src); });
+    if (init.lamp && need.has('light')) out.push(`lamp = "${init.lamp}"`);
+    // الصناديق المستعملة في الكود تبدأ بقيمتها (من المرحلة، أو صفر)
+    Object.keys(Blocks.VARS).filter(v => new RegExp('\\b' + v + '\\b').test(code)).forEach(v => out.push(`${v} = ${(init.vars || {})[v] || 0}`));
+    return out.join('\n\n') + '\n\n' + code + '\n';
+  }
+  async function copyPy() {
+    if (!S.ws) return;
+    const text = realPython(level(), Blocks.python(S.ws).lines);
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { /* بدون صلاحية: الطريقة القديمة */ }
+    if (!ok) {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (e) { /* */ } ta.remove();
+    }
+    Sfx.tap();
+    toast(SAY[key(ok ? 'copied' : 'retry')], ok ? 'tip' : 'bad');
+    if (ok) say('copied', { pri: 'feedback', cut: true });
+    S.lastCopy = text; // للاختبار
+  }
   // تلوين كود بايثون
   function hl(l) {
     return esc(l)
@@ -417,7 +473,7 @@
     if (S.running) return;
     if (S.ed) return runPy();
     if (!S.ws) return;
-    const L = level(), ops = Blocks.compile(S.ws);
+    const L = level(), ops = Blocks.compile(S.ws, L.init);
     if (!ops.length) { if (!demo) { toast(SAY[key('empty')], 'bad'); say('empty', { pri: 'feedback', cut: true }); } return; }
     const my = ++S.run, stage = S.stage, ws = S.ws;
     const alive = () => my === S.run;
@@ -463,7 +519,7 @@
   function missing(L) {
     const need = (L.must || []).filter(ty => !S.ws.getAllBlocks(false).some(b => b.type === ty && b.isEnabled()));
     if (!need.length) return null;
-    return need.some(n => /^func_/.test(n)) ? 'use_func' : need.includes('siraj_repeat') ? 'use_loop' : 'use_card';
+    return need.some(n => /^func_/.test(n)) ? 'use_func' : need.includes('siraj_repeat') ? 'use_loop' : need.some(n => /^siraj_if/.test(n)) ? 'use_if' : 'use_card';
   }
 
   /* مختبر بايثون: نفس المسارح، لكن الأوامر من الكود المكتوب، والسطر الشغّال يتلوّن */
@@ -815,6 +871,21 @@
         back: () => renderTracks(),
       });
     },
+    // دفتر البرمجة: صفحة من LEARN.pages أو الدفتر كله، والرجوع لخريطة البرمجة
+    learn: t => {
+      Sfx.tap();
+      if (!window.LEARN || !LEARN.render) { say('soon'); return; }
+      const page = (t && t.dataset.page) || 'notebook';
+      cleanup(); S.screen = 'learn'; S.lock = Date.now() + 350;
+      const p = S.player;
+      LEARN.render(app, {
+        player: p,
+        playSeq: (items, o) => Voice.playSeq(items, o),
+        say: (k, tx, o) => Voice.play(k, tx, undefined, o),
+        sfx: Sfx, Siraj, fx: FX,
+        saveProgress: (key, stars) => Store.win(p, key, stars),
+      }, { page, back: () => renderTracks() });
+    },
     tracks: () => { Voice.stop(); renderTracks(); },
     level: t => {
       if (t.classList.contains('locked')) { Sfx.oops(); return; }
@@ -825,6 +896,7 @@
     run: () => run(),
     undo: () => { if (!S.running && S.ws) { S.ws.undo(false); Sfx.tap(); } },
     del: () => { if (!S.running && S.ws && S.ws.__del()) Sfx.tap(); },
+    pycopy: () => { if (!S.running) copyPy(); },
     reset: () => { if (!S.running && S.stage) { S.stage.reset(); if (S.ws) { S.ws.highlightBlock(null); Blocks.clearGlow(S.ws); Blocks.clearGhost(S.ws); updateCode(); } if (S.ed) S.ed.clear(); Sfx.tap(); } },
     hint: () => { if (S.running) return; Sfx.tap(); if (S.fails >= 4 && level().solution) offerSolution(); else hint(true); },
     'hint-only': () => { closeModal(); hint(true); },

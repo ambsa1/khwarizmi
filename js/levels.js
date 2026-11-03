@@ -17,6 +17,8 @@
   const lt = c => ['light_on', { C: c }], OFF = 'light_off';
   const vset = (v, n) => ['var_set', { V: v, N: n }], vadd = (v, n) => ['var_add', { V: v, N: n }], vsub = (v, n) => ['var_sub', { V: v, N: n }], vsay = v => ['var_say', { V: v }];
   const def = (name, inner) => ['func_def', { NAME: name }, inner], call = name => ['func_call', { NAME: name }];
+  // الشروط: iff(شرط, [بطاقات لو صح])، ifel(شرط, [لو صح], [وإلا]). الشرط: lamp_off | lamp_on | apples_gt5 | apples_eq0
+  const iff = (c, inner) => ['siraj_if', { COND: c }, inner], ifel = (c, a, b) => ['siraj_ifelse', { COND: c }, a, b];
   const times = (n, a) => Array.from({ length: n }, () => a).flat();
   // مربع طوله s يبدأ من (x, y) ويرسم يميناً ثم لتحت
   const sq = (x, y, s) => [[x, y, x + s, y], [x + s, y, x + s, y + s], [x + s, y + s, x, y + s], [x, y + s, x, y]];
@@ -174,6 +176,35 @@
       ],
     },
     {
+      // الشروط: "لو" حصل كذا اعمل كذا (وإلا اعمل كذا). init: حالة البداية (المصباح/الصناديق) تتغيّر من مرحلة لمرحلة،
+      // فنفس البطاقة تعمل شيئاً مختلفاً. must: لازم بطاقة الشرط (وإلا الطفل يحلّها من غير شرط)
+      id: 'cond', name: 'الشروط', icon: '🔀', color: '#0e9f9f', noLittle: true,
+      idea: 'الشرط: لو حصل كذا، اعمل كذا',
+      levels: [
+        { id: 'cd1', stage: 'party', init: { lamp: 'off' }, goal: 'المِصْباحُ مُطْفَأ. لَوْ مُطْفَأٌ، أُضيئُهُ بِالأَحْمَر!', blocks: ['siraj_if', 'light_on:red'], must: ['siraj_if'], tip: 'if_tip',
+          target: ['red'], solution: [iff('lamp_off', [lt('red')])] },
+        { id: 'cd2', stage: 'party', init: { lamp: 'red' }, goal: 'المِصْباحُ مُنَوَّر. لَوْ مُنَوَّرٌ، أُطْفِئُه!', blocks: ['siraj_if', 'light_off', 'light_on:red'], must: ['siraj_if'], tip: 'pick_word',
+          target: ['off'], solution: [iff('lamp_on', [OFF])] },
+        { id: 'cd2g', gap: 1, stage: 'party', init: { lamp: 'off' }, goal: 'بِطاقَةٌ ناقِصَة! لَوْ مُطْفَأٌ، أُضيئُهُ بِالأَخْضَر!', blocks: ['siraj_if', 'light_on:green', 'light_off'], tip: 'gap_tip',
+          target: ['green'], solution: [iff('lamp_off', [lt('green')])] },
+        { id: 'cd3', stage: 'party', init: { lamp: 'off' }, goal: 'لَوْ مُطْفَأٌ أُضيءُ الأَخْضَر، وَإِلّا أَقولُ: مَرْحَبا!', blocks: ['siraj_ifelse', 'light_on:green', 'siraj_say'], must: ['siraj_ifelse'], tip: 'else_tip',
+          target: ['green'], solution: [ifel('lamp_off', [lt('green')], [say('مرحبا')])] },
+        { id: 'cd4', stage: 'party', init: { lamp: 'blue' }, goal: 'المِصْباحُ أَزْرَق! لَوْ مُطْفَأٌ أُضيءُ الأَخْضَر، وَإِلّا أَقْفِز!', blocks: ['siraj_ifelse', 'light_on:green', 'siraj_jump'], must: ['siraj_ifelse'],
+          target: ['jump'], solution: [ifel('lamp_off', [lt('green')], ['siraj_jump'])] },
+        // توقّع: المصباح أحمر، فالبرنامج الجاهز يدخل في "وإلا"
+        { id: 'cd5', stage: 'party', init: { lamp: 'red' }, goal: 'المِصْباحُ أَحْمَر. لَوْ مُنَوَّرٌ أُضيءُ الأَزْرَق، وَإِلّا الأَخْضَر!', blocks: ['siraj_ifelse', 'light_on'],
+          preset: [ifel('lamp_off', [lt('green')], [lt('red')])],
+          predict: { answer: 0, choices: [['red'], ['green'], ['off']] },
+          target: ['blue'], solution: [ifel('lamp_on', [lt('blue')], [lt('green')])] },
+        { id: 'cd6', stage: 'vars', init: { vars: { apples: 7 } }, goal: 'في الصُّنْدوقِ سَبْعَة! لَوْ أَكْثَرُ مِنْ خَمْسَة، أَقولُ: كَبير!', blocks: ['siraj_if', 'siraj_say'], must: ['siraj_if'], tip: 'pick_word',
+          vars: ['apples'], says: ['كبير'], solution: [iff('apples_gt5', [say('كبير')])] },
+        { id: 'cd7', stage: 'vars', init: { vars: { apples: 3 } }, goal: 'ثَلاثَةٌ فَقَط! لَوْ أَكْثَرُ مِنْ خَمْسَةٍ أَقولُ كَبير، وَإِلّا صَغير!', blocks: ['siraj_ifelse', 'siraj_say'], must: ['siraj_ifelse'],
+          vars: ['apples'], says: ['صغير'], solution: [ifel('apples_gt5', [say('كبير')], [say('صغير')])] },
+        { id: 'cd8', stage: 'vars', init: { vars: { apples: 0 } }, goal: 'الصُّنْدوقُ فارِغ! لَوْ صِفْرٌ أَضَعُ خَمْسَة، ثُمَّ أَقولُها!', blocks: ['siraj_if', 'var_set:apples', 'var_say:apples'], must: ['siraj_if'],
+          vars: ['apples'], target: { apples: 5 }, says: [5], solution: [iff('apples_eq0', [vset('apples', 5)]), vsay('apples')] },
+      ],
+    },
+    {
       id: 'funcs', name: 'علّم سراج كلمة', icon: '📖', color: '#d6336c', noLittle: true,
       idea: 'الدالة: كلمة جديدة نعلّمها مرة ونستعملها كثيراً',
       levels: [
@@ -303,7 +334,7 @@
     p3: [rep(8, ['go_right'])],
     p4: [rep(3, ['go_right', 'go_up']), 'go_right'],
   };
-  const count = list => list.reduce((n, s) => n + 1 + (Array.isArray(s) && s[2] ? count(s[2]) : 0), 0);
+  const count = list => list.reduce((n, s) => n + 1 + (Array.isArray(s) && s[2] ? count(s[2]) : 0) + (Array.isArray(s) && s[3] ? count(s[3]) : 0), 0);
   const pyLines = s => s.split('\n').filter(l => l.trim() && !l.trim().startsWith('#')).length;
   // الحل بدون البطاقة رقم gap (ترتيب القراءة: البطاقة ثم ما بداخلها): هذا هو البرنامج الجاهز في مراحل "أكمل البرنامج"
   const without = (list, gap) => {

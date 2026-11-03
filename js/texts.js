@@ -93,6 +93,15 @@
     idea_bugs: 'البَرْنامَجُ فيهِ خَطَأٌ صَغير: شَغِّلْهُ، ثُمَّ أَصْلِحْه!', idea_bugs_f: 'البَرْنامَجُ فيهِ خَطَأٌ صَغير: شَغِّليهِ، ثُمَّ أَصْلِحيه!',
     idea_party: 'نَخْلِطُ كُلَّ ما تَعَلَّمْناه: أَضْواءٌ وَكَلامٌ وَرَقْص!',
     idea_pylab: 'أَكْتُبُ كودَ بايْثونَ الحَقيقِيَّ بِيَدي!',
+    // الشروط
+    if_tip: 'ضَعِ البِطاقَةَ داخِلَ "لَوْ"!', if_tip_f: 'ضَعي البِطاقَةَ داخِلَ "لَوْ"!',
+    else_tip: 'لَوْ صَحيح: الجُزْءُ الأَوَّل. وَإِلّا: الجُزْءُ الثّاني!',
+    use_if: 'اسْتَعْمِلْ بِطاقَةَ الشَّرْط!', use_if_f: 'اسْتَعْمِلي بِطاقَةَ الشَّرْط!',
+    idea_cond: 'الشَّرْط: لَوْ حَصَلَ كَذا، اعْمَلْ كَذا!',
+    cond_lamp_off: 'المِصْباحُ مُطْفَأ', cond_lamp_on: 'المِصْباحُ مُنَوَّر', cond_apples_gt5: 'التُّفّاحُ أَكْثَرُ مِنْ خَمْسَة', cond_apples_eq0: 'الصُّنْدوقُ فارِغ',
+    // "في بايثون الحقيقي" تحت الكود، وزر نسخ الكود
+    py_real: 'في بايثون الحقيقي: say تصير print، والأضواء والقفز دوال تكتبها أنت بنفسك!',
+    copied: 'نَسَخْتُ الكود! أَلْصِقْهُ في مَلَفّ .py وَشَغِّلْه.', copied_f: 'نَسَخْتُ الكود! أَلْصِقيهِ في مَلَفّ .py وَشَغِّليه.',
     // لعب حر
     free_tip: 'اصْنَعْ ما تُحِبّ، ثُمَّ شَغِّل!', free_tip_f: 'اصْنَعي ما تُحِبّين، ثُمَّ شَغِّلي!',
     use_word: 'اسْتَعْمِلِ الكَلِمَةَ المَطْلوبَة!', use_word_f: 'اسْتَعْمِلي الكَلِمَةَ المَطْلوبَة!',
@@ -106,6 +115,7 @@
     light_on: 'أَضِئْ', light_off: 'أَطْفِئْ',
     var_set: 'ضَعْ في الصُّنْدوق', var_add: 'زِدْ', var_sub: 'أَنْقِصْ', var_say: 'قُلْ ما في الصُّنْدوق',
     func_def: 'عَلِّمْ كَلِمَةً جَديدَة', func_call: 'نادِ الكَلِمَة',
+    siraj_if: 'لَوْ', siraj_ifelse: 'لَوْ، وَإِلّا',
   };
 
   // كلمة الكود الإنجليزية لكل بطاقة: تُنطق بالإنجليزي قبل معناها (ملفات en_)
@@ -114,12 +124,13 @@
     pen_forward: 'forward', pen_right: 'right', pen_left: 'left',
     go_up: 'move_up', go_down: 'move_down', go_left: 'move_left', go_right: 'move_right',
     light_on: 'light_on', light_off: 'off', var_add: 'plus', var_sub: 'minus', var_say: 'say', func_def: 'def',
+    siraj_if: 'if', siraj_ifelse: 'if_else',
   };
   // نطق كل كلمة إنجليزية (المفتاح en_<كلمة>؛ المفاتيح المشتركة مع الموسوعة لها نفس النص)
   const EN = {
     say: 'say', wave: 'wave', jump: 'jump', for: 'for', forward: 'forward', right: 'right', left: 'left',
     move_up: 'move up', move_down: 'move down', move_left: 'move left', move_right: 'move right',
-    light_on: 'light', off: 'off', plus: 'plus', minus: 'minus', def: 'def',
+    light_on: 'light', off: 'off', plus: 'plus', minus: 'minus', def: 'def', if: 'if', if_else: 'if, else',
     red: 'red', yellow: 'yellow', green: 'green', blue: 'blue', purple: 'purple',
     apples: 'apples', stars: 'stars', balloons: 'balloons',
     dance: 'dance', hello: 'hello', blink: 'blink', square: 'square', step: 'step',
@@ -134,6 +145,7 @@
   const PHRASES = [
     ['مرحبا', 'مَرْحَبا', '👋'], ['أنا سراج', 'أَنا سِراج', '🤖'], ['هيا نلعب', 'هَيّا نَلْعَب', '🎮'],
     ['شكرا', 'شُكْراً', '🙏'], ['هيب هيب', 'هِيب هِيب', '📣'], ['هرّاي', 'هُرّاي', '🎉'],
+    ['كبير', 'كَبير', '🐘'], ['صغير', 'صَغير', '🐜'],
   ];
 
   const api = { SAY, CARD, CARD_EN, EN, COLORS, NUMS, PHRASES };

@@ -9,8 +9,25 @@
   const KEYWORDS = ['for', 'in', 'range', 'def', 'if', 'elif', 'else', 'pass', 'True', 'False', 'and', 'or', 'not'];
   // الأوامر الجاهزة: [أقل عدد مدخلات، أكثر عدد، نوع المدخلات]
   const BUILTIN = {
-    say: [1, 1], print: [1, 1], wave: [0, 0], jump: [0, 0], forward: [1, 1, 'num'], right: [0, 1, 'num'], left: [0, 1, 'num'],
+    say: [1, 1], print: [0, 9], wave: [0, 0], jump: [0, 0], forward: [1, 1, 'num'], right: [0, 1, 'num'], left: [0, 1, 'num'],
     move_up: [0, 0], move_down: [0, 0], move_left: [0, 0], move_right: [0, 0], light: [1, 1, 'color'], off: [0, 0],
+    input: [0, 1], int: [1, 1], str: [1, 1],
+  };
+  // شاشة الناتج (بايثون الحقيقي): الأوامر المسموحة فقط، والباقي NameError مثل بايثون
+  const CONSOLE_OK = ['print', 'input', 'int', 'str'];
+  // كيف يطبع بايثون القيمة
+  const fmt = v => typeof v === 'boolean' ? (v ? 'True' : 'False') : typeof v === 'number' ? (Number.isInteger(v) ? String(v) : String(Math.round(v * 1e6) / 1e6)) : String(v);
+  // نص رسالة الخطأ كما تكتبها بايثون (يظهر بالأحمر في شاشة الناتج)
+  const PY = {
+    str: 'SyntaxError: unterminated string literal',
+    paren: "SyntaxError: '(' was never closed",
+    colon: "SyntaxError: expected ':'",
+    indent: 'IndentationError: expected an indented block',
+    extra_indent: 'IndentationError: unexpected indent',
+    name: n => `NameError: name '${n}' is not defined`,
+    mix: (a, b) => typeof a === 'string' ? `TypeError: can only concatenate str (not "${typeof b === 'number' ? 'int' : typeof b}") to str` : `TypeError: unsupported operand type(s) for +: 'int' and 'str'`,
+    int: s => `ValueError: invalid literal for int() with base 10: '${s}'`,
+    zero: 'ZeroDivisionError: division by zero',
   };
 
   // رسائل الخطأ (تظهر على الشاشة؛ الكود بين علامتي ` يُعرض بخط الكود)
@@ -49,8 +66,11 @@
     after: 'شيء زائد في آخر السطر',
   };
 
-  class PyError { constructor(line, msg) { this.line = line; this.msg = msg; } }
-  const fail = (line, msg) => { throw new PyError(line, msg); };
+  class PyError { constructor(line, msg, py) { this.line = line; this.msg = msg; this.py = py; } }
+  const fail = (line, msg, py) => { throw new PyError(line, msg, py); };
+  // input() بلا جواب بعد: نوقف التنفيذ، والمسرح يسأل الطفل ثم يكمّل (resume)
+  class NeedInput { constructor(prompt, line) { this.prompt = prompt; this.line = line; } }
+  const M2 = { not_num: s => `\`${s}\` ليس رقماً، نكتب رقماً مثل \`7\``, ask: 'سؤال بلا جواب' };
 
   // تنظيف ما يكتبه التلفون: علامات تنصيص ذكية، فاصلة عربية، أرقام عربية، Tab
   function norm(src) {
@@ -72,7 +92,7 @@
       if ((m = /^\d+(\.\d+)?/.exec(text.slice(i)))) { out.push({ t: 'num', v: +m[0], line }); i += m[0].length; continue; }
       if (c === '"' || c === "'") {
         const j = text.indexOf(c, i + 1);
-        if (j < 0) fail(line, M.str);
+        if (j < 0) fail(line, M.str, PY.str);
         out.push({ t: 'str', v: text.slice(i + 1, j), line }); i = j + 1; continue;
       }
       if ((m = /^[A-Za-z_][A-Za-z0-9_]*/.exec(text.slice(i)))) { out.push({ t: 'name', v: m[0], line }); i += m[0].length; continue; }
@@ -98,7 +118,7 @@
       while (li < lines.length) {
         const L = lines[li];
         if (L.ind < ind) break;
-        if (L.ind > ind) fail(L.n, M.extra_indent);
+        if (L.ind > ind) fail(L.n, M.extra_indent, PY.extra_indent);
         body.push(statement(L, ind));
       }
       return body;
@@ -107,7 +127,7 @@
     function suite(L, ind, rest) {
       if (rest.length) return [simple({ n: L.n, toks: rest })];
       const nx = lines[li];
-      if (!nx || nx.ind <= ind) fail(nx && nx.ind <= ind ? nx.n : L.n, M.need_indent);
+      if (!nx || nx.ind <= ind) fail(nx && nx.ind <= ind ? nx.n : L.n, M.need_indent, PY.indent);
       const body = block(nx.ind);
       const after = lines[li];
       if (after && after.ind > ind) fail(after.n, M.bad_indent);
@@ -120,7 +140,7 @@
         const ci = L.toks.findIndex(t => t.t === 'op' && t.v === ':');
         if (k.v === 'while') fail(L.n, M.while);
         if (k.v === 'elif' || k.v === 'else') fail(L.n, M.else);
-        if (ci < 0) fail(L.n, M.colon);
+        if (ci < 0) fail(L.n, M.colon, PY.colon);
         const head = L.toks.slice(1, ci), rest = L.toks.slice(ci + 1);
         if (k.v === 'for') {
           const P = cursor(head, L.n);
@@ -228,7 +248,7 @@
         if (!k) fail(line, M.expr);
         if (k.t === 'num') return { t: 'val', v: k.v };
         if (k.t === 'str') return { t: 'val', v: k.v };
-        if (k.t === 'op' && k.v === '(') { const e = P.expr(); if (!P.is('op', ')')) fail(line, M.paren); return e; }
+        if (k.t === 'op' && k.v === '(') { const e = P.expr(); if (!P.is('op', ')')) fail(line, M.paren, PY.paren); return e; }
         if (k.t === 'name') {
           if (k.v === 'True' || k.v === 'False') return { t: 'val', v: k.v === 'True' };
           if (P.is('op', '(')) {
@@ -236,7 +256,7 @@
             if (!P.is('op', ')')) {
               args.push(P.expr());
               while (P.is('op', ',')) args.push(P.expr());
-              if (!P.is('op', ')')) fail(line, M.paren);
+              if (!P.is('op', ')')) fail(line, M.paren, PY.paren);
             }
             return { t: 'call', v: k.v, args, line };
           }
@@ -273,21 +293,23 @@
     return out;
   }
 
-  function execute(prog, ops) {
-    const vars = {}, funcs = {}, dec = declared(prog);
-    let depth = 0;
+  function execute(prog, ops, ctx) {
+    const vars = {}, funcs = {}, dec = declared(prog), con = !!(ctx && ctx.con);
+    let depth = 0, used = 0;
     const emit = o => { ops.push(o); if (ops.length > 3000) fail(o.line, M.long); };
-    const names = () => Object.keys(BUILTIN).concat(Object.keys(funcs), Object.keys(vars), [...dec.vars], [...dec.funcs], KEYWORDS);
+    const known = () => (con ? CONSOLE_OK : Object.keys(BUILTIN));
+    const names = () => known().concat(Object.keys(funcs), Object.keys(vars), [...dec.vars], [...dec.funcs], KEYWORDS);
     const unknown = (n, line) => {
-      if (dec.vars.has(n)) fail(line, M.empty_var(n));
-      if (dec.funcs.has(n)) fail(line, M.def_later(n));
-      fail(line, M.unknown(n, near(n, names())));
+      if (dec.vars.has(n)) fail(line, M.empty_var(n), PY.name(n));
+      if (dec.funcs.has(n)) fail(line, M.def_later(n), PY.name(n));
+      fail(line, M.unknown(n, near(n, names())), PY.name(n));
     };
+    const builtin = n => (con && !CONSOLE_OK.includes(n) ? null : BUILTIN[n]);
     function val(e) {
       if (e.t === 'val') return e.v;
       if (e.t === 'name') {
         if (Object.prototype.hasOwnProperty.call(vars, e.v)) return vars[e.v];
-        if (BUILTIN[e.v] || funcs[e.v]) fail(e.line, M.call_paren(e.v));
+        if (builtin(e.v) || funcs[e.v]) fail(e.line, M.call_paren(e.v));
         return unknown(e.v, e.line);
       }
       if (e.t === 'neg') { const v = val(e.a); if (typeof v !== 'number') fail(e.line, M.mix); return -v; }
@@ -295,11 +317,11 @@
       const a = val(e.a), b = val(e.b);
       switch (e.op) {
         case '+':
-          if (typeof a !== typeof b) fail(e.line, M.mix);
+          if (typeof a !== typeof b) fail(e.line, M.mix, PY.mix(a, b));
           return a + b;
         case '-': case '*': case '/': case '//': case '%':
-          if (typeof a !== 'number' || typeof b !== 'number') fail(e.line, M.mix);
-          if (e.op !== '-' && e.op !== '*' && b === 0) fail(e.line, M.zero);
+          if (typeof a !== 'number' || typeof b !== 'number') fail(e.line, M.mix, `TypeError: unsupported operand type(s) for ${e.op}: '${typeof a === 'number' ? 'int' : 'str'}' and '${typeof b === 'number' ? 'int' : 'str'}'`);
+          if (e.op !== '-' && e.op !== '*' && b === 0) fail(e.line, M.zero, PY.zero);
           return e.op === '-' ? a - b : e.op === '*' ? a * b : e.op === '/' ? a / b : e.op === '//' ? Math.floor(a / b) : ((a % b) + b) % b;
         case '==': return a === b;
         case '!=': return a !== b;
@@ -319,17 +341,32 @@
         depth++; run(funcs[n]); depth--;
         return null;
       }
-      const B = BUILTIN[n];
+      const B = builtin(n);
       if (!B) {
         if (Object.prototype.hasOwnProperty.call(vars, n)) fail(line, M.not_func(n));
         return unknown(n, line);
       }
       if (e.args.length < B[0] || e.args.length > B[1]) fail(line, B[1] ? M.args1(n) : M.args0(n));
       const args = e.args.map(val), a = args[0];
+      // أوامر شاشة الناتج: input تسأل (أو تأخذ جواباً جاهزاً)، int تحوّل لرقم، str لنص
+      if (n === 'input') {
+        const prompt = a === undefined ? '' : fmt(a), answers = (ctx && ctx.answers) || [];
+        if (used >= answers.length) throw new NeedInput(prompt, line);
+        const v = answers[used++];
+        emit({ op: 'input', prompt, value: v, line });
+        return v;
+      }
+      if (n === 'int') {
+        if (typeof a === 'number') return Math.trunc(a);
+        if (!/^\s*-?\d+\s*$/.test(String(a))) fail(line, M2.not_num(a), PY.int(a));
+        return parseInt(a, 10);
+      }
+      if (n === 'str') return fmt(a);
       if (B[2] === 'num' && a !== undefined && typeof a !== 'number') fail(line, M.num(n));
       if (B[2] === 'num' && a !== undefined && Math.abs(a) > 50 && n === 'forward') fail(line, M.big);
       if (B[2] === 'color' && !COLORS.includes(a)) fail(line, M.color);
-      if (n === 'say' || n === 'print') emit({ op: 'say', arg: typeof a === 'number' ? Math.round(a * 100) / 100 : typeof a === 'boolean' ? (a ? 'True' : 'False') : a, line });
+      if (n === 'print' && (con || args.length !== 1)) emit({ op: 'say', arg: args.map(fmt).join(' '), line });
+      else if (n === 'say' || n === 'print') emit({ op: 'say', arg: typeof a === 'number' ? Math.round(a * 100) / 100 : typeof a === 'boolean' ? (a ? 'True' : 'False') : a, line });
       else if (n === 'forward') emit({ op: 'forward', arg: a, line });
       else if (n === 'right') emit({ op: 'turn', arg: a === undefined ? 90 : a, line });
       else if (n === 'left') emit({ op: 'turn', arg: -(a === undefined ? 90 : a), line });
@@ -375,15 +412,35 @@
   }
 
   // يشغّل الكود: {ops, error: {line, msg, parse}}
-  function compile(src) {
+  // شاشة الناتج المفتوحة الآن (المسرح console)، لو فيه
+  const consoleOn = () => (api.console && api.console.el && api.console.el.isConnected ? api.console : null);
+  // into: نتيجة سابقة توقفت عند input()؛ نعيد التنفيذ بالأجوبة ونضيف الأوامر الجديدة على نفس القائمة (المسرح بيمشي عليها)
+  function compile(src, into) {
+    const r = into || { ops: [] }, base = into ? r.ops.length : 0, con = consoleOn();
+    if (!into && con) con.answers = []; // تشغيل جديد: الأسئلة تُسأل من أول
+    delete r.error;
+    const err = (e, parse) => { r.error = { line: e.line, msg: e.msg, parse, py: e.py || (parse ? 'SyntaxError: invalid syntax' : 'RuntimeError: ' + e.msg) }; api.lastError = r.error; return r; };
     let prog;
-    try { prog = parse(src); } catch (e) { if (e instanceof PyError) return { ops: [], error: { line: e.line, msg: e.msg, parse: true } }; throw e; }
+    try { prog = parse(src); } catch (e) { if (e instanceof PyError) return err(e, true); throw e; }
     // الأوامر التي سبقت الخطأ تفضل، عشان الطفل يشوف ما حدث قبله
     const ops = [];
-    try { execute(prog, ops); return { ops }; } catch (e) {
-      if (!(e instanceof PyError)) throw e;
-      return { ops, error: { line: e.line, msg: e.msg } };
+    let e2 = null;
+    try { execute(prog, ops, { con, answers: con ? con.answers : [] }); } catch (e) {
+      if (e instanceof NeedInput) ops.push({ op: 'input', prompt: e.prompt, line: e.line, resume: v => { if (con) con.answers.push(v); compile(src, r); } });
+      else if (e instanceof PyError) e2 = e;
+      else throw e;
     }
+    for (const o of ops.slice(base)) r.ops.push(o);
+    return e2 ? err(e2, false) : r;
+  }
+
+  // ناتج برنامج (سطور print) بأجوبة معيّنة لـ input()؛ null لو فيه خطأ أو الأجوبة ما كفت. يُستعمل لحساب الناتج المطلوب من الحل بأجوبة الطفل نفسها
+  function outputOf(src, answers) {
+    try {
+      const ops = [];
+      execute(parse(src), ops, { con: true, answers: answers || [] });
+      return ops.filter(o => o.op === 'say').map(o => String(o.arg));
+    } catch (e) { if (e instanceof PyError || e instanceof NeedInput) return null; throw e; }
   }
 
   // كلمات البرنامج (للتأكد إن الطفل استعمل for أو def أو if أو +)
@@ -400,7 +457,10 @@
     path: ['move_up()', 'move_down()', 'move_left()', 'move_right()'],
     lights: ['light("|")', 'off()', '"red"', '"yellow"', '"green"', '"blue"', '"purple"'],
     vars: ['say(|)'],
+    console: ['print("|")', 'print(|)', 'input("|")', 'int(input("|"))', ' = ', ' + ', ' - ', ' * '],
   };
+  // لوحة مفاتيح حقيقية غالباً (لابتوب): الطفل يكتب بحرّية، والأزرار تفضل ظاهرة
+  const laptop = () => { try { return window.matchMedia('(min-width: 1024px)').matches || (window.matchMedia('(pointer: fine)').matches && window.matchMedia('(min-width: 700px)').matches); } catch (e) { return false; } };
   const SYMS = ['⏎', '⇥', '⌫', '(', ')', '"', ':', '=', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   const escH = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // مقارنة سطرين بدون فرق المسافات حوالين العلامات (a=1 زي a = 1)
@@ -414,7 +474,8 @@
       <div class="keys" dir="ltr"><div class="krow">${words.map(w => `<button class="key w" data-k="${escH(w)}">${escH(w.replace('|', ''))}</button>`).join('')}</div>
         <div class="krow">${SYMS.map(s => `<button class="key ${/\d/.test(s) ? 'd' : 's'}" data-k="${escH(s)}">${escH(s)}</button>`).join('')}</div></div>`;
     const ta = el.querySelector('textarea'), gut = el.querySelector('.gutter'), hl = el.querySelector('.ed-hl'), err = el.querySelector('.py-err');
-    const LH = 24, PAD = 8;
+    const LH = 24, PAD = 8, kbd = laptop();
+    el.classList.toggle('kbd', kbd);
     let mark = null;
     const lines = () => ta.value.split('\n').length;
     function sync() {
@@ -475,7 +536,9 @@
         else if (STMT.test(text) || /^[A-Za-z_؀-ۿ]+$/.test(t)) {
           // كلمة لوحدها (apples, count, i...) تبدأ سطر جديد بس لو اللي قبل المؤشر قيمة كاملة: range(5| أو say(x)|، مش say(| ولا "|
           const inStr = count(L.before, '"') % 2 === 1, filled = !inStr && /[\w؀-ۿ)":]$/.test(L.before);
-          if (L.text.trim() && (STMT.test(text) ? complete(L.text) || !L.after.trim() : complete(L.text) && filled)) {
+          // أمر بعد "x = " أو "(" يكمل نفس السطر (name = input(...))، مش سطر جديد
+          const waiting = /[=+\-*/<>(,]$/.test(L.before.trim());
+          if (L.text.trim() && (STMT.test(text) ? complete(L.text) || (!L.after.trim() && !waiting) : complete(L.text) && filled)) {
             // بعد أمر كامل: سطر جديد بنفس المسافة (حتى لو المؤشر كان جوّه علامتي التنصيص)
             const ind = indentFor(v, L.b + 1, L.text, text);
             s = e = L.b; t = '\n' + ind + t; if (caret >= 0) caret += 1 + ind.length;
@@ -567,7 +630,8 @@
     sync();
     return {
       get: () => ta.value,
-      set(v) { ta.value = v; pos = { s: v.length, e: v.length }; changed(); },
+      // على اللابتوب نركّز الكتابة فوراً (لوحة المفاتيح الحقيقية)، وعلى التلفون لا (ما نفتح لوحة المفاتيح لوحدنا)
+      set(v) { ta.value = v; pos = { s: v.length, e: v.length }; changed(); if (kbd) { try { ta.focus({ preventScroll: true }); ta.setSelectionRange(v.length, v.length); } catch (x) { /* */ } } },
       caret(i) { pos = { s: i, e: i }; try { ta.setSelectionRange(i, i); } catch (x) { /* */ } }, // بدون focus عشان لوحة مفاتيح التلفون ما تفتح لوحدها
       prepare,
       sel,
@@ -581,6 +645,9 @@
         const html = escH(msg).replace(/`([^`]*)`/g, '<code dir="ltr">$1</code>');
         err.innerHTML = (line ? `<b>${kind2 === 'tip' ? '💡' : '⚠️'} السطر <bdi>${line}</bdi>:</b> ` : '') + html;
         this.mark(line, kind2 !== 'tip');
+        // شاشة الناتج: نفس الخطأ بالأحمر كما تكتبه بايثون الحقيقية
+        const c = kind2 !== 'tip' && line ? consoleOn() : null;
+        if (c) c.error(line, api.lastError && api.lastError.line === line ? api.lastError.py : msg);
       },
       clear() { mark = null; err.hidden = true; sync(); },
       lock(on) { ta.readOnly = on; el.classList.toggle('locked', on); },
@@ -596,7 +663,78 @@
     return a.length > b.length ? { line: b.length + 1, text: '' } : null;
   }
 
-  const api = { compile, uses, lineCount, editor, diffLines, norm };
+  /* ---------- شاشة الناتج: مسرح أسود يعرض ما تطبعه بايثون الحقيقية (print)، ويسأل الطفل عند input ---------- */
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const testMode = () => typeof location !== 'undefined' && /[?&]test=1/.test(location.search);
+  class ConsoleStage {
+    constructor(el, level, color) { this.el = el; this.level = level; this.color = color; this.answers = []; this.out = []; }
+    mount() {
+      this.el.innerHTML = `<div class="con" dir="ltr"><div class="con-bar"><span></span><span></span><span></span><b>Python</b></div>
+        <pre class="con-out" id="conOut"></pre>
+        <form class="con-ask" id="conAsk" hidden dir="rtl"><label for="conIn" class="con-q"></label>
+          <div class="con-row"><input id="conIn" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done" aria-label="الجواب"><button type="submit" class="run con-go">↵</button></div></form>
+        ${this.level.copy ? '<button type="button" class="con-copy" id="conCopy">📋 خد كودك</button>' : ''}</div>`;
+      this.outEl = this.el.querySelector('#conOut'); this.ask = this.el.querySelector('#conAsk'); this.inp = this.el.querySelector('#conIn');
+      this.ask.addEventListener('submit', e => { e.preventDefault(); this.answer(); });
+      const cp = this.el.querySelector('#conCopy');
+      if (cp) cp.addEventListener('click', () => this.copy(cp));
+      api.console = this;
+      this.reset();
+    }
+    reset() { this.answers = []; this.out = []; this.resolve = null; if (this.outEl) this.outEl.innerHTML = '<span class="con-cur"></span>'; this.hide(); }
+    // سطر في الشاشة: cls فاضي = ناتج، in = سؤال وجواب، err = خطأ، ok = نجاح
+    line(text, cls) {
+      const cur = this.outEl.querySelector('.con-cur'), s = document.createElement('span');
+      s.className = 'con-l ' + (cls || ''); s.textContent = text;
+      this.outEl.insertBefore(s, cur); this.outEl.insertBefore(document.createTextNode('\n'), cur);
+      this.outEl.scrollTop = 1e6;
+    }
+    async exec(o) {
+      const d = ms => sleep(ms / (root.__speed || 1));
+      if (o.op === 'say') { const t = String(o.arg); this.out.push(t); this.line(t); if (root.Sfx) Sfx.tap(); await d(260); }
+      else if (o.op === 'input') {
+        let v = o.value;
+        if (v == null) { v = await this.askUser(o.prompt); o.resume(v); }
+        this.line(o.prompt + v, 'in');
+        await d(160);
+      } else if (o.op === 'loop') await d(60);
+      return true;
+    }
+    // الاختبار التلقائي: الأجوبة من المرحلة (inputs). وإلا صندوق سؤال بالعربي
+    askUser(prompt) {
+      const ins = this.level.inputs;
+      if (testMode() && root.__autoInput !== false && ins) return sleep(30).then(() => { const v = ins[this.answers.length]; return v == null ? '' : String(v); });
+      return new Promise(res => {
+        this.el.querySelector('.con-q').textContent = prompt || '…';
+        this.ask.hidden = false; this.inp.value = ''; this.resolve = res;
+        try { this.inp.focus({ preventScroll: true }); } catch (e) { /* */ }
+      });
+    }
+    answer() { if (!this.resolve) return; const v = this.inp.value, r = this.resolve; this.resolve = null; this.hide(); r(v); }
+    hide() { if (this.ask) this.ask.hidden = true; }
+    error(line, py) { this.line(`Traceback (most recent call last):\n  File "main.py", line ${line}`, 'err'); this.line(py, 'err b'); }
+    result() {
+      // المطلوب = ناتج الحل المرجعي بأجوبة الطفل نفسها (اسمه هو، رقمه هو)، وإلا expect الثابتة
+      const want = (this.level.solution && outputOf(this.level.solution, this.answers)) || (this.level.expect || []).map(String), got = this.out;
+      if (want.length === got.length && want.every((x, i) => x === got[i])) return { ok: true };
+      return { ok: false, reason: got.length < want.length ? 'con_short' : got.length > want.length ? 'con_long' : 'con_wrong' };
+    }
+    async celebrate() {
+      this.line('>>> ✓', 'ok');
+      const c = this.el.querySelector('.con');
+      if (c && root.gsap) await gsap.fromTo(c, { boxShadow: '0 0 0 0 #3ddc84' }, { boxShadow: '0 0 0 8px rgba(61,220,132,0)', duration: 0.5 });
+    }
+    // 📋 خد كودك: ينسخ البرنامج كما هو (بايثون حقيقية تشغّله)
+    copy(btn) {
+      const ta = document.querySelector('#code'), code = ta ? ta.value : '';
+      const ok = () => { btn.textContent = '✓ نُسِخ'; setTimeout(() => { btn.textContent = '📋 خد كودك'; }, 1600); };
+      try { navigator.clipboard.writeText(code).then(ok, ok); } catch (e) { ok(); }
+    }
+    destroy() { this.hide(); if (api.console === this) api.console = null; }
+  }
+
+  const api = { compile, outputOf, uses, lineCount, editor, diffLines, norm, fmt, ConsoleStage, console: null, lastError: null };
   root.PyLab = api;
+  if (root.Stages) root.Stages.console = ConsoleStage;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

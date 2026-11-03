@@ -436,7 +436,9 @@
       this.actions = []; this.lit = 0; this.bubble('');
       this.el.querySelectorAll('.lt').forEach(l => { l.className = 'lt'; l.style.removeProperty('--on'); });
       this.el.querySelectorAll('.pc').forEach(c => c.classList.remove('ok', 'bad'));
-      if (this.siraj) this.siraj.setChest('#ffd23e');
+      // مراحل الشروط: حالة المصباح في البداية (منوّر بلون أو مطفأ) تبان على صدر سراج
+      const init = this.level.init || {};
+      if (this.siraj) this.siraj.setChest(init.lamp ? LC()[init.lamp] || '#3a3d58' : '#ffd23e');
     }
     bubble(t) {
       const b = this.el.querySelector('#sayBubble');
@@ -451,7 +453,7 @@
       gsap.fromTo(c, { scale: 1.3 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
     }
     async exec(o) {
-      if (o.op === 'loop' || o.op === 'call') { await sleep(110); return true; }
+      if (o.op === 'loop' || o.op === 'call' || o.op === 'if') { await sleep(110); return true; }
       if (o.op === 'light' || o.op === 'off') {
         const c = o.op === 'off' ? 'off' : o.arg, k = this.lit++;
         this.actions.push(c); this.mark();
@@ -520,7 +522,8 @@
       this.reset();
     }
     reset() {
-      this.vals = {}; this.said = []; this.failReason = null;
+      // مراحل الشروط: الصناديق تبدأ بأرقام جاهزة (init.vars)
+      this.vals = Object.assign({}, (this.level.init || {}).vars); this.said = []; this.failReason = null;
       const want = this.level.target || {};
       this.names = (this.level.vars || []).slice();
       Object.keys(want).forEach(n => { if (!this.names.includes(n)) this.names.push(n); });
@@ -572,7 +575,7 @@
       this.bubble('');
     }
     async exec(o) {
-      if (o.op === 'loop' || o.op === 'call') { await sleep(110); return true; }
+      if (o.op === 'loop' || o.op === 'call' || o.op === 'if') { await sleep(110); return true; }
       if (o.op === 'set') {
         this.vals[o.name] = o.arg; this.paint(o.name); Sfx.snap();
         gsap.fromTo(this.box(o.name).querySelector('.vb-val'), { scale: 1.6 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
@@ -620,6 +623,7 @@
   function preview(kind, c) {
     if (kind === 'talk') return `<div class="pv-talk">${c.map(a => `<span class="pc">${talkChip(a)}</span>`).join('')}</div>`;
     if (kind === 'lights') return `<div class="pv-lights">${c.map(x => `<i style="background:${x === 'off' ? '#2a2d4a' : LC()[x]}"></i>`).join('')}</div>`;
+    if (kind === 'party') return `<div class="pv-talk">${c.map(a => `<span class="pc">${partyChip(a)}</span>`).join('')}</div>`;
     if (kind === 'vars') return `<div class="pv-num">💬 ${esc(c)}</div>`;
     if (kind === 'draw') {
       const xs = c.flatMap(s => [s[0], s[2]]), ys = c.flatMap(s => [s[1], s[3]]);

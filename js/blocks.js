@@ -23,11 +23,21 @@
     box: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 11l12-6 12 6v13l-12 6-12-6z" fill="#fff"/><path d="M4 11l12 6 12-6M16 17v13" stroke="#b07a2a" stroke-width="2" fill="none"/></svg>',
     book: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 6c5-1 9 0 12 3 3-3 7-4 12-3v20c-5-1-9 0-12 3-3-3-7-4-12-3z" fill="#fff"/><path d="M16 9v20" stroke="#c2185b" stroke-width="2"/></svg>',
     call: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M6 8l18 8-18 8 4-8z" fill="#fff"/></svg>',
+    // الشرط: طريق يتفرّع لطريقين
+    fork: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M16 29V17M16 17L7 8M16 17l9-9" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7" r="3.5" fill="#fff"/><circle cx="25" cy="7" r="3.5" fill="#fff"/></svg>',
     // رقصة: نوتة موسيقية مع شرارات
     dance: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M13 24V7l12-3v16" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="24.5" r="4.5" fill="#fff"/><circle cx="21.5" cy="20.5" r="4.5" fill="#fff"/><path d="M4 6l1.5 3M28 10l2-2M3 14l3-1" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
   };
 
-  const COLORS = { talk: '#e8579a', act: '#f08a24', move: '#3d8bff', pen: '#16a865', loop: '#8b5cf6', start: '#ffb400', light: '#4b4f6e', box: '#c27c0e', func: '#d6336c' };
+  const COLORS = { talk: '#e8579a', act: '#f08a24', move: '#3d8bff', pen: '#16a865', loop: '#8b5cf6', start: '#ffb400', light: '#4b4f6e', box: '#c27c0e', func: '#d6336c', cond: '#0e9f9f' };
+  // الشروط (بطاقة "لو"): القيمة المحفوظة، ونص بايثون المكتوب على البطاقة، وطريقة حسابها من حالة المصباح والصناديق
+  const CONDS = {
+    lamp_off: { py: 'lamp_off()', test: s => s.lamp === 'off' },
+    lamp_on: { py: 'lamp_on()', test: s => s.lamp !== 'off' },
+    apples_gt5: { py: 'apples > 5', test: s => (s.vars.apples || 0) > 5 },
+    apples_eq0: { py: 'apples == 0', test: s => !s.vars.apples },
+  };
+  const condField = { type: 'field_dropdown', name: 'COND', options: Object.entries(CONDS).map(([k, c]) => [c.py, k]) };
   // ألوان الأضواء: لون المصباح، ولون البطاقة (أغمق قليلاً عشان الكلام الأبيض يبان)
   const LIGHTS = { red: '#ff4d4f', yellow: '#ffd23e', green: '#3ddc84', blue: '#4fa3ff', purple: '#b07cff' };
   const LIGHT_CARD = { red: '#d93a3c', yellow: '#c99a00', green: '#1f9d55', blue: '#2f6fe0', purple: '#8b5cf6' };
@@ -99,6 +109,12 @@
     Object.assign({ type: 'func_def', message0: '%1 def %2', args0: [icon(ico.book), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }],
       message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], colour: COLORS.func, extensions: ['fname_def'] }, stmt),
     Object.assign({ type: 'func_call', message0: '%1 %2', args0: [icon(ico.call), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }], colour: COLORS.func, extensions: ['fname_call'] }, stmt),
+    // الشروط: لو (الشرط صح) اعمل ما بداخلها، وإلا (في بطاقة لو/وإلا) اعمل الجزء الثاني
+    Object.assign({ type: 'siraj_if', message0: '%1 if %2:', args0: [icon(ico.fork), condField],
+      message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], colour: COLORS.cond }, stmt),
+    Object.assign({ type: 'siraj_ifelse', message0: '%1 if %2:', args0: [icon(ico.fork), condField],
+      message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }],
+      message2: 'else:', message3: '%1', args3: [{ type: 'input_statement', name: 'ELSE' }], colour: COLORS.cond }, stmt),
   ];
   Blockly.common.defineBlocks(Blockly.common.createBlockDefinitionsFromJsonArray(DEFS));
   // إصبع الطفل يهتز: الضغطة ما تتحوّل لسحب يفصل البطاقة إلا بعد ١٢ بكسل (الافتراضي ٥)
@@ -118,7 +134,7 @@
   }
 
   // الحقل الأساسي لكل بطاقة (للكتابة المختصرة 'light_on:red' في المراحل)
-  const MAIN = { siraj_say: 'TEXT', light_on: 'C', var_set: 'V', var_add: 'V', var_sub: 'V', var_say: 'V', func_def: 'NAME', func_call: 'NAME' };
+  const MAIN = { siraj_say: 'TEXT', light_on: 'C', var_set: 'V', var_add: 'V', var_sub: 'V', var_say: 'V', func_def: 'NAME', func_call: 'NAME', siraj_if: 'COND', siraj_ifelse: 'COND' };
 
   // كود بايثون لكل بطاقة
   const G = PY.forBlock;
@@ -144,6 +160,9 @@
   G.var_say = b => `say(${b.getFieldValue('V')})\n`;
   G.func_def = (b, gen) => `def ${b.getFieldValue('NAME')}():\n${body(b, gen)}`;
   G.func_call = b => `${b.getFieldValue('NAME')}()\n`;
+  const condPy = b => (CONDS[b.getFieldValue('COND')] || CONDS.lamp_off).py;
+  G.siraj_if = (b, gen) => `if ${condPy(b)}:\n${body(b, gen)}`;
+  G.siraj_ifelse = (b, gen) => `if ${condPy(b)}:\n${body(b, gen)}else:\n${gen.statementToCode(b, 'ELSE') || gen.INDENT + 'pass\n'}`;
 
   const theme = Blockly.Theme.defineTheme('siraj', {
     base: Blockly.Themes.Classic,
@@ -170,19 +189,24 @@
   //  - لو بطاقة ثانية مختارة: بعدها مباشرة (حتى لو كانت داخل تكرار)
   //  - غير كده: في آخر البرنامج، وإذا آخر بطاقة تكرار فاضي ندخل جواه
   //  - تعريف كلمة جديدة يروح دايماً لآخر البرنامج، ونداء الكلمة ما يدخل جوّا تعريفها
+  // أول مكان فاضي داخل البطاقة: جوّا "لو" (DO)، ثم جوّا "وإلا" (ELSE) لو فاضي، وإلا بعد آخر بطاقة في DO
+  const emptyElse = b => !!(b.getInput('ELSE') && !b.getInputTargetBlock('ELSE'));
+  const slot = b => {
+    const inner = b.getInputTargetBlock('DO');
+    if (!inner) return b.getInput('DO').connection;
+    if (emptyElse(b)) return b.getInput('ELSE').connection;
+    return lastIn(inner).nextConnection;
+  };
   function target(ws, sel, type) {
     if (type === 'func_def') sel = null;
     if (type === 'func_call' && sel) for (let q = sel; q; q = q.getSurroundParent()) if (q.type === 'func_def') sel = q;
     if (sel && !sel.isDeadOrDying() && sel.type !== 'siraj_start' && sel.isEnabled()) {
-      if (hasDo(sel) && !(type === 'func_call' && sel.type === 'func_def')) {
-        const inner = sel.getInputTargetBlock('DO');
-        return inner ? lastIn(inner).nextConnection : sel.getInput('DO').connection;
-      }
+      if (hasDo(sel) && !(type === 'func_call' && sel.type === 'func_def')) return slot(sel);
       return sel.nextConnection;
     }
     const last = lastIn(startOf(ws));
-    const into = hasDo(last) && !last.getInputTargetBlock('DO') && !(last.type === 'func_def' && /^func_/.test(type || ''));
-    return into ? last.getInput('DO').connection : last.nextConnection;
+    const into = hasDo(last) && (!last.getInputTargetBlock('DO') || emptyElse(last)) && !(last.type === 'func_def' && /^func_/.test(type || ''));
+    return into ? slot(last) : last.nextConnection;
   }
 
   // يبني برنامجاً من صيغة الحل: 'نوع' أو ['نوع', {حقل: قيمة}] أو ['نوع', {..}, [بطاقات داخلية]]
@@ -201,6 +225,7 @@
       for (const [f, v] of Object.entries(fields || {})) b.setFieldValue(String(v), f);
       conn.connect(b.previousConnection);
       if (inner) loadIn(ws, inner, b.getInput('DO').connection);
+      if (step[3] && b.getInput('ELSE')) loadIn(ws, step[3], b.getInput('ELSE').connection); // الجزء الثاني من لو/وإلا
       conn = b.nextConnection;
     }
   }
@@ -281,6 +306,11 @@
   function nextConn(ws, d) {
     let b = d.after;
     if (!b) return lastIn(startOf(ws)).nextConnection;
+    // أول بطاقة في فرع "وإلا": نطلع لبطاقة لو/وإلا الأم وندخل في فرعها الثاني
+    if (d.firstElse) {
+      for (let k = d.afterDepth; k >= d.depth && b; k--) b = b.getSurroundParent();
+      return b && b.getInput('ELSE') ? b.getInput('ELSE').connection : null;
+    }
     if (d.afterDepth < d.depth && hasDo(b)) {
       const inner = b.getInputTargetBlock('DO');
       return inner ? lastIn(inner).nextConnection : b.getInput('DO').connection;
@@ -527,15 +557,31 @@
   }
 
   // يحوّل البرنامج المربوط تحت "start" لقائمة أوامر ينفّذها سراج
-  function compile(ws) {
+  // init: حالة البداية في المرحلة {lamp: 'red'|'off', vars: {apples: 7}}. الشروط تُحسب هنا أثناء التحويل،
+  // لأن البرنامج محدَّد تماماً: نتابع حالة المصباح (آخر ضوء) والصناديق مع كل أمر، فنعرف نتيجة كل "لو" في مكانها
+  function compile(ws, init) {
     const ops = [], defs = {};
+    const st = { lamp: (init && init.lamp) || 'off', vars: Object.assign({}, init && init.vars) };
     let halt = false, depth = 0;
     const err = (b, reason) => { ops.push({ id: b.id, op: 'error', reason }); halt = true; };
     const walk = b => {
       for (; b && !halt; b = b.getNextBlock()) {
         if (!b.isEnabled()) continue;
         const t = b.type, f = n => b.getFieldValue(n);
-        if (t === 'siraj_repeat') {
+        if (t === 'siraj_if' || t === 'siraj_ifelse') {
+          const c = CONDS[f('COND')], ok = !!(c && c.test(st));
+          ops.push({ id: b.id, op: 'if', arg: ok });
+          if (ok) walk(b.getInputTargetBlock('DO'));
+          else if (t === 'siraj_ifelse') walk(b.getInputTargetBlock('ELSE'));
+        } else if (t === 'light_on') { st.lamp = f('C'); ops.push({ id: b.id, op: 'light', arg: f('C') }); }
+        else if (t === 'light_off') { st.lamp = 'off'; ops.push({ id: b.id, op: 'off' }); }
+        else if (t === 'var_set') { st.vars[f('V')] = +f('N'); ops.push({ id: b.id, op: 'set', name: f('V'), arg: +f('N') }); }
+        else if (t === 'var_add' || t === 'var_sub') {
+          const n = t === 'var_add' ? +f('N') : -f('N');
+          st.vars[f('V')] = (st.vars[f('V')] || 0) + n;
+          ops.push({ id: b.id, op: 'add', name: f('V'), arg: n });
+        }
+        else if (t === 'siraj_repeat') {
           const n = +f('N');
           for (let k = 0; k < n && !halt; k++) { ops.push({ id: b.id, op: 'loop' }); walk(b.getInputTargetBlock('DO')); }
         } else if (t === 'func_def') defs[f('NAME')] = b;
@@ -550,11 +596,6 @@
         else if (t === 'pen_forward') ops.push({ id: b.id, op: 'forward', arg: +f('N') });
         else if (t === 'pen_right') ops.push({ id: b.id, op: 'turn', arg: +f('A') });
         else if (t === 'pen_left') ops.push({ id: b.id, op: 'turn', arg: -f('A') });
-        else if (t === 'light_on') ops.push({ id: b.id, op: 'light', arg: f('C') });
-        else if (t === 'light_off') ops.push({ id: b.id, op: 'off' });
-        else if (t === 'var_set') ops.push({ id: b.id, op: 'set', name: f('V'), arg: +f('N') });
-        else if (t === 'var_add') ops.push({ id: b.id, op: 'add', name: f('V'), arg: +f('N') });
-        else if (t === 'var_sub') ops.push({ id: b.id, op: 'add', name: f('V'), arg: -f('N') });
         else if (t === 'var_say') ops.push({ id: b.id, op: 'sayvar', name: f('V') });
         else ops.push({ id: b.id, op: t.replace(/^(siraj|go)_/, '') });
         if (ops.length > 2000) { if (depth) err(b, 'func_loop'); halt = true; }
@@ -572,7 +613,7 @@
     return ws;
   }
   function opsOf(list) { const ws = headless(list); const ops = compile(ws); ws.dispose(); return ops; }
-  function countOf(list) { return list.reduce((n, s) => n + 1 + (Array.isArray(s) && s[2] ? countOf(s[2]) : 0), 0); }
+  function countOf(list) { return list.reduce((n, s) => n + 1 + (Array.isArray(s) && s[2] ? countOf(s[2]) : 0) + (Array.isArray(s) && s[3] ? countOf(s[3]) : 0), 0); }
 
   // كود بايثون مع رقم السطر لكل بطاقة (عشان نلوّن السطر اللي شغّال)
   function toPython(ws) {
@@ -604,15 +645,24 @@
   // البرنامج الحالي كقائمة مسطّحة (للمقارنة بالحل في التلميح)
   function flatWs(ws) {
     const out = [];
-    const walk = (b, d) => { for (; b; b = b.getNextBlock()) { if (!b.isEnabled()) continue; out.push({ b, type: b.type, d }); if (hasDo(b)) walk(b.getInputTargetBlock('DO'), d + 1); } };
-    walk(startOf(ws).getNextBlock(), 0);
+    // br: الفرع (ELSE لبطاقات "وإلا")، first: أول بطاقة في فرع "وإلا" (الشبح يدخل هناك)
+    const walk = (b, d, br, first) => {
+      for (; b; b = b.getNextBlock()) {
+        if (!b.isEnabled()) continue;
+        out.push({ b, type: b.type, d, br, first }); first = false;
+        if (hasDo(b)) walk(b.getInputTargetBlock('DO'), d + 1, '', false);
+        if (b.getInput('ELSE')) walk(b.getInputTargetBlock('ELSE'), d + 1, 'ELSE', true);
+      }
+    };
+    walk(startOf(ws).getNextBlock(), 0, '', false);
     return out;
   }
-  function flatSol(list, d = 0, out = []) {
+  function flatSol(list, d = 0, out = [], br = '', first = false) {
     for (const s of list) {
-      const [type, fields, inner] = Array.isArray(s) ? s : [s];
-      out.push({ step: s, type, fields: fields || {}, d });
-      if (inner) flatSol(inner, d + 1, out);
+      const [type, fields, inner, els] = Array.isArray(s) ? s : [s];
+      out.push({ step: s, type, fields: fields || {}, d, br, first }); first = false;
+      if (inner) flatSol(inner, d + 1, out, '', false);
+      if (els) flatSol(els, d + 1, out, 'ELSE', true);
     }
     return out;
   }
@@ -621,10 +671,11 @@
     const a = flatWs(ws), s = flatSol(solution);
     for (let i = 0; i < s.length; i++) {
       const x = a[i], w = s[i];
-      if (!x) return { kind: 'next', step: w.step, type: w.type, line: lineOf(w.step), after: a[i - 1] && a[i - 1].b, afterDepth: a[i - 1] ? a[i - 1].d : -1, depth: w.d };
+      if (!x) return { kind: 'next', step: w.step, type: w.type, line: lineOf(w.step), after: a[i - 1] && a[i - 1].b, afterDepth: a[i - 1] ? a[i - 1].d : -1, depth: w.d, firstElse: !!w.first };
       const sameFields = Object.entries(w.fields).every(([k, v]) => String(x.b.getFieldValue(k)) === String(v));
-      if (x.type === w.type && x.d === w.d && sameFields) continue;
-      if (x.type === w.type && x.d === w.d) return { kind: 'field', block: x.b, line: lineOf(w.step) };
+      const samePlace = x.d === w.d && (x.br || '') === (w.br || '');
+      if (x.type === w.type && samePlace && sameFields) continue;
+      if (x.type === w.type && samePlace) return { kind: 'field', block: x.b, line: lineOf(w.step) };
       return { kind: 'wrong', block: x.b, line: lineOf(w.step) };
     }
     if (a.length > s.length) return { kind: 'extra', block: a[s.length].b };
@@ -678,7 +729,7 @@
   function clear(ws) { const s = startOf(ws), n = s.getNextBlock(); if (n) n.dispose(false); ws.getTopBlocks(false).forEach(b => { if (b !== s) b.dispose(false); }); }
 
   root.Blocks = {
-    DEFS, COLORS, LIGHTS, LIGHT_DOT, VARS, FUNCS, makeWorkspace, dispose, compile, python: toPython, countBlocks, startOf,
+    DEFS, COLORS, LIGHTS, LIGHT_DOT, VARS, FUNCS, CONDS, makeWorkspace, dispose, compile, python: toPython, countBlocks, startOf,
     load, opsOf, countOf, diff, glow, glowTool, clearGlow, clear, lineOf, peek, showTool,
     ghost: showGhost, gap: showGap, stepAt: (list, i) => (flatSol(list)[i] || {}).step, clearGhost, reveal, bugOn, BUG, tint,
   };

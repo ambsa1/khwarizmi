@@ -64,7 +64,7 @@ const only = process.argv[2]; // اختياري: اسم جزء الاختبار 
     const pg = await page(390, 844);
     // الكلمات والحشرات مخفية عن الصغار (tracksFor)، والأزرار مخلوطة فالحل بالترتيب من S.lseq
     const hidden = await pg.evaluate(() => { const p = SirajTest.player(3); return SirajTest.TRACKS.filter(t => !tracksFor(p).some(([x]) => x === t)).map(t => t.id).join(','); });
-    if (hidden !== 'funcs,bugs,pylab') { bad++; console.log('FAIL little tracks hidden: ' + hidden); }
+    if (!/^cond,funcs,bugs,pylab(,|$)/.test(hidden)) { bad++; console.log('FAIL little tracks hidden: ' + hidden); }
     const list = await pg.evaluate(() => SirajTest.TRACKS.filter(t => !t.noLittle).flatMap(t => t.levels.filter(l => l.kind !== 'py').map(l => [t.id, l.id])));
     for (const [tid, lid] of list) {
       const r = await pg.evaluate(async ([t, l]) => { SirajTest.open(t, l, 3); return await SirajTest.littleSolve(); }, [tid, lid]);

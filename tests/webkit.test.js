@@ -64,10 +64,19 @@ const keySel = k => `.key[data-k="${k.replace(/\\/g, '\\\\').replace(/"/g, '\\"'
 async function pyTest(browser, name, opts) {
   const pg = await page(browser, opts, name);
   const tap = sel => (opts.hasTouch ? pg.tap(sel) : pg.click(sel));
-  const levels = await pg.evaluate(() => SirajTest.TRACKS.find(t => t.id === 'pylab').levels.map(l => l.id));
-  for (const id of levels) {
-    await pg.evaluate(i => SirajTest.open('pylab', i), id);
+  // كل مراحل الكتابة: المختبر + مسارات شاشة الناتج (io, errs, proj)؛ أجوبة input() من inputs المرحلة (وضع الاختبار)
+  const levels = await pg.evaluate(() => SirajTest.TRACKS.filter(t => t.kind === 'py').flatMap(t => t.levels.map(l => [t.id, l.id])));
+  for (const [tid, id] of levels) {
+    await pg.evaluate(([t, i]) => SirajTest.open(t, i), [tid, id]);
     await pg.waitForTimeout(450);
+    // بطاقة الفكرة (أول مرحلة في المسار) تغطي الشاشة: نضغط "هيا نجرب" مثل الطفل
+    for (let k = 0; k < 3; k++) {
+      const card = await pg.evaluate(() => !!document.querySelector('[data-act="idea-ok"]'));
+      if (!card) break;
+      await pg.waitForTimeout(400); // قفل النافذة (S.lock) ٣٥٠ مللي بعد ظهورها
+      await pg.evaluate(() => { const b = document.querySelector('[data-act="idea-ok"]'); if (b) b.click(); });
+      await pg.waitForTimeout(250);
+    }
     const keys = await pg.$$eval('.key', bs => bs.map(b => b.dataset.k));
     let ok = true, steps = 0, why = '';
     for (; steps < 30; steps++) {
@@ -86,7 +95,7 @@ async function pyTest(browser, name, opts) {
     await tap('#run');
     const r = await pg.waitForFunction(() => SirajTest.S.lastResult, null, { timeout: 15000 }).then(x => x.jsonValue()).catch(() => null);
     const code = await pg.evaluate(() => SirajTest.S.ed ? SirajTest.S.ed.get() : '');
-    check(ok && r && r.won && r.stars === 3, `${name} pylab ${id} solved by hint + key taps only (${steps} hints)`, ok ? JSON.stringify(r) : why);
+    check(ok && r && r.won && r.stars === 3, `${name} ${tid} ${id} solved by hint + key taps only (${steps} hints)`, ok ? JSON.stringify(r) : why);
     if (!(r && r.won)) console.log(code);
     await pg.evaluate(() => { SirajTest.S.lastResult = null; document.querySelector('#modal').innerHTML = ''; });
   }
@@ -118,6 +127,28 @@ async function pyTest(browser, name, opts) {
     const st = await pg.evaluate(() => { const c = getComputedStyle(document.querySelector('#code')); return c.direction + ' ' + c.unicodeBidi; });
     check(/^ltr (isolate|plaintext)/.test(st), `${name} code editor is LTR + isolated bidi`, st);
     await shot(pg, 'py', name + '-y2-arabic');
+  }
+  // شاشة الناتج: input() تفتح صندوق سؤال حقيقي، الطفل يكتب الجواب ويضغط ↵، والناتج يظهر ويفوز
+  {
+    await pg.evaluate(() => { window.__autoInput = false; SirajTest.open('io', 'io4'); SirajTest.S.drafts = {}; SirajTest.loadSolution(); SirajTest.S.lastResult = null; });
+    await pg.waitForTimeout(300);
+    await tap('#run');
+    const asked = await pg.waitForSelector('#conAsk:not([hidden])', { timeout: 5000 }).then(() => true).catch(() => false);
+    check(asked, `${name} console input() opens the Arabic prompt box`);
+    if (asked) { await pg.fill('#conIn', 'عمر'); await pg.press('#conIn', 'Enter'); }
+    const r = await pg.waitForFunction(() => SirajTest.S.lastResult, null, { timeout: 8000 }).then(x => x.jsonValue()).catch(() => null);
+    const out = await pg.$$eval('.con-l', ls => ls.map(l => l.textContent));
+    check(r && r.won && out.includes('مرحبا عمر') && out.some(l => /^ما اسمك؟عمر$/.test(l)), `${name} console prints greeting with typed name`, JSON.stringify({ r, out }));
+    await shot(pg, 'py', name + '-console-io4');
+    // خطأ حقيقي بالأحمر في الشاشة (SyntaxError + رقم السطر) قبل الإصلاح
+    await pg.evaluate(() => { window.__autoInput = true; SirajTest.open('errs', 'e3'); SirajTest.S.drafts = {}; SirajTest.S.lastResult = null; document.querySelector('#modal').innerHTML = ''; });
+    await pg.waitForTimeout(300);
+    await tap('#run');
+    await pg.waitForFunction(() => SirajTest.S.lastResult, null, { timeout: 8000 }).catch(() => null);
+    const errs = await pg.$$eval('.con-l.err', ls => ls.map(l => l.textContent).join('\n'));
+    check(/line 2/.test(errs) && /NameError: name 'nmae' is not defined/.test(errs), `${name} console shows a real Python NameError with the line number`, JSON.stringify(errs));
+    await shot(pg, 'py', name + '-console-e3');
+    await pg.evaluate(() => { SirajTest.S.lastResult = null; document.querySelector('#modal').innerHTML = ''; });
   }
   await pg.context().close();
 }

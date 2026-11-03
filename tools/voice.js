@@ -51,6 +51,16 @@ for (const [k, v] of Object.entries(MT)) out.push({ key: k, text: v });
 const ST = require('../js/studio/texts.js');
 for (const [k, v] of Object.entries(ST)) out.push({ key: k, text: v });
 
+// مسارات شاشة الناتج: ملفاتها بتضيف على الجداول نفسها عند التحميل، فنوفّرها كمتغيرات عامة ثم نعيد الجمع
+globalThis.SIRAJ_TEXTS = T; globalThis.TRACKS = TRACKS;
+require('../js/texts-py.js'); require('../js/levels-py.js');
+for (const [k, v] of Object.entries(T.SAY)) out.push({ key: k, text: v });
+for (const t of TRACKS) for (const L of t.levels) out.push({ key: 'goal_' + L.id, text: L.goal });
+
+// دفتر البرمجة (lr_)
+const LR = require('../js/learn/texts.js');
+for (const [k, v] of Object.entries(LR)) out.push({ key: k, text: v });
+
 // مفتاح واحد لكل ملف صوت (الأخير يكسب)، عشان ما يتولّد نفس الملف مرتين في نفس الوقت
 const uniq = [...new Map(out.map(i => [i.key, i])).values()];
 fs.writeFileSync(path.join(__dirname, 'voice_texts.json'), JSON.stringify(uniq, null, 1));
