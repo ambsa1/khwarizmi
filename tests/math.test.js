@@ -124,7 +124,8 @@ function layoutProblems() {
   const acts = pg => pg.evaluate(() => MATH.sections.flatMap(s => s.activities.map(a => [s.id, a.id])));
   // كل نشاط متوقَّع موجود في MATH.sections (المصدر الوحيد لقائمة الأنشطة)
   const EXPECTED = ['count', 'tapnum', 'more', 'order', 'evenodd', 'compare', 'shapes', 'pattern', 'sort', 'addobj', 'subobj', 'numline', 'addnum', 'story', 'twostep',
-    'groups', 'tables', 'share', 'factor', 'longer', 'heavy', 'clock', 'week', 'pizza', 'shop', 'fraccmp', 'change', 'rocket', 'sudoku', 'rule', 'balance'];
+    'groups', 'tables', 'share', 'factor', 'longer', 'heavy', 'clock', 'week', 'pizza', 'shop', 'fraccmp', 'change', 'rocket', 'sudoku', 'rule', 'balance',
+    'memory', 'odd', 'seq', 'missing', 'shadow', 'rotate', 'fastcount', 'logic'];
   const checkActs = async pg => {
     const ids = (await acts(pg)).map(x => x[1]);
     EXPECTED.forEach(id => { if (!ids.includes(id)) fail(`activity missing from MATH.sections: ${id}`); });

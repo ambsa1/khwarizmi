@@ -5,7 +5,7 @@
 
   const KEY = 'khwarizmi.v1';
   // بيانات أطفال العائلة مشفّرة برمز العائلة (tools/family.js)، فأسماؤهم لا تظهر في الكود المنشور
-  const FAMILY_ENC = 'AXSmhFOEpnaAYTjzx1lKTjHMvY006oSIhQH0DCoqbIvxk+Y2HhhYUXIvXAhNdaIPz3zH8PzYZWxFDKx7T1NzW/0BdoF1YvZ9/DN+yhgWeBhlzkPUbPrOhtenPt7tTD+IEQzWCTJ+uoZ4S85vF5VoUuCM/NDo8SPCrZie2+QtCR0z0XvWPkH89B95Vx8idDm++B4C5OcEkcJIaE2Vhisd+RpvbxSdIez7F5mi2QeMFSARHJH+Me4sRxbnAU1sMRU5mEsWkGQgoCd2tfkRfrApp40KbDZdp57U0LcehZVUlrt6L1nqILwJnZtklBU3SpMuNDAdoCJlOQZnNAAyBuqC0IWFYjdGRlotIKPCJmzrkvKDnR861CSeHHl+iF0u06VldvRREG8dHkIX9rvyaaMrDgkYB+o8VLO/5C7E+hZmjin4xF7JOu1rrBhqX9c2YM8nuWfRlEL0w9saDqrXUCfpozsDID5POLv0NzboJ3iWvnNh7qVgAc6gcq7DIToqxhwabpjWxtViMtzuFnI4JqyOcLSuRA1VfkWa825s6Q1UQyK65Jwn+tCzUA6ELF3mLvbxqBzZdu4uk7GIlmIIBDvvMeTVSHAFfQ==';
+  const FAMILY_ENC = 'AVFpQPSaHw3IFCWHDiJSYXiM1ltHPT5hsSXzu2S1dU7q3P3hlHaqnEETVVV4iUZt6GX4Hu1YZbrNdff0eGNaGYdt8quHnGduWt2qZUUYy1rmRDJrasBtmfiqOhAa2qIT4hWce6xGYb9bhVYKpM5nLkg6DFmOWf37wbxnb8M21eJnLCqB3UZs8f8TA7f5jk3KgIqu3U+nu0g5Pcu0jDsMbvh6L4LheUHMZL2HVWqOF7DpvvS+Ysf/OlBl81E0b7GINekgivYdVIHc9m6w4B9WLZJ9NLmTIydrgbW4UQ6WSGMFE7kwkWcd/JhybfezcpnaJlRSFOH4voQ8XMV4OvHv/ZoFp6l2ya8B+/hDCHX15A3RrMZxbYfo2d4n6LfZEyG9yY7bYX6TiaTL27WqOZFuIj5QNKOmJTUP22qKpKGU/205n6Ys1ca5UxsNQTG1RvwI7/Ko3m+G8auHOGrqAfYhbekQDXtDPS/EcL6fnBP3/4pkkln10ZNUZacrmxPfxJyg0mjCaDAtNMtN8D4Qbwa+YBGYJv/JxH6h1bU7Xh74ir2Meu/zNXBCqBF0JV/0SnMFvGDKcWPCAro3r0b4n7cmSuME8dw3lAIEoNtBTZogMVk9iD8IHsc=';
   const APP = 'khwarizmi';
   const LIMITS = [0, 15, 30, 45, 60, 90]; // دقائق اللعب في اليوم (0 = بدون حد)
   const MAX_PLAYERS = 40;

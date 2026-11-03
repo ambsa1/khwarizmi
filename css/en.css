@@ -267,3 +267,51 @@
   .en-spell.words .en-slot { min-width: clamp(52px, 13vw, 100px); font-size: clamp(20px, 4.5vh, 34px); }
   .en-spell.words .en-tile { font-size: 28px; }
 }
+
+/* ---------- اللابتوب: شاشة النشاط على عرض الشاشة (مثل مستوى البرمجة) — الصورة/السؤال في جهة (٥٥٪) والاختيارات في الجهة الأخرى (٤٥٪) ----------
+   (آخر الملف عشان يغلب كل القواعد فوق؛ التلفون والتابلت لا يتغيّران) */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .en.en-play { max-width: 1700px; }
+  .en-learn, .en-q, .en-match, .en-spell { padding: 36px 32px 24px; }
+  /* بطاقات التعلّم: بطاقة أكبر وأزرار أكبر */
+  .en-lrow { gap: clamp(20px, 3vw, 60px); }
+  .en-card { width: min(46vw, 720px); height: min(100%, 760px); --ps: clamp(100px, min(20vw, 30vh), 280px); border-radius: 40px; gap: 10px; }
+  .en-cword { font-size: clamp(40px, min(6vw, 10vh), 96px); }
+  .en-cword.mid { font-size: clamp(32px, min(4.6vw, 8vh), 76px); }
+  .en-cword.long { font-size: clamp(24px, min(3.4vw, 6.5vh), 56px); }
+  .en-car { font-size: clamp(20px, 3.2vh, 32px); }
+  .en-nav { width: 88px; height: 88px; font-size: 40px; }
+  /* سؤال + صور: السؤال يمين والصور شمال */
+  .en-q { display: grid; grid-template-columns: minmax(0, 55fr) minmax(0, 45fr); grid-template-rows: minmax(0, 1fr); align-items: center; justify-items: center; column-gap: 32px; }
+  .en-prompt { grid-column: 1; grid-row: 1; max-width: 100%; width: 100%; height: 100%; }
+  .en-opts { grid-column: 2; grid-row: 1; align-self: center; width: 100%; max-width: 100%; gap: 24px; }
+  .en-opts.n2 { --s: min(18vw, 40vh, 300px); grid-template-columns: repeat(2, var(--s)); }
+  .en-opts.n3 { --s: min(13.5vw, 36vh, 260px); grid-template-columns: repeat(3, var(--s)); }
+  .en-opts.n4, .en-opts.n4:not(.k-read):not(.k-count) { --s: min(19vw, 32vh, 280px); grid-template-columns: repeat(2, var(--s)); }
+  .en-ear { width: clamp(120px, 28vh, 220px); height: clamp(120px, 28vh, 220px); font-size: clamp(56px, 12vh, 96px); }
+  .en-word { max-width: 100%; font-size: clamp(40px, min(6vw, 14vh), 110px); padding: 14px 44px; border-radius: 34px; }
+  .en-word.mid { font-size: clamp(32px, min(4.5vw, 11vh), 84px); }
+  .en-word.long { font-size: clamp(24px, min(3.2vw, 8vh), 60px); padding: 12px 28px; }
+  .en-objs { max-width: min(48vw, 640px); font-size: clamp(32px, 8vh, 68px); padding: 14px 20px; }
+  .en-objs.many { font-size: clamp(28px, 6.5vh, 56px); max-width: min(48vw, 560px); }
+  .en-shape { width: clamp(160px, 44vh, 360px); }
+  /* صِل: الصور يمين والكلمات عمود شمال */
+  .en-match { display: grid; grid-template-columns: minmax(0, 55fr) minmax(0, 45fr); align-items: center; justify-items: center; column-gap: 32px; }
+  .en-mpics, .en-mpics.n4 { --s: min(16vw, 34vh, 240px); grid-template-columns: repeat(3, var(--s)); gap: 20px; }
+  .en-mpics.n4 { --s: min(16vw, 32vh, 280px); grid-template-columns: repeat(2, var(--s)); }
+  .en-mwords, .en-mwords.n4 { grid-template-columns: minmax(0, 1fr); width: min(100%, 520px); gap: 18px; }
+  .en-mw { min-height: 84px; font-size: clamp(26px, 2.4vw, 44px); border-radius: 22px; }
+  .en-mw.mid { font-size: clamp(22px, 2vw, 36px); }
+  .en-mw.long { font-size: clamp(18px, 1.6vw, 28px); }
+  /* التهجئة: الصورة يمين، الخانات والحروف شمال */
+  .en-spell { display: grid; grid-template-columns: minmax(0, 45fr) minmax(0, 55fr); grid-template-rows: 1fr auto auto 1fr; column-gap: 32px; row-gap: 28px; align-items: center; justify-items: center; }
+  .en-spic { grid-row: 2 / 4; grid-column: 1; --ps: clamp(100px, 30vh, 220px); min-width: 240px; min-height: 200px; padding: 20px 36px; border-radius: 36px; }
+  .en-ear-s { width: 56px; height: 56px; font-size: 28px; bottom: -14px; left: -14px; }
+  .en-slots { grid-row: 2; grid-column: 2; gap: 10px; max-width: 100%; }
+  .en-tiles { grid-row: 3; grid-column: 2; max-width: 100%; gap: 12px; }
+  .en-full { position: static; width: 100%; margin: 0; font-size: 28px; }
+  .en-slot { width: clamp(48px, 5vw, 80px); height: clamp(60px, 10vh, 92px); font-size: clamp(32px, 7vh, 56px); border-radius: 18px; }
+  .en-tile { min-width: 72px; height: 80px; font-size: 42px; padding: 0 16px; border-radius: 20px; }
+  .en-spell.words .en-slot { min-width: clamp(70px, 8vw, 130px); font-size: clamp(24px, 5vh, 40px); padding: 0 12px; }
+  .en-spell.words .en-tile { font-size: 32px; padding: 0 20px; }
+}

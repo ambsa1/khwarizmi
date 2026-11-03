@@ -143,3 +143,35 @@
 .lr-wsj svg { width: 100%; height: 100%; overflow: visible; }
 .lr-wcard h2 { margin: 6px 0 8px; font: 800 clamp(20px, 3vh, 26px)/1.4 var(--head); }
 .lr-wacts { display: flex; gap: 10px; margin-top: 12px; }
+
+/* ---------- اللابتوب: صفحات الدفتر على عرض الشاشة (مثل مستوى البرمجة) — الصورة/الكود في جهة (٥٥٪) والكلام/الاختيارات في الجهة الأخرى (٤٥٪) ----------
+   التلفون والتابلت لا يتغيّران */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .lr.lr-play { max-width: 1700px; }
+  .lr-bub-t { font-size: 19px; }
+  .lr-stage { padding: 32px 32px 14px; justify-content: center; }
+  .lr-story, .lr-codes, .lr-q { display: grid; grid-template-columns: minmax(0, 55fr) minmax(0, 45fr); align-items: center; justify-items: center; column-gap: 40px; row-gap: 16px; max-width: 1500px; width: 100%; flex: 1; min-height: 0; }
+  /* القصّة: الصورة يمين والكلام شمال */
+  .lr-story { grid-template-rows: minmax(0, 1fr) auto; }
+  .lr-pic { grid-column: 1; grid-row: 1 / -1; height: 100%; }
+  .lr-line { grid-column: 2; grid-row: 1; font-size: clamp(24px, 2.2vw, 38px); line-height: 1.6; align-self: center; }
+  .lr-story > .lr-score { grid-column: 2; grid-row: 2; font-size: 44px; align-self: start; }
+  .lr-emo { font-size: clamp(90px, 18vmin, 220px); }
+  .lr-badge { font-size: clamp(32px, 6vmin, 56px); }
+  .lr-steps { width: min(100%, 460px); gap: 12px; } .lr-steps li { font-size: clamp(18px, 2.4vh, 26px); padding: 12px 18px; } .lr-steps li::before { width: 38px; height: 38px; font-size: 19px; }
+  .lr-pc-scr { width: clamp(220px, 44vmin, 420px); } .lr-box-pic { width: clamp(180px, 34vmin, 280px); }
+  .lr-out { font-size: clamp(18px, 2.6vh, 26px); padding: 10px 24px; }
+  .lr-vsc { max-width: 100%; max-height: 64vh; font-size: clamp(12px, 1.9vh, 18px); }
+  /* الكود: الصندوق يمين والشرح شمال */
+  .lr-codes > .lr-code { grid-column: 1; max-width: 100%; width: 100%; font-size: clamp(17px, 1.5vw, 26px); padding: 16px 18px; border-radius: 20px; }
+  .lr-codes > .lr-code.big { font-size: clamp(19px, 1.6vw, 28px); }
+  .lr-expl { grid-column: 2; font-size: clamp(22px, 2vw, 34px); line-height: 1.6; min-height: 0; }
+  /* الأسئلة: السؤال والكود يمين والاختيارات عمود شمال */
+  .lr-q { grid-template-rows: auto auto minmax(0, 1fr); align-content: center; }
+  .lr-qdots { grid-column: 1; grid-row: 1; margin: 0; }
+  .lr-qt { grid-column: 1; grid-row: 2; font-size: clamp(24px, 2.2vw, 36px); line-height: 1.5; }
+  .lr-q > .lr-code.q { grid-column: 1; grid-row: 3; max-width: 100%; width: 100%; font-size: clamp(16px, 1.3vw, 23px); align-self: start; }
+  .lr-opts, .lr-opts.n2, .lr-opts.n3 { grid-column: 2; grid-row: 1 / -1; grid-template-columns: minmax(0, 1fr); max-width: 560px; gap: 16px; }
+  .lr-opt { min-height: 84px; font-size: clamp(20px, 1.6vw, 28px); padding: 14px 22px; border-radius: 22px; }
+  .lr-foot { padding-bottom: 20px; } .lr-next { max-width: 520px; height: 68px; }
+}

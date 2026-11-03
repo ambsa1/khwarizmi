@@ -430,3 +430,85 @@
   .mt-tokb.mt-ch { width: 96px; height: 96px; }
   .mt-scene.mt-trays.nums .mt-ch.mt-tray { max-width: 280px; max-height: 280px; }
 }
+
+/* ---------- اللابتوب: شاشة النشاط على عرض الشاشة (مثل مستوى البرمجة) — المشهد في جهة (٥٥٪) والاختيارات في الجهة الأخرى (٤٥٪) ----------
+   لو ما فيش اختيارات (المشهد نفسه هو اللعبة) المشهد ياخد العرض كله. التلفون والتابلت لا يتغيّران. */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .mt.mt-play { max-width: 1700px; }
+  .mt-game { display: grid; grid-template-columns: minmax(0, 55fr) minmax(0, 45fr); grid-template-rows: minmax(0, 1fr); align-items: center; justify-items: center; column-gap: 28px; padding: 34px 32px 22px; }
+  .mt-game.mt-g-speed { padding-left: 84px; }
+  .mt-scene { grid-column: 1; grid-row: 1; width: 100%; height: 100%; max-width: none; min-height: 0; gap: 18px; }
+  .mt-s-speed .mt-scene { max-width: none; }
+  .mt-choices { grid-column: 2; grid-row: 1; max-width: 100%; max-height: 100%; gap: 20px; }
+  .mt-game:has(> .mt-choices:empty) { grid-template-columns: minmax(0, 1fr); }
+  .mt-game:has(> .mt-choices:empty) .mt-scene { grid-column: 1 / -1; max-width: 1200px; }
+  .mt-ch { min-width: clamp(120px, 7.5vw, 150px); height: clamp(108px, 6.6vw, 130px); padding: 0 22px; font-size: clamp(54px, 3.3vw, 64px); border-radius: 30px; }
+  .mt-ch.txt { font-size: clamp(26px, 2.2vw, 40px); min-width: 130px; }
+  .mt-g-tapnum .mt-choices.many .mt-ch { min-width: 124px; }
+  .mt-choices.mt-bins { flex-wrap: nowrap; width: 100%; max-width: 100%; height: min(100%, 440px); gap: 16px; }
+  .mt-bin { min-height: 0; height: 100%; max-height: none; }
+  .mt-bin-lbl { width: 56px; height: 56px; } .mt-sw { width: 48px; height: 48px; } .mt-got span { width: 30px; height: 30px; }
+  .mt-choices.mt-wallet { gap: 26px; }
+  .mt-coin { width: 68px; height: 68px; font-size: 28px; } .mt-coin.c5 { width: 78px; height: 78px; font-size: 32px; } .mt-coin.c10 { width: 88px; height: 88px; font-size: 36px; }
+  .mt-tokb.mt-ch { width: 120px; height: 120px; }
+  .mt-pzb.mt-ch { width: clamp(100px, 22vh, 180px); height: clamp(100px, 22vh, 180px); }
+  .mt-frb.mt-ch { width: 104px; height: 124px; font-size: 36px; }
+  .mt-clockb.mt-ch { width: clamp(110px, 24vh, 190px); height: clamp(110px, 24vh, 190px); }
+  .mt-fit.mt-ch { --c: 130px; }
+  /* المشهد أكبر */
+  .mt-eq b, .mt-eq i { font-size: clamp(32px, 6vw, 72px); }
+  .mt-eq.xl b, .mt-eq.xl i { font-size: clamp(48px, 9vw, 120px); }
+  .mt-bignum { font-size: clamp(60px, 18vmin, 150px); }
+  .mt-eo-num { font-size: clamp(48px, 12vmin, 96px); }
+  .mt-daycard b { font-size: clamp(36px, 8vmin, 66px); }
+  .mt-rep { font-size: clamp(20px, 2.4vh, 32px); }
+  .mt-rep.mt-days { font-size: clamp(15px, 2vh, 22px); max-width: 100%; }
+  .mt-train-wrap, .mt-nl, .mt-patrow, .mt-ruler, .mt-ladder, .mt-prow.mt-ch, .mt-pickt-row { max-width: 100%; width: 100%; }
+  .mt-nl { padding: 44px 34px 34px; } .mt-tick b { font-size: clamp(16px, 2.2vh, 24px); } .mt-frog { font-size: 44px; top: -36px; }
+  .mt-hop { height: 84px; padding: 0 24px; } .mt-hop span, .mt-hop b { font-size: 36px; } .mt-reset { width: 68px; height: 68px; font-size: 30px; }
+  .mt-car { max-width: 120px; height: clamp(70px, 12vh, 110px); } .mt-car b { font-size: clamp(28px, 4vh, 46px); } .mt-loco { font-size: clamp(60px, 14vh, 110px); }
+  .mt-patrow .mt-tok { width: min(clamp(56px, 9vh, 96px), calc((min(55vw, 1000px) - 76px - var(--n) * 6px) / var(--n))); }
+  .mt-patrow .mt-tnum { font-size: min(clamp(28px, 5vh, 46px), calc((min(55vw, 1000px) - 76px) / var(--n) / 2)); }
+  .mt-oneshape { width: min(70vh, 100%, 420px); }
+  .mt-clockbox { max-height: min(76vh, 560px); } .mt-digital { font-size: clamp(60px, 14vh, 120px); }
+  .mt-pz-box { max-height: min(74vh, 560px); } .mt-pz-goal { font-size: clamp(36px, 7vh, 64px); }
+  .mt-sdk { width: min(100%, 70vh, 520px); }
+  .mt-scale { width: min(100%, 760px); height: min(100%, 480px); }
+  .mt-mbox { width: clamp(70px, 14vh, 130px); font-size: clamp(36px, 7vh, 66px); } .mt-mbox.num { min-width: clamp(70px, 14vh, 130px); font-size: clamp(28px, 5.5vh, 56px); }
+  .mt-pan-e { font-size: clamp(60px, 14vh, 120px); }
+  .mt-item { width: clamp(72px, 13vh, 120px); height: clamp(72px, 13vh, 120px); }
+  .mt-tbtn { width: clamp(120px, 20vh, 170px); font-size: 42px; } .mt-pickt-sj { width: clamp(120px, 26vh, 220px); }
+  .mt-item-card { padding: 14px 40px; } .mt-goods { font-size: clamp(80px, 20vh, 150px); } .mt-tag { font-size: 34px; }
+  .mt-tray { width: min(100%, 700px); min-height: 110px; } .mt-sum { font-size: 36px; }
+  .mt-rules { padding: 16px 28px; gap: 12px; } .mt-rl b, .mt-rl i { font-size: clamp(28px, 5vh, 48px); }
+  .mt-sj { width: clamp(90px, 22vh, 200px); } .mt-ear { width: 96px; height: 96px; font-size: 42px; }
+  .mt-ear-row.sm .mt-sj { width: clamp(70px, 14vh, 120px); } .mt-ear-row.sm .mt-ear { width: 72px; height: 72px; font-size: 32px; }
+  .mt-scene.mt-trays.nums .mt-ch.mt-tray { max-width: 340px; max-height: 340px; }
+  .mt-ch.mt-tray { max-height: 520px; }
+  .mt-timer { width: min(100%, 560px); height: 16px; }
+}
+
+/* ===== ٩ ألعاب الذكاء ===== */
+.mt-s-brain .mt-stage { background: radial-gradient(120% 80% at 50% 0%, #fbf8ff, #e6dcff); }
+.mt-br-em { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.mt-br-sil { filter: brightness(0); opacity: .82; }
+/* شبكة أزرار داخل المشهد (الذاكرة، الشاذّ، الأضواء) */
+.mt-scene.mt-br-pick { display: grid; gap: 6px; justify-content: center; align-content: center; --c: 72px; }
+.mt-br-pick .mt-ch { width: var(--c); height: var(--c); min-width: 0; padding: 0; font-size: calc(var(--c) * .56); border-radius: 22%; }
+.mt-br-card.mt-ch { background: linear-gradient(145deg, #8b5cf6, #c4a7ff); color: #fff; box-shadow: 0 6px 0 #5b3bb8; }
+.mt-br-card .bk { font-size: calc(var(--c) * .42); opacity: .9; }
+.mt-br-card .fc { display: none; }
+.mt-br-card.up, .mt-br-card.done { background: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.12); }
+.mt-br-card.up .fc, .mt-br-card.done .fc { display: inline-flex; }
+.mt-br-card.up .bk, .mt-br-card.done .bk { display: none; }
+.mt-br-card.done { background: #e4fbe9; box-shadow: 0 6px 0 #9bd9ad; pointer-events: none; }
+.mt-br-light.mt-ch { border-radius: 50%; background: var(--lc); opacity: .5; filter: saturate(.5); transition: opacity .12s, filter .12s, transform .12s, box-shadow .12s; }
+.mt-br-light.lit { opacity: 1; filter: none; transform: scale(1.08); box-shadow: 0 0 0 5px #fff, 0 0 28px var(--lc); }
+/* اختيارات صور كبيرة */
+.mt-choices.mt-br-big .mt-ch { width: clamp(68px, 17vmin, 108px); height: clamp(68px, 17vmin, 108px); min-width: 0; padding: 0; font-size: clamp(36px, 9vmin, 60px); }
+.mt-br-target { flex: none; font-size: clamp(72px, 24vmin, 160px); line-height: 1; background: rgba(255,255,255,.8); border-radius: 28px; padding: 10px 26px; box-shadow: 0 6px 0 rgba(0,0,0,.08); }
+/* ستارة فوق الأشياء (ما الذي اختفى؟ / عدّ بسرعة) */
+.mt-br-wrap { position: relative; flex: 1; min-height: 0; width: 100%; display: flex; }
+.mt-br-curtain { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-size: clamp(64px, 22vmin, 130px); line-height: 1; background: rgba(255,255,255,.94); border-radius: 24px; z-index: 2; }
+.mt-br-curtain.on { display: flex; }
+.mt-obj.mt-br-q { background: #fff8de; box-shadow: 0 0 0 3px var(--gold); color: #c9971c; font: 800 calc(var(--c) * .6)/1 var(--head); animation: mtq 1.2s ease-in-out infinite; }
