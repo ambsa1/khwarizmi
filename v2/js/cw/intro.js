@@ -121,7 +121,7 @@
         q('#it').innerHTML = `<div class="cw-card cw-drag-card"><div class="cw-art md">${ART[id]()}</div><small>${A.text('cw_p_' + id)}</small></div>`;
         card = q('#it .cw-card');
         if (root.gsap) gsap.from(card, { scale: 0.4, opacity: 0, duration: 0.4, ease: 'back.out(2)' });
-        A.say(i === 0 ? ['cw_ipo_intro', 'cw_p_' + id] : 'cw_p_' + id);
+        A.say(i === 0 ? ['cw_ipo_intro', 'cw_p_' + id] : 'cw_p_' + id, { pri: 'instruction' }); // اسم الجزء هنا هو سؤال الجولة
         busy = false;
         A.drag(card, {
           enabled: () => !busy,
@@ -135,7 +135,7 @@
         busy = true;
         bin.querySelector('.cw-bin-got').insertAdjacentHTML('beforeend', `<span class="cw-art xs">${ART[id]()}</span>`);
         const first = !seen[kind]; seen[kind] = 1;
-        A.good(bin, first ? 'cw_ipo_' + kind : 'cw_good' + U.rand(1, 3));
+        if (first) A.good(bin, 'cw_ipo_' + kind); else { A.good(bin); A.praise(['cw_good1', 'cw_good2', 'cw_good3']); }
         if (root.gsap) gsap.to(card, { scale: 0, opacity: 0, duration: 0.3 });
         A.later(() => {
           i++;

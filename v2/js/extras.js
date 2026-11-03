@@ -132,7 +132,9 @@
         ${hearKey ? `<button class="ib" data-x="hear" data-k="${hearKey}" aria-label="اسمع">🔊</button>` : ''}</header>
       <div class="x-scroll">${body}</div>`, 'night x-screen xs-' + name);
   }
-  const hear = k => Voice.play(...xline(k));
+  // الصوت عبر سياسة Voice: تعليمة الشاشة مرة، وزر 🔊 والمكافآت دايماً (force)
+  const FORCE = { force: true };
+  const hear = (k, o) => Voice.play(...xline(k), undefined, o);
 
   function openEncy() {
     const p = P(); if (!p) return;
@@ -172,8 +174,9 @@
       return got ? `<button class="x-cert got" data-x="cert" data-k="${esc(g.key)}" style="--tc:${esc(g.color || '#ffc531')}"><span class="x-ic">${g.icon || '📜'}</span><b>${esc(g.name)}</b><span class="x-c-ok">📜 شهادة</span></button>`
         : `<div class="x-cert" style="--tc:${esc(g.color || '#888')}"><span class="x-ic">${g.icon || '📜'}</span><b>${esc(g.name)}</b><div class="x-bar"><i style="width:${Math.round(d / all * 100)}%"></i></div><small>💡 ${frac(d, all)}</small></div>`;
     }).join('')}</div>`;
-    go('certs', '📜 شهاداتي', body, Object.keys(p.certs).length ? null : 'x_certs_none');
-    if (!Object.keys(p.certs).length) setTimeout(() => { if (A().S.screen === 'certs') hear('x_certs_none'); }, 400);
+    const k = Object.keys(p.certs).length ? 'x_certs' : 'x_certs_none';
+    go('certs', '📜 شهاداتي', body, k);
+    A().S.timers.push(setTimeout(() => { if (A().S.screen === 'certs') hear(k); }, 400));
   }
 
   /* ---------- ركن العائلة: نجوم العائلة معاً، ومدينة مصابيح لكل طفل (بدون ترتيب) ---------- */
@@ -207,7 +210,7 @@
     go('family', '🏠 ركن العائلة', body, 'x_family');
     gsap.from('.x-kid', { y: 24, opacity: 0, stagger: 0.1, duration: 0.45, ease: 'back.out(1.6)' });
     gsap.from('.x-bigstar', { scale: 0, rotation: -120, duration: 0.7, ease: 'back.out(2.5)' });
-    setTimeout(() => { if (A().S.screen === 'family') hear('x_family'); }, 350);
+    A().S.timers.push(setTimeout(() => { if (A().S.screen === 'family') hear('x_family'); }, 350));
   }
 
   /* ---------- الشهادة: صورة على canvas فيها الاسم واللقب والتاريخ وسراج ---------- */
@@ -254,11 +257,15 @@
     x.fillStyle = '#b3a891'; x.font = `500 26px ${BODY}`; x.fillText('بيت الخوارزمي', 275, 160);
     return c;
   }
-  let certUrl = null, certName = '';
+  let certUrl = null, certName = '', certTok = 0;
   async function showCert(p, g, fromQueue) {
+    // الرسم بياخد وقت: لو الطفل خرج من الشاشة أو ضغط شهادة ثانية، ما نفتح نافذة متأخرة فوق شاشة ثانية
+    const my = ++certTok, scr = A().S.screen, alive = () => my === certTok && A().S.screen === scr && P() === p;
     let c;
-    try { c = await certCanvas(p, g, p.certs[g.key]); } catch (e) { if (fromQueue) runQueue(true); return; }
+    try { c = await certCanvas(p, g, p.certs[g.key]); } catch (e) { if (fromQueue && alive()) runQueue(true); return; }
+    if (!alive()) return;
     c.toBlob(blob => {
+      if (!alive()) return;
       if (!blob) { if (fromQueue) runQueue(true); return; }
       if (certUrl) URL.revokeObjectURL(certUrl);
       certUrl = URL.createObjectURL(blob);
@@ -266,7 +273,7 @@
       A().showModal(`<h2>📜 ${esc(xtext('x_cert', p))}</h2><img class="x-cert-img" alt="شهادة" src="${certUrl}">
         <div class="w-acts"><button class="sq x-save" data-x="cert-save" aria-label="احفظ">💾</button><button class="run" data-x="${fromQueue ? 'q-next' : 'm-close'}">▶</button></div>`, true);
       FX.confetti(); Sfx.win();
-      Voice.play(...xline('x_cert', p));
+      Voice.play(...xline('x_cert', p), undefined, FORCE);
     }, 'image/png');
   }
   function saveCert() {
@@ -301,7 +308,7 @@
     if (f) f(); else if (force) A().closeModal();
   }
   function onScreen(name) {
-    clearTimeout(qTimer); queue = [];
+    clearTimeout(qTimer); queue = []; certTok++; // شاشة جديدة تلغي أي شهادة لسه بتترسم
     if (name === 'home' && Store.backupDue()) { const c = $('.corner'); if (c) c.classList.add('x-due'); } // تذكير الأهل بالنسخة الاحتياطية
     const p = P();
     if (!p || !isMap(name)) return;
@@ -323,7 +330,7 @@
       <div class="x-title-big"><span>${TITLES[i][1]}</span>${esc(titleName(p, i))}</div>
       <div class="w-acts"><button class="run" data-x="q-next">▶</button></div>`, p.color);
     gsap.from('.x-title-big', { scale: 0.3, opacity: 0, duration: 0.6, ease: 'back.out(2.5)', delay: 0.15 });
-    Voice.playSeq([xline('x_title_new', p), [titleKey(p, i), X[titleKey(p, i)]]]);
+    Voice.playSeq([xline('x_title_new', p), [titleKey(p, i), X[titleKey(p, i)]]], FORCE);
   }
   function showSticker(p, from, to) {
     const got = STICKERS.slice(from, to).slice(-3);
@@ -331,7 +338,7 @@
       <div class="x-new-stk">${got.map(e => `<span class="x-stk">${e}</span>`).join('')}</div>
       <div class="w-acts"><button class="sq" data-x="go-stickers" aria-label="ملصقاتي">🏅</button><button class="run" data-x="q-next">▶</button></div>`);
     gsap.from('.x-new-stk .x-stk', { scale: 0, rotation: 200, stagger: 0.15, duration: 0.7, ease: 'back.out(2)' });
-    Voice.play(...xline('x_sticker_new', p));
+    Voice.play(...xline('x_sticker_new', p), undefined, FORCE);
   }
   function showBreak(p) {
     breakDue = false; lastBreak = Date.now();
@@ -342,7 +349,7 @@
     const el = $('#xsj');
     if (el) { const s = Siraj.create(el, p.color); A().S.msirajs.push(s); s.setLit(false); }
     gsap.from('.x-zz', { y: 10, opacity: 0, duration: 1.2, repeat: -1, ease: 'sine.out' });
-    Voice.play(...xline('x_break', p));
+    Voice.play(...xline('x_break', p), undefined, { pri: 'instruction', force: true });
   }
 
   /* ---------- وقت اللعب: كل ١٥ ثانية والطفل يلعب ---------- */
@@ -387,19 +394,19 @@
 
   /* ---------- الأحداث ---------- */
   const XACT = {
-    hear: t => hear(t.dataset.k),
+    hear: t => hear(t.dataset.k, FORCE),
     ency: () => { Sfx.tap(); openEncy(); hear('x_ency'); },
     stickers: () => { Sfx.tap(); openStickers(); hear('x_stickers'); },
     certs: () => { Sfx.tap(); openCerts(); },
     family: () => { Sfx.tap(); openFamily(); },
-    title: () => { const p = P(); if (p) { Sfx.tap(); Voice.play(titleKey(p, titleIdx(p)), X[titleKey(p, titleIdx(p))]); } },
+    title: () => { const p = P(); if (p) { Sfx.tap(); Voice.play(titleKey(p, titleIdx(p)), X[titleKey(p, titleIdx(p))], undefined, FORCE); } },
     'e-ar': (t, e) => {
       e.stopPropagation();
       const id = t.dataset.k; Sfx.tap();
-      Voice.play('x_e_' + id, X['x_e_' + id]);
+      Voice.play('x_e_' + id, X['x_e_' + id], undefined, FORCE);
       const card = t.closest('.x-entry'); if (card) gsap.fromTo(card, { scale: 0.96 }, { scale: 1, duration: 0.35, ease: 'back.out(3)' });
     },
-    'e-en': (t, e) => { e.stopPropagation(); Sfx.tap(); Voice.play('en_' + t.dataset.k, EN[t.dataset.k], 'en'); },
+    'e-en': (t, e) => { e.stopPropagation(); Sfx.tap(); Voice.play('en_' + t.dataset.k, EN[t.dataset.k], 'en', FORCE); },
     'e-lock': () => { Sfx.oops(); hear('x_locked'); },
     stk: t => { Sfx.spark(); gsap.fromTo(t, { scale: 1.4, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.6, ease: 'elastic.out(1, .4)' }); },
     cert: t => { const p = P(), g = groups().find(x => x.key === t.dataset.k); if (p && g) showCert(p, g, false); },
@@ -408,13 +415,10 @@
     'm-close': () => A().closeModal(),
     'go-stickers': () => { queue = []; openStickers(); },
   };
-  let lastTap = 0, lastEl = null;
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-x]');
     if (!t || t.disabled || !A()) return;
-    if (Date.now() < A().S.lock) return;
-    if (t === lastEl && Date.now() - lastTap < 300) return; // ضغطتين سريعتين على نفس الزر
-    lastTap = Date.now(); lastEl = t;
+    if (!A().tapOk(t, t.dataset.x)) return; // نفس حارس التطبيق: بعد تغيير الشاشة، وضغطتين على نفس الزر
     const f = XACT[t.dataset.x];
     if (f) f(t, e);
   });

@@ -13,21 +13,27 @@
   const girl = () => S.player && S.player.gender === 'g';
   const key = k => (girl() && SAY[k + '_f'] ? k + '_f' : k);
   const line = k => [key(k), SAY[key(k)]];
-  const say = k => Voice.play(...line(k));
+  // الصوت يمر دايماً بسياسة Voice في sfx.js (أولوية، عدم تكرار، أسماء تُتعلّم)
+  const say = (k, o) => Voice.play(...line(k), undefined, o);
   const little = () => S.player && S.player.age <= 4;
   const showCode = () => !S.player || S.player.age >= 7;
   const level = () => TRACKS[S.track].levels[S.li];
   const later = (fn, ms) => S.timers.push(setTimeout(fn, ms));
+  Voice.who = () => S.player; // عدّادات "اتعلّم الاسم" لكل طفل
 
+  // كل ما يخص الشاشة القديمة يتنظّف هنا: التشغيل، المؤقّتات، الحركات، الصوت، بلوكلي، والنافذة
   function cleanup() {
     S.run++; // أي تشغيل قديم يقيف
     S.timers.forEach(clearTimeout); S.timers = [];
+    clearTimeout(S.toastT);
     if (S.ws) { Blocks.dispose(S.ws); S.ws = null; }
     if (S.stage) { S.stage.destroy(); S.stage = null; }
     S.sirajs.forEach(s => s.destroy()); S.sirajs = [];
     if (window.CW && CW.destroy) CW.destroy(); // لو عالم الكمبيوتر مفتوح، يقفل نفسه
     closeModal();
-    S.running = false;
+    gsap.killTweensOf(app.querySelectorAll('*')); // حركات عناصر الشاشة القديمة ما تفضل شغّالة
+    Voice.stop();
+    S.running = false; S.relayoutDue = false; S.ed = null;
   }
   function screen(html, cls) {
     cleanup();
@@ -38,13 +44,16 @@
   const live = (el, color, opts) => { const s = Siraj.create(el, color, opts); S.sirajs.push(s); return s; };
   const mini = (color, lit = true) => Siraj.svg(color, { lit, shadow: false });
 
+  // نافذة واحدة فقط في أي وقت: الجديدة تنظّف القديمة أولاً
   function showModal(html, sticky) {
+    closeModal();
     S.lock = Date.now() + 350;
     modal.innerHTML = `<div class="m-back" ${sticky ? '' : 'data-act="m-close-bg"'}><div class="m-card" role="dialog" aria-modal="true">${html}</div></div>`;
     gsap.fromTo('.m-card', { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, ease: 'back.out(2)' });
   }
   function closeModal() {
     S.msirajs.forEach(s => s.destroy()); S.msirajs = [];
+    if (modal.firstChild) gsap.killTweensOf(modal.querySelectorAll('*'));
     modal.innerHTML = '';
   }
 
@@ -180,7 +189,7 @@
     if (lit) seq.push(line('little'));
     else if (L.tip) seq.push(line(L.tip));
     if (L.predict && !lit) { later(() => predict(L, kind, seq), 350); return; }
-    later(() => Voice.playSeq(seq), 350);
+    later(() => Voice.playSeq(seq, { pri: 'instruction' }), 350);
     if (!lit && L.tip) later(() => toast(SAY[key(L.tip)], 'tip'), 2600);
   }
 
@@ -193,14 +202,14 @@
     showModal(`<h2 class="pred-title">🤔 ${plain(SAY[key('predict')])}</h2>
       ${code.length ? `<pre class="w-code" dir="ltr">${code.map(hl).join('\n')}</pre>` : ''}
       <div class="pred pred-${kind}">${order.map(i => `<button class="pchoice" data-act="pred" data-i="${i}">${Stages.preview(kind, L.predict.choices[i])}</button>`).join('')}</div>`, true);
-    say('predict');
+    say('predict', { pri: 'instruction' });
   }
   function pickPredict(t) {
     const L = level(), right = L.predict.answer, ok = +t.dataset.i === right;
     if (document.querySelector('.pchoice.right')) return;
     document.querySelectorAll('.pchoice').forEach(b => b.classList.add(+b.dataset.i === right ? 'right' : 'dim'));
     if (ok) { Sfx.win(); const r = t.getBoundingClientRect(); FX.burst(r.left + r.width / 2, r.top + r.height / 2, 30, ['#ffd23e', '#7cff8a', '#4fd1ff']); } else Sfx.oops();
-    say(ok ? 'predict_ok' : 'predict_no');
+    say(ok ? 'predict_ok' : 'predict_no', { pri: 'feedback', cut: true });
     // نشغّل البرنامج الجاهز عشان الطفل يتأكد من توقّعه، ثم يسمع المطلوب
     later(() => { closeModal(); run(true); }, 1500);
   }
@@ -213,18 +222,20 @@
     if (en && EN[en]) seq.push(['en_' + en, EN[en], 'en']);
     if (CARD[type]) seq.push(['k_' + type, CARD[type]]);
     if (type === 'light_on') { const c = b.getFieldValue('C'); seq.push(['c_' + c, T.COLORS[c]]); }
-    Voice.playSeq(seq);
+    Voice.playSeq(seq, { pri: 'name' }); // أول ٣ مرات لكل طفل، وبعدها صوت البطاقة فقط
   }
+  const NAME = { pri: 'name' };
   function onWs(e) {
+    if (S.screen !== 'level' || !S.ws) return; // حدث متأخر من مساحة اتقفلت
     if (e.full) {
       const L = level(), k = L.blocks.includes('siraj_repeat') ? 'use_loop' : 'full';
-      toast(SAY[key(k)], 'bad'); say(k); return;
+      toast(SAY[key(k)], 'bad'); say(k, { pri: 'feedback', cut: true }); return;
     }
     if (e.added) cardVoice(e.added, e.block);
-    if (e.field === 'TEXT') { const i = SIRAJ_TEXTS.PHRASES.findIndex(p => p[0] === e.value); if (i >= 0) Voice.play('ph_' + i, SIRAJ_TEXTS.PHRASES[i][1]); }
-    if (e.field === 'C' && EN[e.value]) Voice.playSeq([['en_' + e.value, EN[e.value], 'en'], ['c_' + e.value, SIRAJ_TEXTS.COLORS[e.value]]]);
-    if (e.field === 'V' && EN[e.value]) Voice.play('en_' + e.value, EN[e.value], 'en');
-    if (e.field === 'N' && SIRAJ_TEXTS.NUMS[+e.value]) Voice.play('n_' + e.value, SIRAJ_TEXTS.NUMS[+e.value]);
+    if (e.field === 'TEXT') { const i = SIRAJ_TEXTS.PHRASES.findIndex(p => p[0] === e.value); if (i >= 0) Voice.play('ph_' + i, SIRAJ_TEXTS.PHRASES[i][1], undefined, NAME); }
+    if (e.field === 'C' && EN[e.value]) Voice.playSeq([['en_' + e.value, EN[e.value], 'en'], ['c_' + e.value, SIRAJ_TEXTS.COLORS[e.value]]], NAME);
+    if (e.field === 'V' && EN[e.value]) Voice.play('en_' + e.value, EN[e.value], 'en', NAME);
+    if (e.field === 'N' && SIRAJ_TEXTS.NUMS[+e.value]) Voice.play('n_' + e.value, SIRAJ_TEXTS.NUMS[+e.value], undefined, NAME);
     if (!S.running) { S.failId = null; updateCode(); }
   }
   function updateCode(activeId, bad) {
@@ -264,6 +275,7 @@
     if (r) r.disabled = on;
     if (S.ws && S.ws.setIsReadOnly) S.ws.setIsReadOnly(on); // ما نعدّل البرنامج وهو شغّال
     if (S.ed) S.ed.lock(on);
+    if (!on && S.relayoutDue) relayout(); // الجهاز اتلفّ أثناء التشغيل: نعيد الرسم بعده
   }
 
   // demo: تشغيل البرنامج الجاهز بعد التوقّع (لا يُحسب محاولة)
@@ -272,7 +284,7 @@
     if (S.ed) return runPy();
     if (!S.ws) return;
     const L = level(), ops = Blocks.compile(S.ws);
-    if (!ops.length) { if (!demo) { toast(SAY[key('empty')], 'bad'); say('empty'); } return; }
+    if (!ops.length) { if (!demo) { toast(SAY[key('empty')], 'bad'); say('empty', { pri: 'feedback', cut: true }); } return; }
     const my = ++S.run, stage = S.stage, ws = S.ws;
     const alive = () => my === S.run;
     setBusy(true);
@@ -295,7 +307,7 @@
       const res = reason ? { ok: false, reason } : stage.result();
       if (demo) {
         ws.highlightBlock(null); updateCode();
-        Voice.playSeq(S.predSeq || [['goal_' + L.id, L.goal]]);
+        Voice.playSeq(S.predSeq || [['goal_' + L.id, L.goal]], { pri: 'instruction' });
         toast(L.goal, 'tip');
         return;
       }
@@ -323,7 +335,7 @@
   /* مختبر بايثون: نفس المسارح، لكن الأوامر من الكود المكتوب، والسطر الشغّال يتلوّن */
   async function runPy() {
     const L = level(), ed = S.ed, code = ed.get(), r = PyLab.compile(code);
-    if (!r.ops.length && !r.error) { toast(SAY[key('empty')], 'bad'); say('empty'); return; }
+    if (!r.ops.length && !r.error) { toast(SAY[key('empty')], 'bad'); say('empty', { pri: 'feedback', cut: true }); return; }
     const my = ++S.run, stage = S.stage, alive = () => my === S.run;
     S.drafts[L.id] = code;
     setBusy(true);
@@ -360,7 +372,7 @@
     S.fails++;
     Sfx.oops();
     toast(SAY[key(reason)] || SAY[key('retry')], 'bad');
-    Voice.play(...(SAY[reason] ? line(reason) : line('retry')));
+    Voice.play(...(SAY[reason] ? line(reason) : line('retry')), undefined, { pri: 'feedback', cut: true });
     helpAfterFail();
   }
 
@@ -373,14 +385,16 @@
     if (S.fails === 2) later(hint, 1700);
     if (S.fails >= 4 && !S.offered && level().solution) { S.offered = true; later(offerSolution, 1900); }
   }
-  function hint() {
+  // manual = الطفل ضغط 💡 (طلب صريح مثل 🔊)، وإلا تلميح تلقائي بعد فشلين
+  function hint(manual) {
+    const ho = manual ? { pri: 'feedback', force: true } : { pri: 'feedback' };
     const L = level();
     if (!L.solution || S.running || S.screen !== 'level') return;
     const b = $('#hintBtn'); if (b) b.classList.remove('pulse');
     if (S.ed) {
       const d = PyLab.diffLines(S.ed.get(), L.solution);
-      if (d && d.text) { S.ed.error(d.line, `جرّب: \`${d.text.trim()}\``, 'tip'); say('hint_next'); }
-      else if (d) { S.ed.error(d.line, 'هذا السطر زائد', 'tip'); say('hint_extra'); }
+      if (d && d.text) { S.ed.error(d.line, `جرّب: \`${d.text.trim()}\``, 'tip'); say('hint_next', ho); }
+      else if (d) { S.ed.error(d.line, 'هذا السطر زائد', 'tip'); say('hint_extra', ho); }
       return;
     }
     if (!S.ws) return;
@@ -389,7 +403,7 @@
     if (!L.preset && S.stage.hint) {
       S.stage.reset();
       const k = S.stage.hint(Blocks.opsOf(L.solution));
-      if (k) { toast(SAY[key(k)], 'tip'); say(k); return; }
+      if (k) { toast(SAY[key(k)], 'tip'); say(k, ho); return; }
     }
     const d = Blocks.diff(S.ws, L.solution);
     if (!d) return;
@@ -397,7 +411,7 @@
     if (d.block) Blocks.glow(d.block);
     if (d.kind === 'next') Blocks.glowTool(S.ws, d.step);
     toast(plain(SAY[key(k)]) + (d.line && d.kind !== 'wrong' && d.kind !== 'extra' ? '  ' + d.line : ''), 'tip');
-    say(k);
+    say(k, ho);
   }
   function offerSolution() {
     if (S.screen !== 'level' || S.running || !level().solution) return;
@@ -429,10 +443,10 @@
     FX.confetti();
     await S.stage.celebrate();
     if (my !== S.run) return;
-    const w = 'win' + (1 + Math.floor(Math.random() * 3));
+    const w = Voice.pick(['win1', 'win2', 'win3']); // متنوّعة، وما تتكرر نفس الجملة مرتين ورا بعض
     const code = S.ed ? S.ed.get().split('\n').filter(l => l.trim()) : S.ws ? Blocks.python(S.ws).lines : S.littleCode || [];
     const fewer = stars < 3 && !S.solShown;
-    Voice.playSeq([line(w)].concat(fewer ? [line('fewer')] : []));
+    Voice.playSeq([line(w)].concat(fewer ? [line('fewer')] : []), { pri: 'feedback', force: true });
     const t = TRACKS[S.track], last = S.li + 1 >= t.levels.length;
     showModal(`<div class="w-siraj" id="wsj"></div>
       <h2>${plain(SAY[key(w)])}</h2>
@@ -554,7 +568,7 @@
   /* ---------- الأحداث ---------- */
   const toAscii = s => String(s || '').replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660).replace(/[۰-۹]/g, d => d.charCodeAt(0) - 0x6F0).trim();
   const ACT = {
-    home: () => renderHome(),
+    home: () => { renderHome(); say('who'); },
     'm-close-bg': (t, e) => { if (e.target === t) closeModal(); },
     'm-close': () => renderHome(),
     new: () => { renderNew(); say('newp'); },
@@ -582,12 +596,12 @@
     pc: () => {
       Sfx.tap();
       if (!window.CW || !CW.render) { say('soon'); return; }
-      cleanup(); S.screen = 'cw';
+      cleanup(); S.screen = 'cw'; S.lock = Date.now() + 350;
       const p = S.player;
       CW.render(app, {
         player: p,
-        playSeq: items => Voice.playSeq(items),
-        say: (k, t) => Voice.play(k, t),
+        playSeq: (items, o) => Voice.playSeq(items, o),
+        say: (k, t, o) => Voice.play(k, t, undefined, o),
         sfx: Sfx, Siraj, fx: FX,
         saveProgress: (id, stars) => Store.cwWin(p, id, stars),
         back: () => renderSections(),
@@ -598,14 +612,14 @@
       if (t.classList.contains('locked')) { Sfx.oops(); return; }
       renderLevel(+t.dataset.t, +t.dataset.l);
     },
-    goal: () => { const L = level(); Voice.play('goal_' + L.id, L.goal); },
+    goal: () => { const L = level(); Voice.play('goal_' + L.id, L.goal, undefined, { pri: 'instruction', force: true }); }, // 🔊 = بالطلب دايماً
     py: () => $('#pyBox').classList.toggle('folded'),
     run: () => run(),
     undo: () => { if (!S.running && S.ws) { S.ws.undo(false); Sfx.tap(); } },
     del: () => { if (!S.running && S.ws && S.ws.__del()) Sfx.tap(); },
     reset: () => { if (!S.running && S.stage) { S.stage.reset(); if (S.ws) { S.ws.highlightBlock(null); Blocks.clearGlow(S.ws); updateCode(); } if (S.ed) S.ed.clear(); Sfx.tap(); } },
-    hint: () => { if (S.running) return; Sfx.tap(); if (S.fails >= 4 && level().solution) offerSolution(); else hint(); },
-    'hint-only': () => { closeModal(); hint(); },
+    hint: () => { if (S.running) return; Sfx.tap(); if (S.fails >= 4 && level().solution) offerSolution(); else hint(true); },
+    'hint-only': () => { closeModal(); hint(true); },
     sol: () => showSolution(),
     pred: t => pickPredict(t),
     tjump: t => { const el = $('#tr-' + t.dataset.t); Sfx.tap(); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); gsap.fromTo(el, { scale: 1.04 }, { scale: 1, duration: 0.5, delay: 0.3 }); } },
@@ -621,30 +635,47 @@
     delp: t => { if (confirm('حذف هذا اللاعب نهائياً؟')) { Store.removePlayer(t.dataset.id); parentsPanel(); } },
   };
 
+  /* حارس الضغطات السريعة (للتطبيق كله، ومنه extras.js و parents.js):
+     - بعد تغيير الشاشة أو فتح نافذة بـ ٣٥٠ ملّي ثانية: أي لمسة "شبح" من الضغطة السابقة تُتجاهل (حتى على بلوكلي والأنشطة).
+     - نفس الزر مرتين خلال ٣٥٠ ملّي ثانية = ضغطة واحدة (إلا أزرار الصغار والحذف والتراجع، فتكرارها مقصود). */
+  const REPEAT = new Set(['lb', 'undo', 'del', 'gate', 'pin-ok', 'pin-save', 'family']); // تكرارها مقصود أو آمن (تصحيح رقم ثم إعادة المحاولة)
+  let lastEl = null, lastT = 0;
+  function tapOk(t, act) {
+    const now = Date.now();
+    if (now < S.lock && act !== 'lb') return false;
+    if (t === lastEl && now - lastT < 350 && !REPEAT.has(act)) return false;
+    lastEl = t; lastT = now;
+    return true;
+  }
+  ['pointerdown', 'mousedown', 'touchstart', 'click'].forEach(ev => addEventListener(ev, e => {
+    if (!e.isTrusted || Date.now() >= S.lock || !e.target.closest || e.target.closest('.lb')) return; // لمسات حقيقية فقط
+    if (e.target.closest('#app, #modal')) { e.stopPropagation(); if (ev === 'click') e.preventDefault(); }
+  }, true));
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-act]');
-    if (!t || t.disabled) return;
-    if (Date.now() < S.lock && t.dataset.act !== 'lb') return;
+    if (!t || t.disabled || !tapOk(t, t.dataset.act)) return;
     const f = ACT[t.dataset.act];
     if (f) f(t, e);
   });
   document.addEventListener('change', e => { if (e.target.id === 'vc') { Store.settings.voice = e.target.checked; Store.save(); if (!e.target.checked) Voice.stop(); } });
   document.addEventListener('visibilitychange', () => { if (document.hidden) Voice.stop(); });
 
-  // لو حجم المسرح اتغيّر (تدوير الجهاز مثلاً) نعيد رسمه، إلا وهو شغّال
+  // لو حجم المسرح اتغيّر (تدوير الجهاز مثلاً) نعيد رسمه؛ وهو شغّال نأجّل لحدي ما يخلص
   let rt;
-  const relayout = () => {
+  function relayout() {
     clearTimeout(rt);
     rt = setTimeout(() => {
-      if (S.screen !== 'level' || !S.stage || S.running) return;
+      if (S.screen !== 'level' || !S.stage) return;
+      if (S.running) { S.relayoutDue = true; return; }
+      S.relayoutDue = false;
       if (S.stage.layout) S.stage.layout();
       if (S.stage.draw) { S.stage.draw(); S.stage.placePen(true); }
     }, 150);
-  };
+  }
   addEventListener('resize', relayout);
 
   // واجهة صغيرة للوحدات الإضافية (extras.js, parents.js)
-  window.App = { S, screen, showModal, closeModal, live, mini, renderHome, renderSections };
+  window.App = { S, screen, showModal, closeModal, live, mini, renderHome, renderSections, tapOk };
   try { Store.load(); } catch (e) { /* البيانات التالفة لا توقف اللعبة */ }
   renderHome();
 
@@ -680,7 +711,7 @@
       async littleSolve() { S.lastResult = null; for (const i of S.lseq) { if (i < 0) return { won: false, reason: 'no-button' }; await littleTap(i); if (S.lastResult && S.lastResult.won) break; } return S.lastResult; },
       hint: () => hint(), offer: () => offerSolution(), showSolution: () => showSolution(),
       screens: { renderHome, renderSections, renderTracks, renderLevel },
-      act: (name, data) => ACT[name](Object.assign(document.createElement('div'), { dataset: data || {} }), {}),
+      act: (name, data) => { const d = document.createElement('div'); Object.assign(d.dataset, data || {}); return ACT[name](d, { target: d }); },
     };
   }
 })();

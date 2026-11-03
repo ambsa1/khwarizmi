@@ -55,15 +55,20 @@
     const line = k => { const kk = vkey(k); return [kk, TXT()[kk] || '', kk.startsWith('cw_en_') ? 'en' : undefined]; };
     const text = k => plain(TXT()[vkey(k)] || '');
     let lastSeq = null;
+    // كل الصوت يمر بسياسة Voice (sfx.js): opts.pri = instruction|feedback|name|ambient، و force لزر 🔊
     function speak(list, opts) {
       list = (Array.isArray(list) ? list : [list]).filter(Boolean);
       const items = list.map(k => (Array.isArray(k) ? k : line(k))).filter(i => i[1]);
       if (!items.length) return '';
-      if (!(opts && opts.noReplay)) lastSeq = list;
+      // زر 🔊 يعيد آخر "تعليمة" (مش آخر اسم أو تشجيع)
+      const V = root.Voice, instr = opts && opts.pri ? opts.pri === 'instruction' : !V || !V.cls || list.some(k => typeof k !== 'string' || V.cls(vkey(k)) === 'instruction');
+      if (!(opts && opts.noReplay) && instr) lastSeq = list;
+      // في الأنشطة كل "نتيجة" هي رد على ضغطة الطفل، فتقطع سؤال الجولة
+      const vo = opts ? { pri: opts.pri, force: opts.force, cool: opts.cool, cut: opts.cut != null ? opts.cut : opts.pri === 'feedback' } : undefined;
       try {
-        if (ctx.playSeq) ctx.playSeq(items);
-        else if (ctx.play) ctx.play(items);
-        else if (root.Voice) root.Voice.playSeq(items);
+        if (ctx.playSeq) ctx.playSeq(items, vo);
+        else if (ctx.play) ctx.play(items, vo);
+        else if (root.Voice) root.Voice.playSeq(items, vo);
       } catch (e) { /* الصوت اختياري */ }
       const show = items.slice(0, (opts && opts.show) || items.length);
       const shown = plain(show[0][2] === 'en' ? show[0][1] : show.filter(i => i[2] !== 'en').map(i => i[1]).join(' '));
@@ -92,9 +97,14 @@
     function screen(html, cls) {
       if (cur) closeActivity();
       teardown();
-      lock = Date.now() + 300;
+      lock = Date.now() + 300; guard = Date.now() + 250;
       rootEl.innerHTML = `<div class="cw ${cls || ''}" dir="rtl">${html}</div>`;
     }
+    // لمسة "شبح" من الضغطة اللي فتحت الشاشة ما توصل للعبة الجديدة (مثلاً تختار إجابة لوحدها)
+    let guard = 0;
+    const ghost = e => { if (e.isTrusted && Date.now() < guard) { e.stopPropagation(); if (e.type === 'click') e.preventDefault(); } };
+    const GHOST = ['pointerdown', 'mousedown', 'touchstart', 'click'];
+    GHOST.forEach(ev => rootEl.addEventListener(ev, ghost, true));
     function miniSiraj(el) {
       if (!el || !SirajLib) return null;
       const s = SirajLib.create(el, color, { shadow: false });
@@ -193,8 +203,11 @@
           const r = el.getBoundingClientRect();
           f.burst(r.left + r.width / 2, r.top + r.height / 2, n || 18, colors || ['#ffd23e', '#ff6b9a', '#4fd1ff', '#7cff8a']);
         },
-        good(el, k) { sfx.spark && sfx.spark(); A.burst(el); if (barSj) barSj.wow(); if (k) speak(k); if (el && hasGsap()) gsap.fromTo(el, { scale: 1 }, { scale: 1.12, duration: 0.15, yoyo: true, repeat: 1 }); },
-        bad(el, k) { sfx.oops && sfx.oops(); if (k) speak(k); if (el) { el.classList.remove('cw-shake'); void el.offsetWidth; el.classList.add('cw-shake'); } },
+        // رد على إجابة الطفل: يقطع سؤال الجولة (الطفل جاوب خلاص)، لكن ما يتكرر خلال ٦ ثوانٍ
+        good(el, k) { sfx.spark && sfx.spark(); A.burst(el); if (barSj) barSj.wow(); if (k) speak(k, { pri: 'feedback', cut: true }); if (el && hasGsap()) gsap.fromTo(el, { scale: 1 }, { scale: 1.12, duration: 0.15, yoyo: true, repeat: 1, overwrite: 'auto' }); },
+        bad(el, k) { sfx.oops && sfx.oops(); if (k) speak(k, { pri: 'feedback', cut: true }); if (el) { el.classList.remove('cw-shake'); void el.offsetWidth; el.classList.add('cw-shake'); } },
+        // تشجيع متنوّع ونادر (مرة كل ١٥ ثانية على الأكثر)؛ غير كده المؤثر الصوتي يكفي
+        praise(keys) { const k = root.Voice && root.Voice.pick ? root.Voice.pick(keys) : pick(keys); speak(k, { pri: 'ambient', quiet: true }); },
         hit(el, x, y, pad) { const r = el.getBoundingClientRect(); pad = pad || 0; return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad; },
         drag: (el, o) => drag(el, o, A),
         stars, save,
@@ -222,8 +235,8 @@
       save(o.id || A.act.id, n);
       sfx.win && sfx.win();
       const f = fx(); if (f && f.confetti) f.confetti();
-      const w = 'cw_win' + rand(1, 3);
-      speak([w].concat(o.say ? [o.say] : []).concat(n < 3 && o.tip ? [o.tip] : []), { noReplay: true });
+      const w = root.Voice && root.Voice.pick ? root.Voice.pick(['cw_win1', 'cw_win2', 'cw_win3']) : 'cw_win' + rand(1, 3);
+      speak([w].concat(o.say ? [o.say] : []).concat(n < 3 && o.tip ? [o.tip] : []), { noReplay: true, pri: 'feedback', force: true });
       const old = rootEl.querySelector('.cw-win'); if (old) old.remove();
       const box = document.createElement('div');
       box.className = 'cw-win';
@@ -286,7 +299,7 @@
       sec: t => { const sec = sections[+t.dataset.i]; sfx.tap && sfx.tap(); sectionScreen(sec); },
       act: t => { const a = curSec.activities[+t.dataset.i]; sfx.tap && sfx.tap(); openActivity(curSec, a); },
       back: () => { if (cur && cur.A._back()) return; Voice_stop(); sectionScreen(curSec, true); },
-      replay: () => { sfx.tap && sfx.tap(); if (lastSeq) speak(lastSeq); },
+      replay: () => { sfx.tap && sfx.tap(); if (lastSeq) speak(lastSeq, { force: true }); }, // 🔊 = بالطلب دايماً
       again: () => { const w = S.winOpts; S.winOpts = null; const box = rootEl.querySelector('.cw-win'); if (box) box.remove(); if (w && w.o.again) w.o.again(); else if (cur) openActivity(cur.sec, cur.act); },
       done: () => { const w = S.winOpts; S.winOpts = null; const box = rootEl.querySelector('.cw-win'); if (box) box.remove(); if (w && w.o.next) w.o.next(); else if (w && w.o.done) w.o.done(); else sectionScreen(curSec, true); },
     };
@@ -305,6 +318,7 @@
       if (cur) closeActivity();
       teardown();
       rootEl.removeEventListener('click', onClick);
+      GHOST.forEach(ev => rootEl.removeEventListener(ev, ghost, true));
       rootEl.innerHTML = '';
     }
 

@@ -7,7 +7,9 @@
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // رقم يقوله سراج بصوته (n_<رقم>)، وإلا صوت الجهاز
-  const sayNum = v => { const N = SIRAJ_TEXTS.NUMS; Voice.play(Number.isInteger(v) && v >= 0 && v < N.length ? 'n_' + v : 'n_x', Number.isInteger(v) && v >= 0 && v < N.length ? N[v] : String(v)); };
+  // كلام سراج وهو ينفّذ البرنامج هو "ناتج" البرنامج: يتقال كل مرة (حتى لو تكرر في حلقة)
+  const OUT = { pri: 'feedback', force: true, again: true };
+  const sayNum = v => { const N = SIRAJ_TEXTS.NUMS; Voice.play(Number.isInteger(v) && v >= 0 && v < N.length ? 'n_' + v : 'n_x', Number.isInteger(v) && v >= 0 && v < N.length ? N[v] : String(v), undefined, OUT); };
   const talkChip = a => a === 'wave' ? '👋' : a === 'jump' ? '🦘' : `💬<small>${esc(a.slice(4))}</small>`;
 
   /* ---------- سراج يتكلم ---------- */
@@ -47,7 +49,7 @@
         this.bubble(String(o.arg));
         const i = Talk.key(o.arg);
         if (typeof o.arg === 'number') sayNum(o.arg);
-        else Voice.play(i >= 0 ? 'ph_' + i : 'ph_x', i >= 0 ? SIRAJ_TEXTS.PHRASES[i][1] : o.arg);
+        else Voice.play(i >= 0 ? 'ph_' + i : 'ph_x', i >= 0 ? SIRAJ_TEXTS.PHRASES[i][1] : o.arg, undefined, OUT);
         await this.siraj.talk(950);
         await sleep(200);
         this.bubble('');

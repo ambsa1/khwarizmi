@@ -38,7 +38,7 @@
         A.sfx.tap();
         const chip = el.querySelector(`.cw-chip[data-n="${id}"]`);
         if (!got.has(id)) { got.add(id); chip.classList.add('on'); A.burst(chip, 12); }
-        A.say(['cw_p_' + id, 'cw_pd_' + id]);
+        A.say(['cw_p_' + id, 'cw_pd_' + id], { force: true, pri: 'instruction' }); // الطفل ضغط عشان يسمع: الدرس نفسه
         if (got.size === names.length && !done) { done = true; A.later(() => A.win({ stars: 3 }), 3200); }
       }
       A.on(el, 'click', e => { const p = e.target.closest('.cw-part'); if (p) tapPart(p); });

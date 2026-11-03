@@ -13,6 +13,8 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: var(--night2); color: var(--ink); overflow: hidden; }
+/* الضغطات السريعة: لا تكبير بالضغط مرتين، لا سحب لتحديث الصفحة، ولا قائمة الضغط الطويل */
+html, body { touch-action: manipulation; overscroll-behavior: none; -webkit-touch-callout: none; }
 body { font-family: var(--body); -webkit-user-select: none; user-select: none; }
 button { font: inherit; border: 0; cursor: pointer; color: inherit; background: none; touch-action: manipulation; }
 input { font: inherit; }

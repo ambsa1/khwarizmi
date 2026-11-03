@@ -111,7 +111,7 @@
         if (b && !busy) {
           let bad = 0;
           el.querySelectorAll('.cw-px-c').forEach(cc => { const w = +pic[+cc.dataset.y][+cc.dataset.x]; const wrong = w !== grid[+cc.dataset.y][+cc.dataset.x]; cc.classList.toggle('bad', wrong && grid[+cc.dataset.y][+cc.dataset.x] === 1); if (wrong) bad++; });
-          if (el.querySelector('.cw-px-c.bad')) A.bad(b, 'cw_px_fix'); else A.say(bad ? 'cw_px_more' : 'cw_px_ok');
+          if (el.querySelector('.cw-px-c.bad')) A.bad(b, 'cw_px_fix'); else A.say(bad ? 'cw_px_more' : 'cw_px_ok', { pri: 'feedback' });
         }
       });
       A.later(show, 250);
@@ -261,7 +261,7 @@
         b.classList.add(n < secret ? 'low' : 'high');
         q('#hs').textContent = (n < secret ? '⬆️ ' : '⬇️ ') + lo + ' – ' + hi;
         A.sfx.tap();
-        A.say(n < secret ? 'cw_hl_up' : 'cw_hl_down');
+        A.say(n < secret ? 'cw_hl_up' : 'cw_hl_down', { pri: 'feedback', cool: 1500 }); // معلومة اللعبة نفسها: تتكرر بسرعة أكبر
         if (sj) sj.talk(500);
       });
       A.later(show, 250);

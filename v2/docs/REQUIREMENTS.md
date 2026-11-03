@@ -38,4 +38,6 @@ Reviewers: check each item; the final report lists every item with where it live
 ## Quality
 - R24 Professional look (logo, fonts, palette, animation) competitive with the benchmark apps in QUALITY.md.
 - R25 Smooth, no bugs, no overlapping/random repeated voice, works at all screen sizes.
+- R27 **Stress robustness** (owner reported this in earlier tests): rapid/double/multi taps, fast back-and-forth navigation, tapping during animations/voice/modals, rotating, switching apps — must never flicker, glitch, duplicate screens/modals, get stuck, desync state or throw errors. Verified by automated monkey testing (gremlins.js) on every screen + targeted race tests.
+- R28 **Smart voice** (owner: "random repeated voice feels cheap"): one central voice policy — taps get short SFX, not speech; the same line is never replayed if it was just said (cooldown); card/key names spoken only the first few times per child until learned; instructions are not cut by lower-priority lines (priority queue: goal/instruction > result feedback > card names > ambient); no voice on every tap in typing/tap games (use SFX + occasional praise); praise varies and is rate-limited; pressing 🔊 always replays on demand.
 - R26 Multiple independent review rounds (fun, learning, quality, code, voice, gaps) until every QUALITY.md dimension ≥ 8.

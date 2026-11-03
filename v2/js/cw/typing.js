@@ -243,7 +243,8 @@
                 kb.press(c, true); A.sfx.land();
                 const k = el.querySelector('.cw-key.next');
                 if (k) { k.classList.remove('cw-shake'); void k.offsetWidth; k.classList.add('cw-shake'); }
-                if (wrongHere === 2) { const ch = charAt(units[pos]); A.say(ch === ' ' ? ['cw_ty_space'] : [letterKey(tr, ch), 'cw_f_' + FINGER[want]]); }
+                // كل ضغطة = مؤثر صوتي فقط؛ بعد غلطتين على نفس الحرف نساعد بالصوت (الحرف وإصبعه)
+                if (wrongHere === 2) { const ch = charAt(units[pos]); A.say(ch === ' ' ? ['cw_ty_space'] : [letterKey(tr, ch), 'cw_f_' + FINGER[want]], { pri: 'feedback' }); }
                 render();
               }
             },
@@ -265,7 +266,7 @@
                   <div class="cw-wacts"><button class="sq" data-r="list" aria-label="الدروس">☰</button><button class="run" data-r="again">↻ مرة أخرى</button></div></div></div>`);
                 const s = A.siraj(q('#rsj')); if (s) s.sad();
                 A.sfx.oops();
-                A.say(['cw_ty_close', 'cw_ty_slow']);
+                A.say(['cw_ty_close', 'cw_ty_slow'], { pri: 'feedback' });
                 el.querySelectorAll('[data-r]').forEach(b => A.on(b, 'click', () => { A.sfx.tap(); if (b.dataset.r === 'again') lesson(i); else menu(); }));
               }, 350);
             }

@@ -40,7 +40,7 @@
         const badge = q('#bg').children[i];
         badge.classList.remove('cur'); badge.classList.add('on');
         A.good(badge);
-        A.say(['cw_sf_safe', 'cw_rule' + (i + 1)]);
+        A.say(['cw_sf_safe', 'cw_rule' + (i + 1)], { pri: 'feedback' });
         A.later(() => { i++; if (i < SCEN.length) show(); else A.win({ stars: miss <= 1 ? 3 : miss <= 3 ? 2 : 1, say: 'cw_sf_end' }); }, 3800);
       });
       A.later(show, 250);
@@ -128,7 +128,7 @@
         if (root.gsap) gsap.to(p, { scale: 0, opacity: 0, duration: 0.25, onComplete: () => p.remove() }); else p.remove();
         popOpen = false;
         if (closed >= N) { over = true; A.later(() => A.win({ stars: traps === 0 ? 3 : traps <= 2 ? 2 : 1, say: 'cw_pop_end' }), 600); }
-        else { A.say('cw_good' + U.rand(1, 3)); A.later(openPop, U.rand(1800, 3000)); }
+        else { A.praise(['cw_good1', 'cw_good2', 'cw_good3']); A.later(openPop, U.rand(1800, 3000)); }
       });
       A.every(() => { if (!popOpen) star(); }, 900);
       A.later(() => A.say('cw_pop'), 250);
@@ -175,7 +175,7 @@
         q('[data-x="ok"]').disabled = s < 4;
         if (added && added[1] === 'name' && !warned.name) { warned.name = 1; A.bad(q('#pf'), 'cw_pw_name'); }
         else if (added && added[1] === 'easy' && !warned.easy) { warned.easy = 1; A.bad(q('#pf'), 'cw_pw_easy'); }
-        else if (s > lvl) { A.sfx.spark(); A.say(s === 4 ? 'cw_pw_strong' : s === 3 ? 'cw_pw_good' : 'cw_pw_mid', { quiet: s < 4 }); }
+        else if (s > lvl) { A.sfx.spark(); A.say(s === 4 ? 'cw_pw_strong' : s === 3 ? 'cw_pw_good' : 'cw_pw_mid', { quiet: s < 4, pri: s === 4 ? 'feedback' : 'ambient' }); }
         if (s === 4 && lvl < 4 && root.gsap) gsap.fromTo(q('[data-x="ok"]'), { scale: 1 }, { scale: 1.1, duration: 0.2, yoyo: true, repeat: 3 });
         lvl = s;
       }

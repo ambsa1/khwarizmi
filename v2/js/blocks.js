@@ -87,6 +87,10 @@
     Object.assign({ type: 'func_call', message0: '%1 %2()', args0: [icon(ico.call), { type: 'field_label_serializable', name: 'NAME', text: 'dance' }], colour: COLORS.func }, stmt),
   ];
   Blockly.common.defineBlocks(Blockly.common.createBlockDefinitionsFromJsonArray(DEFS));
+  // إصبع الطفل يهتز: الضغطة ما تتحوّل لسحب يفصل البطاقة إلا بعد ١٢ بكسل (الافتراضي ٥)
+  if (Blockly.config) Blockly.config.dragRadius = 12;
+  // لا قائمة ضغط طويل (تكرار/حذف/مساعدة بالكلام) تظهر فجأة تحت إصبع الطفل؛ الحذف بزر 🗑 والتراجع بزر ↶
+  try { Blockly.ContextMenuRegistry.registry.reset(); } catch (e) { /* نسخة بلوكلي مختلفة */ }
 
   // الحقل الأساسي لكل بطاقة (للكتابة المختصرة 'light_on:red' في المراحل)
   const MAIN = { siraj_say: 'TEXT', light_on: 'C', var_set: 'V', var_add: 'V', var_sub: 'V', var_say: 'V', func_def: 'NAME', func_call: 'NAME' };
@@ -223,8 +227,8 @@
       if (!down || e.pointerId !== down.p || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) { down = null; return; }
       const id = down.id, sel = down.sel;
       down = null;
-      setTimeout(() => Blockly.hideChaff(), 0); // نقفل قائمة الكلمات لو اتفتحت بالضغطة
-      if (ws.isReadOnly && ws.isReadOnly()) return;
+      setTimeout(() => { if (!ws.isDisposed || !ws.isDisposed()) Blockly.hideChaff(); }, 0); // نقفل قائمة الكلمات لو اتفتحت بالضغطة
+      if ((ws.isReadOnly && ws.isReadOnly()) || (ws.isDisposed && ws.isDisposed())) return;
       const src = fw.getBlockById(id);
       if (!src) return;
       if (ws.remainingCapacity() < 1) { on({ full: true }); return; }
@@ -232,8 +236,13 @@
       // البطاقة الجديدة تاخد نفس قيم بطاقة القائمة (لون الضوء، اسم الصندوق، اسم الكلمة...)
       const fields = {};
       src.inputList.forEach(inp => inp.fieldRow.forEach(f => { if (f.name && f.isSerializable()) fields[f.name] = src.getFieldValue(f.name); }));
-      const b = Blockly.serialization.blocks.append({ type: src.type, fields }, ws, { recordUndo: true });
-      conn.connect(b.previousConnection);
+      // الإضافة والتوصيل حدث واحد، عشان زر التراجع يشيل البطاقة مرة واحدة (بدل ما تنفصل الأول ثم تختفي)
+      Blockly.Events.setGroup(true);
+      let b;
+      try {
+        b = Blockly.serialization.blocks.append({ type: src.type, fields }, ws, { recordUndo: true });
+        conn.connect(b.previousConnection);
+      } finally { Blockly.Events.setGroup(false); }
       setCursor(b); // البطاقة الجديدة هي مكان الإضافة التالي (ولو تكرار، الإضافة التالية تدخل جواه)
       Sfx.snap();
       on({ added: src.type, block: b });

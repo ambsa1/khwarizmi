@@ -90,7 +90,7 @@
         A.say(r === 0 ? 'cw_feed' : 'cw_feed_more');
       }
       function hint(f) {
-        A.say('cw_feed_drag');
+        A.say('cw_feed_drag', { pri: 'feedback' });
         const h = q('#hand'), fr = f.getBoundingClientRect(), ar = q('#an').getBoundingClientRect(), base = el.getBoundingClientRect();
         if (!root.gsap) return;
         gsap.killTweensOf(h);
@@ -175,7 +175,7 @@
         if (done) return;
         const [sx, sy] = toSvg(e.clientX, e.clientY), p = pts[cur];
         if (Math.hypot(sx - p[0], sy - p[1]) < 60) { dragging = true; try { sv.setPointerCapture(e.pointerId); } catch (er) { /* لا شيء */ } e.preventDefault(); }
-        else A.say('cw_trace_car');
+        else A.say('cw_trace_car', { pri: 'feedback' });
       });
       A.on(sv, 'pointermove', e => { if (dragging) follow(e.clientX, e.clientY); });
       A.on(sv, 'pointerup', () => { dragging = false; });
@@ -219,7 +219,7 @@
           A.good(b, 'cw_star_yes');
           A.later(() => { r++; if (r < ROUNDS) show(); else { setDot(ROUNDS); A.win({ stars: 3 }); } }, 1500);
         } else {
-          A.say('cw_star_no');
+          A.say('cw_star_no', { pri: 'feedback' });
           A.later(() => b.classList.remove('open'), 1100);
         }
       });

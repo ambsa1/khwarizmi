@@ -79,44 +79,49 @@
       mouth.setAttribute('d', MOUTH[k]);
       mouth.setAttribute('fill-opacity', k === 'open' || k === 'wow' ? 1 : 0);
     }
-    let talkTimer = null;
+    let talkTimer = null, talkEnd = null, talkRes = null;
+    // الحركة الجديدة تاخد مكان القديمة على نفس الجزء (بدل ما يتصارعوا فيرتعش سراج مع الضغطات السريعة)
+    const tl = o => gsap.timeline(Object.assign({ defaults: { overwrite: 'auto' } }, o));
 
     const api = {
       el,
-      // يحرّك الفم لمدة معيّنة (أثناء الكلام)
+      // يحرّك الفم لمدة معيّنة (أثناء الكلام). كلام جديد ينهي القديم بدل ما يقفل فمه في النص
       talk(ms) {
-        clearInterval(talkTimer);
+        clearInterval(talkTimer); clearTimeout(talkEnd); if (talkRes) talkRes();
         let open = false;
         talkTimer = setInterval(() => { open = !open; setMouthShape(open ? 'open' : 'smile'); }, 130);
-        return new Promise(res => setTimeout(() => { clearInterval(talkTimer); setMouthShape('smile'); res(); }, ms));
+        return new Promise(res => {
+          talkRes = res;
+          talkEnd = setTimeout(() => { clearInterval(talkTimer); talkRes = null; setMouthShape('smile'); res(); }, ms);
+        });
       },
       wave() {
-        return gsap.timeline().to(armR, { rotation: -150, duration: 0.25, ease: 'back.out(2)' })
+        return tl().to(armR, { rotation: -150, duration: 0.25, ease: 'back.out(2)' })
           .to(armR, { rotation: -110, duration: 0.18, repeat: 3, yoyo: true, ease: 'sine.inOut' })
           .to(armR, { rotation: 0, duration: 0.3, ease: 'back.out(2)' });
       },
       jump() {
-        return gsap.timeline()
+        return tl()
           .to(all, { scaleY: 0.86, scaleX: 1.1, duration: 0.12 })
           .to(all, { y: -60, scaleY: 1.1, scaleX: 0.94, duration: 0.3, ease: 'power2.out' })
           .to(all, { y: 0, scaleY: 1, scaleX: 1, duration: 0.3, ease: 'bounce.out' });
       },
       happy() {
         setMouthShape('open');
-        return gsap.timeline({ onComplete: () => setMouthShape('smile') })
+        return tl({ onComplete: () => setMouthShape('smile') })
           .to([armL, armR], { rotation: i => (i ? -150 : 150), duration: 0.25, ease: 'back.out(2)' }, 0)
           .to(all, { y: -50, duration: 0.28, ease: 'power2.out', yoyo: true, repeat: 3 }, 0)
           .to([armL, armR], { rotation: 0, duration: 0.3 }, '>-0.1');
       },
       sad() {
         setMouthShape('sad');
-        return gsap.timeline({ onComplete: () => setTimeout(() => setMouthShape('smile'), 900) })
+        return tl({ onComplete: () => setTimeout(() => setMouthShape('smile'), 900) })
           .to(head, { rotation: -10, duration: 0.3 }).to(head, { rotation: 0, duration: 0.5, delay: 0.6 });
       },
       wow() { setMouthShape('wow'); setTimeout(() => setMouthShape('smile'), 900); return gsap.fromTo(all, { scale: 1 }, { scale: 1.08, duration: 0.15, yoyo: true, repeat: 1 }); },
       dizzy() {
         setMouthShape('wow');
-        return gsap.timeline({ onComplete: () => setMouthShape('smile') })
+        return tl({ onComplete: () => setMouthShape('smile') })
           .to(all, { rotation: 12, duration: 0.12, yoyo: true, repeat: 5, ease: 'sine.inOut' }).set(all, { rotation: 0 });
       },
       setLit(on) {
@@ -124,7 +129,10 @@
         gsap.to(glow, { opacity: on ? 1 : 0, duration: 0.4 });
       },
       setChest(color) { gsap.to(q('.s-chest'), { attr: { fill: color }, duration: 0.15 }); },
-      destroy() { clearTimeout(blinkTimer); clearInterval(talkTimer); idle.kill(); glowTl.kill(); gsap.killTweensOf([all, head, eyes, armL, armR, glow, body]); },
+      destroy() {
+        clearTimeout(blinkTimer); clearInterval(talkTimer); clearTimeout(talkEnd); if (talkRes) { talkRes(); talkRes = null; }
+        idle.kill(); glowTl.kill(); gsap.killTweensOf([all, head, eyes, armL, armR, glow, body, q('.s-chest')]);
+      },
     };
     if (shadow) api.shadow = shadow;
     return api;

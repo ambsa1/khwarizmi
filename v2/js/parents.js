@@ -144,16 +144,19 @@
     const r = new FileReader();
     r.onload = () => {
       let res;
-      try { res = Store.importData(String(r.result)); } catch (e) { message('❌ لم يتم الاسترجاع', 'هذا الملف ليس نسخة صحيحة من بيت الخوارزمي، أو لا يحتوي على أي طفل.'); return; }
+      try { res = Store.importData(String(r.result)); } catch (e) { if (onPanel()) message('❌ لم يتم الاسترجاع', 'هذا الملف ليس نسخة صحيحة من بيت الخوارزمي، أو لا يحتوي على أي طفل.'); return; }
+      if (!onPanel()) return;
       panel();
       message('✔ تم الاسترجاع', `تقدّم ${res.count} ${res.count === 1 ? 'طفل' : 'أطفال'}${res.added ? ` (جديد: ${res.added})` : ''}. احتفظنا بأفضل نتيجة لكل مرحلة.`);
     };
-    r.onerror = () => message('❌ لم يتم الاسترجاع', 'تعذّرت قراءة الملف.');
+    r.onerror = () => { if (onPanel()) message('❌ لم يتم الاسترجاع', 'تعذّرت قراءة الملف.'); };
     r.readAsText(file);
   }
 
   /* ---------- الأحداث ---------- */
   const val = id => ($('#' + id) ? $('#' + id).value : '');
+  // نعيد رسم اللوحة فقط لو الأهل لسه فيها (ما نرجّع شاشة قفلوها)
+  const onPanel = () => A().S.screen === 'parents';
   const PACT = {
     close: () => A().closeModal(),
     gate: () => {
@@ -173,7 +176,7 @@
     forgot: () => gate(true, () => setPin(false)),
     'change-pin': () => setPin(false),
     limit: t => { Store.setLimit(+t.dataset.m); if (window.Extras) Extras._resetBreak(); document.querySelectorAll('.p-seg button').forEach(b => b.classList.toggle('on', b === t)); },
-    backup: () => { download(Store.exportAll(), fileName()); setTimeout(panel, 300); },
+    backup: () => { download(Store.exportAll(), fileName()); setTimeout(() => { if (onPanel()) panel(); }, 300); },
     share: () => { share(Store.exportAll(), fileName()); },
     import: () => { const f = $('#pFile'); if (f) { f.value = ''; f.click(); } },
     'export-one': t => { const p = Store.getPlayer(t.dataset.id), o = Store.exportOne(t.dataset.id); if (o) download(o, fileName(p && p.name ? p.name : 'طفل')); },
@@ -192,8 +195,7 @@
   };
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-p]');
-    if (!t || t.disabled || !A()) return;
-    if (Date.now() < A().S.lock) return;
+    if (!t || t.disabled || !A() || !A().tapOk(t, t.dataset.p)) return; // حارس الضغطات المشترك (لا ملفّين من ضغطتين)
     const f = PACT[t.dataset.p];
     if (f) f(t, e);
   });
