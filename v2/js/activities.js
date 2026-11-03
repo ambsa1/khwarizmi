@@ -10,7 +10,7 @@
   // كلام سراج وهو ينفّذ البرنامج هو "ناتج" البرنامج: يتقال كل مرة (حتى لو تكرر في حلقة)
   const OUT = { pri: 'feedback', force: true, again: true };
   const sayNum = v => { const N = SIRAJ_TEXTS.NUMS; Voice.play(Number.isInteger(v) && v >= 0 && v < N.length ? 'n_' + v : 'n_x', Number.isInteger(v) && v >= 0 && v < N.length ? N[v] : String(v), undefined, OUT); };
-  const talkChip = a => a === 'wave' ? '👋' : a === 'jump' ? '🦘' : `💬<small>${esc(a.slice(4))}</small>`;
+  const talkChip = a => a === 'wave' ? '🙋' : a === 'jump' ? '🦘' : `💬<small>${esc(a.slice(4))}</small>`;
 
   /* ---------- سراج يتكلم ---------- */
   class TalkStage {
@@ -450,8 +450,9 @@
     }
     paint(n) {
       const b = this.box(n), v = this.vals[n];
-      b.querySelector('.vb-val').textContent = v == null ? '?' : typeof v === 'number' ? String(Math.round(v * 100) / 100) : String(v);
-      b.classList.toggle('empty', v == null);
+      // الصغار: الصندوق الفاضي = صفر (وسراج يقول صفر لو سألناه)، فنكتب 0 بدل ؟
+      b.querySelector('.vb-val').textContent = v == null ? (this.little ? '0' : '?') : typeof v === 'number' ? String(Math.round(v * 100) / 100) : String(v);
+      b.classList.toggle('empty', v == null && !this.little);
       const k = Number.isInteger(v) && v > 0 && v <= 12 ? v : 0;
       b.querySelector('.vb-items').innerHTML = Array.from({ length: k }, () => `<i>${vEmoji(n)}</i>`).join('');
       const w = (this.level.target || {})[n];

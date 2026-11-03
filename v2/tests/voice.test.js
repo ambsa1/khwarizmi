@@ -34,6 +34,11 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
     Voice.stop(); T.t += 10000;
     Voice.play('en_wave', 'wave', 'en', { pri: 'name' });
     r.feedInterruptsName = Voice.play('talk_short', 'x', undefined, { pri: 'feedback' }) && Voice.busy() === Voice.PRI.feedback;
+    // اسم جديد ما يقطع زوج (إنجليزي + عربي) شغّال، إلا بالطلب
+    Voice.stop(); T.t += 10000;
+    Voice.playSeq([['en_jump', 'jump', 'en'], ['k_siraj_jump', 'x']], { pri: 'name' });
+    r.nameKeepsName = !Voice.playSeq([['en_for', 'for', 'en'], ['k_siraj_repeat', 'x']], { pri: 'name' }) && Voice.log.slice(-1)[0].why === 'busy';
+    r.forcedNameCuts = Voice.play('ph_0', 'x', undefined, { pri: 'name', force: true });
     // منع التكرار
     Voice.stop(); T.t += 10000;
     r.first = Voice.play('retry', 'x');
@@ -84,6 +89,7 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
   check(u.instr && !u.nameWhileInstr && !u.feedWhileInstr, 'lower priority never interrupts an instruction', JSON.stringify(u).slice(0, 0));
   check(u.forceWhileInstr, '🔊 / forced line interrupts anything');
   check(u.feedInterruptsName, 'feedback interrupts a card name');
+  check(u.nameKeepsName && u.forcedNameCuts, 'a new card name never splits a playing name pair (unless forced)', JSON.stringify([u.nameKeepsName, u.forcedNameCuts]));
   check(u.first && u.repeatBlocked && u.forced && u.afterCool, 'same line not replayed within 6 s unless forced', JSON.stringify([u.first, u.repeatBlocked, u.forced, u.afterCool]));
   check(u.forceNoRestart, '🔊 tapped 3× while playing = one start (no stutter)');
   check(u.nameStarts === 3 && u.saved === 3 && u.persisted, 'card names stop after 3 times per child (saved)', JSON.stringify([u.nameStarts, u.saved, u.persisted]));

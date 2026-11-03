@@ -15,6 +15,7 @@
     open: 'M86 104 Q100 128 114 104 Z',
     sad: 'M84 117 Q100 104 116 117',
     wow: 'M94 108 Q100 122 106 108 Q100 100 94 108 Z',
+    sleepy: 'M91 111 Q100 115 109 111',
   };
 
   let uid = 0;
@@ -124,9 +125,20 @@
         return tl({ onComplete: () => setMouthShape('smile') })
           .to(all, { rotation: 12, duration: 0.12, yoyo: true, repeat: 5, ease: 'sine.inOut' }).set(all, { rotation: 0 });
       },
+      // نبضة التوهج المتكررة لازم تقف، وإلا ترجع تنوّر المصباح المطفي
       setLit(on) {
-        q('.s-bulb').setAttribute('fill', on ? '#ffd23e' : '#a29d86');
-        gsap.to(glow, { opacity: on ? 1 : 0, duration: 0.4 });
+        const b = q('.s-bulb');
+        b.setAttribute('fill', on ? '#ffd23e' : '#a29d86'); b.setAttribute('stroke', on ? '#f0a500' : '#7d7964');
+        glowTl.pause();
+        gsap.to(glow, { opacity: on ? 1 : 0, duration: 0.4, overwrite: true, onComplete: () => { if (on) glowTl.restart(); } });
+      },
+      // نعسان: المصباح مطفي، العيون شبه مقفولة، الراس مايل، والفم صغير
+      sleep() {
+        api.setLit(false);
+        clearTimeout(blinkTimer); blinkTimer = null;
+        gsap.killTweensOf(eyes); gsap.set(eyes, { scaleY: 0.15 });
+        setMouthShape('sleepy');
+        gsap.to(head, { rotation: 8, duration: 0.6, ease: 'sine.out' });
       },
       setChest(color) { gsap.to(q('.s-chest'), { attr: { fill: color }, duration: 0.15 }); },
       destroy() {

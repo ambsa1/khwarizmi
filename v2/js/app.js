@@ -161,6 +161,7 @@
             }).join('')}</div></div>`;
         }).join('')}
       </div>`, 'night');
+    balanceLamps();
     gsap.from('.bld', { scaleY: 0, transformOrigin: '50% 100%', stagger: 0.05, duration: 0.5, ease: 'back.out(1.6)' });
     gsap.from('.track', { y: 30, opacity: 0, stagger: 0.08, duration: 0.45, ease: 'back.out(1.6)' });
     // النافذة التي نوّرها الطفل الآن تلمع
@@ -169,6 +170,18 @@
       S.justLit = null;
       if (w) { w.classList.add('pop'); later(() => Sfx.light(), 450); }
     }
+  }
+
+  // صفوف مصابيح متوازنة: ٩ مراحل = ٥ + ٤ بدل ٨ + واحدة لوحدها (حسب العرض المتاح)
+  function balanceLamps() {
+    document.querySelectorAll('.track-lamps').forEach(el => {
+      el.style.maxWidth = '';
+      const n = el.children.length, lv = el.firstElementChild;
+      if (!n || !lv) return;
+      const gap = parseFloat(getComputedStyle(el).columnGap) || 10, w = lv.offsetWidth + gap;
+      const per = Math.max(1, Math.floor((el.clientWidth + gap) / w)), rows = Math.ceil(n / per);
+      if (rows > 1) el.style.maxWidth = Math.ceil(n / rows) * w - gap + 1 + 'px';
+    });
   }
 
   /* ---------- المرحلة ---------- */
@@ -398,7 +411,7 @@
       const res = stage.result();
       if (res.ok) {
         const need = (L.mustPy || []).find(w => !PyLab.uses(code, w));
-        if (need) { ed.error(0, `استعمل \`${need}\` في هذه المرحلة`, 'tip'); return fail('use_word'); }
+        if (need) { ed.error(0, `${girl() ? 'استعملي' : 'استعمل'} \`${need}\` في هذه المرحلة`, 'tip'); return fail('use_word'); }
         ed.mark(null);
         return await win(L, PyLab.lineCount(code), my);
       }
@@ -436,7 +449,7 @@
     const b = $('#hintBtn'); if (b) b.classList.remove('pulse');
     if (S.ed) {
       const d = PyLab.diffLines(S.ed.get(), L.solution);
-      if (d && d.text) { S.ed.error(d.line, `جرّب: \`${d.text.trim()}\``, 'tip'); say('hint_next', ho); }
+      if (d && d.text) { S.ed.error(d.line, `${girl() ? 'جرّبي' : 'جرّب'}: \`${d.text.trim()}\``, 'tip'); say('hint_next', ho); }
       else if (d) { S.ed.error(d.line, 'هذا السطر زائد', 'tip'); say('hint_extra', ho); }
       return;
     }
@@ -496,7 +509,7 @@
       <div class="w-stars">${[1, 2, 3].map(i => `<span class="${i <= stars ? 'on' : ''}">★</span>`).join('')}</div>
       ${fewer ? `<p class="hint">${plain(SAY[key(fk)])}</p>` : ''}
       ${code.length ? `<pre class="w-code" dir="ltr">${code.map(hl).join('\n')}</pre>` : ''}
-      <div class="w-acts">${stars < 3 || L.free ? '<button class="sq" data-act="again" aria-label="مرة أخرى">↻</button>' : ''}
+      <div class="w-acts"><button class="sq" data-act="tracks" aria-label="الخريطة">🗺</button>${stars < 3 || L.free ? '<button class="sq" data-act="again" aria-label="مرة أخرى">↻</button>' : ''}
         ${L.free && S.kind === 'draw' ? '<button class="sq" data-act="savepic" aria-label="احفظ رسمتي">💾</button>' : ''}
         <button class="run" data-act="next">${last ? '✔ تم' : '▶ التالي'}</button></div>`, true);
     const s = Siraj.create($('#wsj'), p.color); S.msirajs.push(s); s.happy();
@@ -541,7 +554,7 @@
   const vEm = n => Blocks.VARS[n] || '📦';
   const LICON = {
     say: o => { const p = SIRAJ_TEXTS.PHRASES.find(x => x[0] === o.arg); return `${p ? p[2] : '💬'}<small>${esc(o.arg)}</small>`; },
-    wave: () => '👋', jump: () => '🦘', up: () => '⬆️', down: () => '⬇️', left: () => '⬅️', right: () => '➡️',
+    wave: () => '🙋', jump: () => '🦘', up: () => '⬆️', down: () => '⬇️', left: () => '⬅️', right: () => '➡️',
     light: () => '💡', off: () => '🌑',
     set: o => `${vEm(o.name)}<small>= ${o.arg}</small>`, add: o => `${vEm(o.name)}<small>${o.arg > 0 ? '+' : '−'}${Math.abs(o.arg)}</small>`,
     sayvar: o => `💬<small>${vEm(o.name)}</small>`,
@@ -735,6 +748,7 @@
   function relayout() {
     clearTimeout(rt);
     rt = setTimeout(() => {
+      if (S.screen === 'tracks') { balanceLamps(); return; }
       if (S.screen !== 'level' || !S.stage) return;
       if (S.running) { S.relayoutDue = true; return; }
       S.relayoutDue = false;

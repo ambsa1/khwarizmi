@@ -40,7 +40,7 @@
   const PRI = { ambient: 1, name: 2, feedback: 3, instruction: 4 };
   const COOL = 6000, AMBIENT_GAP = 15000, LEARN = 3;
   const NAME = /^(en_|k_|c_|n_|ph_|cw_(en_)?l_|cw_en_w_|cw_wd_|cw_n_|cw_f_|cw_p_|cw_alg_\d)/;
-  const AMBIENT = /^(hi_|cw_hello$|cw_good\d|cw_bal_good$|cw_yum$)/;
+  const AMBIENT = /^(hi_|cw_hello$|cw_good\d|cw_bal_good(_f)?$|cw_yum$)/;
   const FEEDBACK = /^(win\d|cw_win\d|fewer|retry|empty|full$|hint_|sol_|predict_(ok|no)|py_err|use_|talk_|draw_|path_|bump$|edge$|light_|var_(empty|wrong|say)|func_(unknown|empty|loop)|x_(cert$|cert_f|title_new|sticker_new|locked|t\d))/;
   // تصنيف الجملة من مفتاحها لو المستدعي ما حدّد الأولوية
   const cls = k => (AMBIENT.test(k) ? 'ambient' : NAME.test(k) ? 'name' : FEEDBACK.test(k) ? 'feedback' : 'instruction');
@@ -92,7 +92,8 @@
       if (cur && cur.keys === sig(items) && !o.again) return true; // نفس الجملة شغّالة: ما نبدأها من الأول مع كل ضغطة
     } else {
       // cut: رد على إجابة الطفل نفسها (هو جاوب السؤال، فالتعليمة خلاص انتهت)
-      if (cur && cur.pri > pri && !o.cut) { note(sig(items), 'drop', { why: 'busy' }); return false; }
+      // اسم بطاقة جديد ما يقطع اسماً شغّالاً (عشان الزوج إنجليزي + عربي ما يتقسم)
+      if (cur && (cur.pri > pri || (cur.pri === PRI.name && pri === PRI.name)) && !o.cut) { note(sig(items), 'drop', { why: 'busy' }); return false; }
       items = items.filter(([k]) => {
         if (t - (last.has(k) ? last.get(k) : -1e9) < (o.cool || COOL)) return false;
         const c = cls(k);

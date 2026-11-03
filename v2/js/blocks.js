@@ -4,6 +4,7 @@
   'use strict';
 
   const PY = python.pythonGenerator;
+  PY.INDENT = '    '; // أربع مسافات مثل مختبر بايثون (وبايثون الحقيقي)
   const T = root.SIRAJ_TEXTS;
 
   const icon = svg => ({ type: 'field_image', src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), width: 26, height: 26, alt: '' });
@@ -419,8 +420,13 @@
     const fw = flyWs(ws); if (!fw) return;
     const m = fw.getMetricsManager(), max = m.getScrollMetrics().width - m.getViewMetrics().width;
     if (max < 20) return;
-    const tw = slide(ws, max, { duration: 0.9, yoyo: true, repeat: 1, repeatDelay: 0.5 });
-    if (tw) ws.getParentSvg().parentNode.addEventListener('pointerdown', () => tw.kill(), { once: true, capture: true }); // الطفل لمس: نقف
+    const x0 = -fw.scrollX, tw = slide(ws, max, { duration: 0.9, yoyo: true, repeat: 1, repeatDelay: 0.5 });
+    // الطفل لمس: نقف، ونرجع القائمة لأولها عشان أول البطاقات (الجديدة والمطلوبة) تبان
+    if (tw) ws.getParentSvg().parentNode.addEventListener('pointerdown', () => {
+      if (!tw.isActive() && tw.progress() >= 1) return;
+      tw.kill();
+      const w = flyWs(ws); if (w && w.scrollbar) w.scrollbar.set(x0, 0);
+    }, { once: true, capture: true });
   }
   function clearGlow(ws) {
     [ws, ws.getFlyout && ws.getFlyout() && ws.getFlyout().getWorkspace()].forEach(w => w && w.getAllBlocks(false).forEach(b => glow(b, false)));

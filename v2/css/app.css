@@ -239,6 +239,11 @@ b.k { color: #c792ea; } b.f { color: #82aaff; } b.s { color: #c3e88d; } b.n { co
   .level .editor { grid-row: 2; grid-column: 2; border-top: 0; }
   .level .controls { grid-row: 3; grid-column: 2; }
 }
+/* شاشة عريضة (تابلت بالعرض): كود بايثون يظهر منه ٤ أسطر على الأقل (المسرح في عمود لوحده) */
+@media (orientation: landscape) and (min-width: 700px) and (min-height: 521px) {
+  .py:not(.folded) { min-height: 148px; max-height: 40%; }
+  .py:not(.folded) pre { flex: 1; min-height: 0; }
+}
 @media (max-height: 520px) and (orientation: landscape) {
   .bar { padding: 4px 10px; } .ib { width: 38px; height: 38px; } .run, .sq { height: 48px; }
 }
@@ -283,6 +288,9 @@ input { -webkit-user-select: text; user-select: text; }
 .level.t-funcs .bar { background: linear-gradient(90deg, #a01e4f, #d6336c); }
 .level.t-bugs .bar { background: linear-gradient(90deg, #1f6e30, #2f9e44); }
 .level.t-pylab .bar { background: linear-gradient(90deg, #24527a, #3776ab); }
+/* شريط المرحلة: اسم المسار في سطر واحد دايماً (يصغر الخط بدل ما ينزل لسطرين؛ … آخر حل) */
+.level .bar .t { display: block; -webkit-line-clamp: none; white-space: nowrap; text-overflow: ellipsis; font-size: clamp(14px, 4.3vw, 21px); }
+@media (max-width: 420px) { .level .bar { gap: 6px; padding-left: 10px; padding-right: 10px; } .level .bar .chip { padding: 6px 8px; letter-spacing: 0; } }
 .bar .hintb { opacity: .75; }
 .bar .hintb.pulse { opacity: 1; background: var(--gold); animation: pulse 1s ease-in-out infinite; box-shadow: 0 0 18px rgba(255,197,49,.8); }
 .run.pulse { animation: pulse 1s ease-in-out infinite; }
@@ -381,6 +389,7 @@ input { -webkit-user-select: text; user-select: text; }
 .city-count { position: absolute; top: 10px; right: 14px; color: var(--glow); font: 800 15px var(--head); background: rgba(0,0,0,.3); border-radius: 999px; padding: 2px 10px; }
 .track { scroll-margin-top: 8px; }
 /* تلفون ضيق: العمارات أعرض (مسافات أقل) عشان تبقى سهلة اللمس */
+@media (max-width: 350px) { .lv { width: 60px; } .track-lamps { gap: 8px; } } /* ٤ مصابيح في الصف بدل ٣ */
 @media (max-width: 420px) { .tracks { padding-left: 6px; padding-right: 6px; } .city { padding-left: 3px; padding-right: 3px; } .skyline { gap: 2px; } .bld { padding-left: 2px; padding-right: 2px; } }
 
 /* مختبر بايثون: محرّر كود بأرقام أسطر وأزرار كبيرة */

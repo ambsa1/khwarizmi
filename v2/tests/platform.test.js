@@ -181,8 +181,14 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
 
     // الشهادة: نكمل مسار الكلام، ونرجع للخريطة → تظهر الشهادة
     await pg.evaluate(() => { const p = SirajTest.S.player; SirajTest.TRACKS[0].levels.forEach(l => Store.win(p, l.id, 3)); SirajTest.screens.renderTracks(); });
+    // شهادة + لقب + ملصق = نافذة احتفال واحدة، والشهادة تنفتح من قائمتها
+    await pg.waitForSelector('.x-rewards', { timeout: 6000 }).catch(() => {});
+    const rw = await pg.evaluate(() => ({ title: !!document.querySelector('.x-rewards .x-title-big'), stk: !!document.querySelector('.x-rewards .x-new-stk'), certs: document.querySelectorAll('.x-rewards [data-x="q-cert"]').length, modals: document.querySelectorAll('.m-back').length }));
+    check(rw.title && rw.stk && rw.certs === 1 && rw.modals === 1, 'one celebration modal: title + sticker + certificate list', JSON.stringify(rw));
+    await shot(pg, 'rewards');
+    await pg.click('[data-x="q-cert"]');
     await pg.waitForSelector('.x-cert-img', { timeout: 6000 }).catch(() => {});
-    const cert = await pg.evaluate(() => { const i = document.querySelector('.x-cert-img'); return i ? { w: i.naturalWidth, h: i.naturalHeight } : null; });
+    const cert =await pg.evaluate(() => { const i = document.querySelector('.x-cert-img'); return i ? { w: i.naturalWidth, h: i.naturalHeight } : null; });
     check(cert && cert.w === 1400 && cert.h === 1000, 'certificate renders on canvas', JSON.stringify(cert));
     await wait(pg, 600);
     await shot(pg, 'cert-modal');
@@ -190,12 +196,6 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
     fs.writeFileSync(path.join(SHOTS, 'platform-cert.png'), Buffer.from(png.split(',')[1], 'base64'));
     const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 4000 }).catch(() => null), pg.click('[data-x="cert-save"]')]);
     check(!!dl && /\.png$/.test(dl.suggestedFilename()), 'certificate save downloads png');
-    // بعد الشهادة: لقب جديد ثم ملصق جديد
-    await pg.click('[data-x="q-next"]'); await wait(pg, 700);
-    check(!!(await pg.$('.x-title-big')), 'new title celebration after certificate', await pg.evaluate(() => document.querySelector('#modal').textContent.trim().slice(0, 30) + ' q=' + Extras.queued + ' ' + [...document.querySelectorAll('#modal [data-x]')].map(b => b.dataset.x) + ' ' + JSON.stringify(SirajTest.S.player.seen) + ' ' + SirajTest.S.screen));
-    await shot(pg, 'title');
-    await pg.click('[data-x="q-next"]'); await wait(pg, 700);
-    check(!!(await pg.$('.x-new-stk')), 'new sticker celebration');
     await pg.click('[data-x="q-next"]'); await wait(pg, 500);
     check(!(await pg.$('.m-card')), 'reward queue finishes');
     await pg.evaluate(() => Extras.openCerts()); await wait(pg, 700);

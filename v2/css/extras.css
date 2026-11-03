@@ -95,6 +95,17 @@
 .x-title-big { display: inline-flex; align-items: center; gap: 10px; margin: 8px 0; padding: 10px 22px; border-radius: 999px; font-family: var(--head); font-weight: 800; font-size: 30px;
   background: linear-gradient(#ffe48a, #ffc531); color: var(--ink); box-shadow: 0 5px 0 #c98f00, 0 0 30px rgba(255,197,49,.6); }
 .x-title-big span { font-size: 36px; }
+/* نافذة الاحتفال الواحدة: لقب + ملصقات + قائمة شهادات */
+.x-rewards .x-sub { margin: 10px 0 2px; }
+.x-rewards .w-siraj { width: 96px; height: 110px; }
+.x-rewards .x-new-stk { margin: 8px 0 4px; }
+.x-rewards .x-new-stk .x-stk { width: 76px; height: 76px; font-size: 44px; }
+.x-rew-certs { display: flex; flex-direction: column; gap: 8px; margin: 6px 0; }
+.x-rew-cert { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 14px; border-radius: 16px; background: #fffaf0; border: 3px solid var(--tc); box-shadow: 0 4px 0 rgba(0,0,0,.12);
+  font-family: var(--head); font-weight: 800; font-size: 19px; color: var(--ink); text-align: start; }
+.x-rew-cert span { font-size: 26px; } .x-rew-cert b { flex: 1; min-width: 0; } .x-rew-cert i { font-style: normal; font-size: 24px; }
+.x-rew-cert:active { transform: translateY(3px); box-shadow: none; }
+@media (max-height: 560px) { .x-rewards .w-siraj { display: none; } }
 .x-sleepy { opacity: .95; }
 .x-zz { display: block; font-size: 30px; margin-top: -20px; }
 .x-break-t { color: #2b2f7a !important; font-size: 26px !important; line-height: 1.4; }

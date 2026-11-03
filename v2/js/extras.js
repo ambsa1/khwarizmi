@@ -73,11 +73,12 @@
     return `<button class="chip x-title" data-x="title" aria-label="لقبي">${TITLES[i][1]} ${esc(titleName(p, i))}</button>`;
   }
 
-  /* ---------- الملصقات: ملصق لكل ٤ نجوم ---------- */
+  /* ---------- الملصقات: ملصق لكل ٧ نجوم (تقريباً ملصق كل فوزين أو ثلاثة، فيفضل له طعم) ---------- */
   const STICKERS = ['🦁', '🐼', '🦊', '🐸', '🐙', '🦄', '🐢', '🦋', '🐝', '🐞', '🦉', '🐧', '🐬', '🐳', '🦕', '🐯', '🐨', '🦒', '🚀', '🛸',
     '🌈', '🌙', '☀️', '🌻', '🍉', '🍓', '🍦', '🎈', '🎨', '🎸', '⚽', '🚂', '🚁', '⛵', '🏰', '🎁', '🧩', '🔭', '💎', '🏆'];
-  const PER = 4;
-  const stickerCount = p => Math.min(STICKERS.length, Math.floor(Store.stars(p) / PER));
+  const PER = 7;
+  // الملصقات اللي الطفل كسبها قبل كده (لما كانت كل ٤ نجوم) تفضل معه
+  const stickerCount = p => Math.min(STICKERS.length, Math.max(Math.floor(Store.stars(p) / PER), p && p.seen && typeof p.seen.stk === 'number' ? p.seen.stk : 0));
   // كل ملصق على شارة واحدة الشكل (لون خلفية هادي مختلف)، عشان الإيموجي يبان موحّد على كل الأجهزة
   const stkStyle = i => `--r:${((i * 37) % 17) - 8}deg;--h:${(i * 47) % 360}`;
 
@@ -91,7 +92,7 @@
     { id: 'say', g: 'py', icon: '💬', word: 'say("مرحبا")', code: 1, lv: /say/ },
     { id: 'print', g: 'py', icon: '🖨️', word: 'print("مرحبا")', code: 1, lv: /say|^print$/ },
     { id: 'paren', g: 'py', icon: '🤲', word: '( )', code: 1, lv: /./ },
-    { id: 'wave', g: 'py', icon: '👋', word: 'wave()', code: 1, lv: /wave/ },
+    { id: 'wave', g: 'py', icon: '🙋', word: 'wave()', code: 1, lv: /wave/ },
     { id: 'jump', g: 'py', icon: '🦘', word: 'jump()', code: 1, lv: /jump/ },
     { id: 'light', g: 'py', icon: '🚦', word: 'light("red")\noff()', code: 1, lv: /^light|^off$/ },
     { id: 'forward', g: 'py', icon: '✏️', word: 'forward(2)', code: 1, lv: /forward/ },
@@ -194,10 +195,10 @@
 
   function openStickers() {
     const p = P(); if (!p) return;
-    const n = stickerCount(p), s = Store.stars(p), left = n >= STICKERS.length ? 0 : (n + 1) * PER - s;
-    // العدّاد 🏅 للملصقات، والشريط عليه ⭐ كم نجمة من ٤ للملصق الجاي (عشان ما يتلخبطوا)
+    const n = stickerCount(p), s = Store.stars(p), left = n >= STICKERS.length ? 0 : Math.max(1, (n + 1) * PER - s), have = Math.max(0, PER - left);
+    // العدّاد 🏅 للملصقات، والشريط عليه ⭐ كم نجمة من ٧ للملصق الجاي (عشان ما يتلخبطوا)
     const body = `<div class="x-st-head"><span class="x-st-n">🏅 ${frac(n, STICKERS.length)}</span>
-        ${left ? `<div class="x-bar-w"><div class="x-bar"><i style="width:${Math.round(((s % PER) / PER) * 100)}%"></i></div><b>⭐ ${frac(s % PER, PER)}</b></div><p>⭐ ${left} للملصق التالي</p>` : '<p>🎉 جمعت كل الملصقات!</p>'}
+        ${left ? `<div class="x-bar-w"><div class="x-bar"><i style="width:${Math.round((have / PER) * 100)}%"></i></div><b>⭐ ${frac(have, PER)}</b></div><p>⭐ ${left} للملصق التالي</p>` : '<p>🎉 جمعت كل الملصقات!</p>'}
         <button class="x-looks-btn" data-x="title"><span class="pic">${A().mini(p.color)}</span>🎨 ألوان سراج</button></div>
       <div class="x-stickers">${STICKERS.map((e, i) => i < n
         ? `<button class="x-stk" data-x="stk" style="${stkStyle(i)}"><span>${e}</span></button>`
@@ -329,17 +330,21 @@
   // شاشات الخرائط فقط (عالم الكمبيوتر كله شاشة واحدة 'cw' فيها أنشطة، فلا نقاطعه)
   const isMap = n => /^(sections|tracks|ency|stickers|certs|family)$/.test(n || '');
   let queue = [], qTimer = null, breakDue = false, lastBreak = 0;
+  // كل مكافآت الفوز (شهادات + لقب + ملصق) في نافذة احتفال واحدة، بدل نوافذ ورا بعض
   function collect(p) {
-    const q = [];
+    const q = [], certs = [];
     for (const g of groups(p)) {
-      if (!p.certs[g.key] && g.ids.every(id => isDone(p, id))) { p.certs[g.key] = Date.now(); Store.save(); q.push(() => showCert(p, g, true)); }
+      if (!p.certs[g.key] && g.ids.every(id => isDone(p, id))) { p.certs[g.key] = Date.now(); Store.save(); certs.push(g); }
     }
+    let title = null, stk = null;
     const ti = titleIdx(p);
     if (typeof p.seen.title !== 'number') Store.setSeen(p, 'title', ti);
-    else if (ti > p.seen.title) { Store.setSeen(p, 'title', ti); q.push(() => showTitle(p, ti)); }
+    else if (ti > p.seen.title) { Store.setSeen(p, 'title', ti); title = ti; }
     const sn = stickerCount(p);
     if (typeof p.seen.stk !== 'number') Store.setSeen(p, 'stk', sn);
-    else if (sn > p.seen.stk) { const from = p.seen.stk; Store.setSeen(p, 'stk', sn); q.push(() => showSticker(p, from, sn)); }
+    else if (sn > p.seen.stk) { stk = [p.seen.stk, sn]; Store.setSeen(p, 'stk', sn); }
+    if (certs.length === 1 && title == null && !stk) q.push(() => showCert(p, certs[0], true)); // شهادة واحدة بس: نعرضها مباشرة
+    else if (certs.length || title != null || stk) q.push(() => showRewards(p, certs, title, stk));
     if (breakDue) q.push(() => showBreak(p));
     return q;
   }
@@ -366,21 +371,30 @@
     if (el) { const s = Siraj.create(el, color); A().S.msirajs.push(s); s.happy(); }
     FX.confetti(); Sfx.win();
   }
-  function showTitle(p, i) {
-    rewardModal(`<div class="w-siraj" id="xsj"></div><p class="x-sub">${esc(xtext('x_title_new', p))}</p>
-      <div class="x-title-big"><span>${TITLES[i][1]}</span>${esc(titleName(p, i))}</div>
-      ${LOOKS[i] ? `<p class="x-newlook">🎁 <i class="sw" style="background:${LOOKS[i]}"></i> 🎨</p>` : ''}
-      <div class="w-acts">${LOOKS[i] ? '<button class="sq" data-x="title" aria-label="ألوان سراج">🎨</button>' : ''}<button class="run" data-x="q-next">▶</button></div>`, p.color);
-    gsap.from('.x-title-big', { scale: 0.3, opacity: 0, duration: 0.6, ease: 'back.out(2.5)', delay: 0.15 });
-    Voice.playSeq([xline('x_title_new', p), [titleKey(p, i), X[titleKey(p, i)]]], FORCE);
-  }
-  function showSticker(p, from, to) {
-    const got = STICKERS.slice(from, to).slice(-3);
-    rewardModal(`<p class="x-sub">${esc(xtext('x_sticker_new', p))}</p>
-      <div class="x-new-stk">${got.map((e, j) => `<span class="x-stk" style="${stkStyle(STICKERS.indexOf(e))}"><span>${e}</span></span>`).join('')}</div>
-      <div class="w-acts"><button class="sq" data-x="go-stickers" aria-label="ملصقاتي">🏅</button><button class="run" data-x="q-next">▶</button></div>`);
-    gsap.from('.x-new-stk .x-stk', { scale: 0, rotation: 200, stagger: 0.15, duration: 0.7, ease: 'back.out(2)' });
-    Voice.play(...xline('x_sticker_new', p), undefined, FORCE);
+  // نافذة احتفال واحدة: اللقب الجديد، والملصقات الجديدة، وقائمة الشهادات (كل شهادة تنفتح بالضغط)
+  let rewardCerts = [];
+  function showRewards(p, certs, i, stk) {
+    rewardCerts = certs;
+    const got = stk ? STICKERS.slice(stk[0], stk[1]).slice(-3) : [];
+    const look = i != null && LOOKS[i];
+    rewardModal(`<div class="w-siraj" id="xsj"></div>
+      ${i != null ? `<p class="x-sub">${esc(xtext('x_title_new', p))}</p>
+        <div class="x-title-big"><span>${TITLES[i][1]}</span>${esc(titleName(p, i))}</div>
+        ${look ? `<p class="x-newlook">🎁 <i class="sw" style="background:${look}"></i> 🎨</p>` : ''}` : ''}
+      ${got.length ? `<p class="x-sub">${esc(xtext('x_sticker_new', p))}</p>
+        <div class="x-new-stk">${got.map(e => `<span class="x-stk" style="${stkStyle(STICKERS.indexOf(e))}"><span>${e}</span></span>`).join('')}</div>` : ''}
+      ${certs.length ? `<p class="x-sub">📜 ${certs.length > 1 ? 'شهادات جديدة!' : 'شهادة جديدة!'}</p>
+        <div class="x-rew-certs">${certs.map(g => `<button class="x-rew-cert" data-x="q-cert" data-k="${esc(g.key)}" style="--tc:${esc(g.color || '#ffc531')}"><span>${g.icon || '📜'}</span><b>${esc(g.name)}</b><i>📜</i></button>`).join('')}</div>` : ''}
+      <div class="w-acts">${look ? '<button class="sq" data-x="title" aria-label="ألوان سراج">🎨</button>' : ''}${got.length ? '<button class="sq" data-x="go-stickers" aria-label="ملصقاتي">🏅</button>' : ''}<button class="run" data-x="q-next">▶</button></div>`, p.color);
+    const mc = $('.m-card'); if (mc) mc.classList.add('x-rewards');
+    if (i != null) gsap.from('.x-title-big', { scale: 0.3, opacity: 0, duration: 0.6, ease: 'back.out(2.5)', delay: 0.15 });
+    if (got.length) gsap.from('.x-new-stk .x-stk', { scale: 0, rotation: 200, stagger: 0.15, duration: 0.7, ease: 'back.out(2)', delay: 0.3 });
+    if (certs.length) gsap.from('.x-rew-cert', { y: 16, opacity: 0, stagger: 0.1, duration: 0.45, ease: 'back.out(2)', delay: 0.45 });
+    const seq = [];
+    if (i != null) seq.push(xline('x_title_new', p), [titleKey(p, i), X[titleKey(p, i)]]);
+    if (got.length) seq.push(xline('x_sticker_new', p));
+    if (certs.length) seq.push(xline('x_cert', p));
+    Voice.playSeq(seq, FORCE);
   }
   function showBreak(p) {
     breakDue = false; lastBreak = Date.now();
@@ -389,7 +403,7 @@
       <p class="hint">⏱ ${Math.round(Store.todaySec(p) / 60)} دقيقة اليوم</p>
       <div class="w-acts"><button class="run" data-act="home">👋 حاضر</button></div>`, true);
     const el = $('#xsj');
-    if (el) { const s = Siraj.create(el, p.color); A().S.msirajs.push(s); s.setLit(false); }
+    if (el) { const s = Siraj.create(el, p.color, { lit: false }); A().S.msirajs.push(s); s.sleep(); }
     gsap.from('.x-zz', { y: 10, opacity: 0, duration: 1.2, repeat: -1, ease: 'sine.out' });
     Voice.play(...xline('x_break', p), undefined, { pri: 'instruction', force: true });
   }
@@ -461,6 +475,8 @@
     cert: t => { const p = P(), g = groups(p).find(x => x.key === t.dataset.k); if (p && g) showCert(p, g, false); },
     'cert-save': () => saveCert(),
     'q-next': () => { A().closeModal(); setTimeout(() => runQueue(), 250); },
+    // شهادة من نافذة الاحتفال: تنفتح بصورتها، و▶ فيها يكمّل باقي الطابور
+    'q-cert': t => { const p = P(), g = rewardCerts.find(x => x.key === t.dataset.k); if (p && g) showCert(p, g, true); },
     'm-close': () => A().closeModal(),
     'go-stickers': () => { queue = []; openStickers(); },
   };

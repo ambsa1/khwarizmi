@@ -63,7 +63,7 @@
   }
   // عدد المراحل والأنشطة، والمحلول منها لكل طفل (من أقسام الشهادات في extras.js)
   function counts(p) {
-    const gs = window.Extras ? Extras.groups() : [], r = { lv: 0, lvAll: 0, cw: 0, cwAll: 0 };
+    const gs = window.Extras ? Extras.groups(p) : [], r = { lv: 0, lvAll: 0, cw: 0, cwAll: 0 };
     for (const g of gs) {
       const k = g.key[0] === 'C' ? 'cw' : 'lv';
       r[k + 'All'] += g.ids.length; r[k] += Extras.doneIn(p, g);
@@ -176,7 +176,17 @@
     forgot: () => gate(true, () => setPin(false)),
     'change-pin': () => setPin(false),
     limit: t => { Store.setLimit(+t.dataset.m); if (window.Extras) Extras._resetBreak(); document.querySelectorAll('.p-seg button').forEach(b => b.classList.toggle('on', b === t)); },
-    backup: () => { download(Store.exportAll(), fileName()); setTimeout(() => { if (onPanel()) panel(); }, 300); },
+    // نعيد رسم اللوحة (يختفي تنبيه النسخة ويتحدّث «آخر نسخة») ونبقى في نفس مكان التمرير
+    backup: () => {
+      download(Store.exportAll(), fileName());
+      setTimeout(() => {
+        if (!onPanel()) return;
+        const sc = $('.p-panel'), y = sc ? sc.scrollTop : 0, note = sc && sc.querySelector('.p-note [data-p="backup"]');
+        const shift = note ? note.closest('.p-note').offsetHeight + 14 : 0; // التنبيه فوق بيختفي
+        panel();
+        const s2 = $('.p-panel'); if (s2) s2.scrollTop = Math.max(0, y - shift);
+      }, 300);
+    },
     share: () => { share(Store.exportAll(), fileName()); },
     import: () => { const f = $('#pFile'); if (f) { f.value = ''; f.click(); } },
     'export-one': t => { const p = Store.getPlayer(t.dataset.id), o = Store.exportOne(t.dataset.id); if (o) download(o, fileName(p && p.name ? p.name : 'طفل')); },
