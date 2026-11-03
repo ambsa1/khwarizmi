@@ -35,7 +35,8 @@ function fill() {
 
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k.startsWith('khwarizmi-') && k !== CACHE) await caches.delete(k);
+    // نمسح النسخ القديمة، ومعاها ملفات أي نسخة سابقة من اللعبة كانت على نفس الموقع
+    for (const k of await caches.keys()) if (k !== CACHE) await caches.delete(k);
     await self.clients.claim();
     fill();
   })());
