@@ -39,6 +39,14 @@ for (const [k, v] of Object.entries(XT.EN)) out.push({ key: 'en_' + k, text: v, 
 const CWT = require('../js/cw/texts.js');
 for (const [k, v] of Object.entries(CWT)) out.push(k.startsWith('cw_en_') ? { key: k, text: v, lang: 'en' } : { key: k, text: v });
 
+// الإنجليزية (en2_): كلها بصوت إنجليزي (en2 = صوت آنا). الترجمة العربية EN_AR للعرض فقط وما يتولّدش لها صوت
+const ENT = require('../js/en/texts.js');
+for (const [k, v] of Object.entries(ENT)) out.push({ key: k, text: v, lang: 'en2' });
+
+// الرياضيات (m_)
+const MT = require('../js/math/texts.js');
+for (const [k, v] of Object.entries(MT)) out.push({ key: k, text: v });
+
 // مفتاح واحد لكل ملف صوت (الأخير يكسب)، عشان ما يتولّد نفس الملف مرتين في نفس الوقت
 const uniq = [...new Map(out.map(i => [i.key, i])).values()];
 fs.writeFileSync(path.join(__dirname, 'voice_texts.json'), JSON.stringify(uniq, null, 1));

@@ -101,6 +101,17 @@
   if (Blockly.config) Blockly.config.dragRadius = 12;
   // لا قائمة ضغط طويل (تكرار/حذف/مساعدة بالكلام) تظهر فجأة تحت إصبع الطفل؛ الحذف بزر 🗑 والتراجع بزر ↶
   try { Blockly.ContextMenuRegistry.registry.reset(); } catch (e) { /* نسخة بلوكلي مختلفة */ }
+  // أشرطة التمرير مخفية (الطفل يحرّك المساحة بالسحب): ما تغطّي البطاقات، وما تاخد مكان فاضي تحت القائمة
+  if (Blockly.Scrollbar) Blockly.Scrollbar.scrollbarThickness = 6; // أقل من كده بلوكلي يرسم مستطيلات بمقاس سالب
+  // قائمة البطاقات على التلفون أصغر شوية من البرنامج نفسه، عشان مساحة البرنامج تكفي
+  let FLY = 1;
+  if (Blockly.HorizontalFlyout && Blockly.registry) {
+    class SirajFlyout extends Blockly.HorizontalFlyout {
+      getFlyoutScale() { return (this.targetWorkspace.__base || this.targetWorkspace.scale) * FLY; } // ثابتة حتى لو البرنامج صغُر ليكفي
+      layout_(c) { super.layout_(c); this.workspace_.scale = this.getFlyoutScale(); }
+    }
+    try { Blockly.registry.register(Blockly.registry.Type.FLYOUTS_HORIZONTAL_TOOLBOX, 'siraj', SirajFlyout); } catch (e) { /* مسجّلة من قبل */ }
+  }
 
   // الحقل الأساسي لكل بطاقة (للكتابة المختصرة 'light_on:red' في المراحل)
   const MAIN = { siraj_say: 'TEXT', light_on: 'C', var_set: 'V', var_add: 'V', var_sub: 'V', var_say: 'V', func_def: 'NAME', func_call: 'NAME' };
@@ -175,6 +186,7 @@
     Blockly.Events.disable();
     try { loadIn(ws, list, conn); } finally { Blockly.Events.enable(); }
     if (ws.rendered) ws.getAllBlocks(false).forEach(b => b.setDisabledReason && b.setDisabledReason(false, 'ORPHANED_BLOCK'));
+    if (ws.__fit) ws.__fit();
   }
   function loadIn(ws, list, conn) {
     for (const step of list) {
@@ -188,27 +200,179 @@
     }
   }
 
+  // قيم حقول البطاقة (لنسخها في بطاقة جديدة)
+  function fieldsOf(src) {
+    const fields = {};
+    src.inputList.forEach(inp => inp.fieldRow.forEach(f => { if (f.name && f.isSerializable()) fields[f.name] = src.getFieldValue(f.name); }));
+    return fields;
+  }
+  const alive = ws => ws && !(ws.isDisposed && ws.isDisposed());
+  // البطاقة تبان كاملة في مساحة البرنامج (مش تحت قائمة البطاقات ولا برّه الشاشة)
+  // (بعد ما بلوكلي يخلّص الرسم المؤجّل، عشان المقاسات تبقى صح)
+  function reveal(ws, b) {
+    setTimeout(() => {
+      if (!alive(ws) || !b || b.isDeadOrDying() || !ws.scrollBoundsIntoView) return;
+      const rm = Blockly.renderManagement;
+      if (rm && rm.triggerQueuedRenders) try { rm.triggerQueuedRenders(ws); } catch (e) { /* */ }
+      try { ws.scrollBoundsIntoView(b.getBoundingRectangleWithoutChildren ? b.getBoundingRectangleWithoutChildren() : b.getBoundingRectangle(), 14); } catch (e) { /* أثناء السحب */ }
+    }, 30);
+  }
+  // البطاقة المنفصلة/الشبح: لونها الأصلي (شفاف شوية) بدل نقش "مقفول"
+  function tint(ws) {
+    if (!alive(ws)) return;
+    ws.getAllBlocks(false).forEach(b => {
+      const r = b.getSvgRoot && b.getSvgRoot();
+      if (!r) return;
+      if (!b.isEnabled()) r.style.setProperty('--blocklyDisabledPattern', b.getColour());
+      r.classList.toggle('siraj-loose', !b.isEnabled() && !r.classList.contains('siraj-ghost'));
+    });
+  }
+  // يصغّر البرنامج (لحد ٦٠٪ من الحجم العادي) لحد ما يبان كله، ويرجّعه للحجم العادي لما يصغر
+  function fit(ws, focus) {
+    if (!alive(ws) || (Blockly.Gesture && Blockly.Gesture.inProgress && Blockly.Gesture.inProgress())) return;
+    const rm = Blockly.renderManagement; // الرسم المؤجّل يخلص الأول، عشان المقاسات تبقى حقيقية
+    if (rm && rm.triggerQueuedRenders) try { rm.triggerQueuedRenders(ws); } catch (e) { /* */ }
+    const box = ws.getBlocksBoundingBox(), m = ws.getMetricsManager().getViewMetrics();
+    const w = box.right - box.left, h = box.bottom - box.top, base = ws.__base || 1;
+    if (!(w > 0 && h > 0) || !(m.height > 0)) return;
+    const s = Math.max(base * 0.6, Math.min(base, (m.height - 24) / h, (m.width - 24) / w));
+    if (Math.abs(s - ws.scale) > 0.01) ws.setScale(s);
+    const sc = ws.scale;
+    if (w * sc <= m.width - 20 && h * sc <= m.height - 20) {
+      // البرنامج كله يكفي: أوله فوق على الشمال بهامش صغير (لو مش ظاهر كله دلوقتي)
+      const x = ws.scrollX + sc * box.left, y = ws.scrollY + sc * box.top; // مكان أول البرنامج على الشاشة
+      const ok = x >= 4 && y >= 4 && x + w * sc <= m.width - 4 && y + h * sc <= m.height - 4;
+      if (!ok) try { ws.scroll(12 - sc * box.left, 12 - sc * box.top); } catch (e) { /* */ }
+    }
+    else if (focus) reveal(ws, focus);
+    else { try { ws.scrollBoundsIntoView(startOf(ws).getBoundingRectangleWithoutChildren(), 8); } catch (e) { /* */ } } // البداية تبان
+  }
+  const rectOf = b => b.getBoundingRectangle();
+  const hits = (a, c) => a.left < c.right && c.left < a.right && a.top < c.bottom && c.top < a.bottom;
+  // بطاقة متروكة فوق بطاقات ثانية: تنزل تحت كل البطاقات (من غير ما تتوصّل بحاجة)
+  function untangle(ws, id) {
+    if (!alive(ws)) return;
+    const b = ws.getBlockById(id);
+    if (!b || b.isDeadOrDying() || b.getParent() || b.type === 'siraj_start') return;
+    const others = ws.getTopBlocks(false).filter(o => o !== b);
+    if (!others.some(o => hits(rectOf(b), rectOf(o)))) return;
+    const bottom = Math.max(...others.map(o => rectOf(o).bottom)), left = rectOf(startOf(ws)).left;
+    const r = rectOf(b);
+    b.moveBy(left - r.left, bottom + 16 - r.top);
+    reveal(ws, b);
+  }
+
+  /* الشبح: البطاقة التالية في التلميح تظهر شفافة متوصّلة في مكانها الصحيح (مش فوق بطاقة ثانية).
+     الضغط عليها يضيفها. ما تدخل في الكود ولا في العدّ (مقفولة)، وتختفي مع أي تعديل */
+  function clearGhost(ws) {
+    if (!alive(ws) || !ws.__ghost) return;
+    const g = ws.getBlockById(ws.__ghost);
+    ws.__ghostGone = ws.__ghost; ws.__ghost = null;
+    if (!g || g.isDeadOrDying()) return;
+    Blockly.Events.disable();
+    try { g.dispose(true); } finally { Blockly.Events.enable(); }
+  }
+  // مكان البطاقة التالية حسب الحل: بعد آخر بطاقة، أو جوّا التكرار/الكلمة، أو بعد البطاقة الأم لو الخطوة برّه
+  function nextConn(ws, d) {
+    let b = d.after;
+    if (!b) return lastIn(startOf(ws)).nextConnection;
+    if (d.afterDepth < d.depth && hasDo(b)) {
+      const inner = b.getInputTargetBlock('DO');
+      return inner ? lastIn(inner).nextConnection : b.getInput('DO').connection;
+    }
+    for (let k = d.afterDepth; k > d.depth && b; k--) b = b.getSurroundParent();
+    return b ? lastIn(b).nextConnection : null;
+  }
+  function showGhost(ws, d) {
+    clearGhost(ws);
+    if (!alive(ws) || !d || d.kind !== 'next' || ws.remainingCapacity() < 2) return null; // آخر مكان فاضي: نسيبه للبطاقة الحقيقية
+    const conn = nextConn(ws, d);
+    if (!conn || conn.targetBlock()) return null;
+    const [type, fields] = Array.isArray(d.step) ? d.step : [d.step];
+    let g = null;
+    Blockly.Events.disable();
+    try {
+      g = ws.newBlock(type);
+      g.initSvg();
+      for (const [f, v] of Object.entries(fields || {})) g.setFieldValue(String(v), f);
+      g.setDisabledReason(true, 'SIRAJ_GHOST');
+      g.setMovable(false); g.setEditable(false);
+      g.getSvgRoot().classList.add('siraj-ghost');
+      g.render();
+      conn.connect(g.previousConnection);
+    } catch (e) { if (g) g.dispose(false); g = null; } finally { Blockly.Events.enable(); }
+    if (!g) return null;
+    ws.__ghost = g.id;
+    tint(ws);
+    if (ws.__fit) ws.__fit(g); else reveal(ws, g);
+    return g;
+  }
+
+  /* الحشرة: دعسوقة صغيرة قاعدة على البطاقة الغلط في مراحل صيد الحشرات */
+  const BUG = '<svg class="bug-svg" viewBox="0 0 44 44" width="38" height="38" aria-hidden="true"><g class="bug-body">'
+    + '<path d="M16 9 Q13 3 9 4 M28 9 Q31 3 35 4" stroke="#20213a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+    + '<circle cx="9" cy="4" r="2.4" fill="#20213a"/><circle cx="35" cy="4" r="2.4" fill="#20213a"/>'
+    + '<path d="M8 22 L2 19 M8 28 L2 30 M10 34 L5 39 M36 22 L42 19 M36 28 L42 30 M34 34 L39 39" stroke="#20213a" stroke-width="2.6" stroke-linecap="round"/>'
+    + '<circle cx="22" cy="14" r="8" fill="#20213a"/><circle cx="19" cy="13" r="2.2" fill="#fff"/><circle cx="25" cy="13" r="2.2" fill="#fff"/>'
+    + '<circle cx="19.4" cy="13.4" r="1.1" fill="#20213a"/><circle cx="25.4" cy="13.4" r="1.1" fill="#20213a"/>'
+    + '<ellipse cx="22" cy="28" rx="14" ry="13" fill="#ef3b36" stroke="#20213a" stroke-width="2.4"/>'
+    + '<path d="M22 15.5 V41" stroke="#20213a" stroke-width="2.2"/>'
+    + '<circle cx="15" cy="24" r="2.8" fill="#20213a"/><circle cx="29" cy="24" r="2.8" fill="#20213a"/><circle cx="14" cy="33" r="2.4" fill="#20213a"/><circle cx="30" cy="33" r="2.4" fill="#20213a"/>'
+    + '<ellipse cx="16" cy="21" rx="3" ry="1.6" fill="#fff" opacity=".55" transform="rotate(-30 16 21)"/></g></svg>';
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  // يحط الحشرة على البطاقة (فوق طرفها اليمين)، ويشيلها من أي بطاقة ثانية
+  function bugOn(ws, b) {
+    if (!alive(ws)) return null;
+    ws.getAllBlocks(false).forEach(x => { const r = x.getSvgRoot && x.getSvgRoot(), o = r && r.querySelector(':scope > .siraj-bug'); if (o && x !== b) o.remove(); });
+    if (!b || b.isDeadOrDying() || !b.getSvgRoot()) return null;
+    const r = b.getSvgRoot();
+    let g = r.querySelector(':scope > .siraj-bug');
+    if (!g) {
+      g = document.createElementNS(SVGNS, 'g');
+      g.setAttribute('class', 'siraj-bug');
+      g.innerHTML = BUG;
+      r.appendChild(g);
+    }
+    // على الطرف اليمين للبطاقة، في نص سطرها الأول (ما تغطّي كلام بطاقة ثانية)
+    const w = b.width || b.getHeightWidth().width, h = Math.min(b.height || 48, 52);
+    g.setAttribute('transform', `translate(${Math.max(40, w) - 14} ${h / 2 - 19})`);
+    return g;
+  }
+
   // يجهّز مساحة البرمجة لمرحلة معيّنة. on(event) يبلّغ التطبيق بما يحدث
   function makeWorkspace(div, types, max, on) {
+    const narrow = div.clientWidth < 420, short = div.clientHeight < 330; // short = تلفون بالعرض
+    FLY = short ? 0.75 : narrow ? 0.82 : 1;
     const ws = Blockly.inject(div, {
       toolbox: { kind: 'flyoutToolbox', contents: types.map(toolItem) },
-      renderer: 'zelos', theme, rtl: false, sounds: false, trashcan: true,
+      renderer: 'zelos', theme, rtl: false, sounds: false, trashcan: false, // الحذف بزر 🗑 أو بالسحب للقائمة
       // قائمة البطاقات في الأسفل بالعرض، عشان مساحة البرنامج تاخد كل عرض الشاشة
       horizontalLayout: true, toolboxPosition: 'end',
+      plugins: { flyoutsHorizontalToolbox: 'siraj' },
       maxBlocks: max ? max + 1 : Infinity, // +1 لبطاقة البداية
       move: { scrollbars: true, drag: true, wheel: true },
-      zoom: { startScale: div.clientWidth < 420 ? 0.88 : 1, controls: false, wheel: false, pinch: true },
+      zoom: { startScale: narrow ? 0.85 : short ? 0.8 : 1, controls: false, wheel: false, pinch: true },
       grid: { spacing: 28, length: 3, colour: '#e3dbff', snap: false },
     });
+    ws.__base = ws.scale;
     const start = ws.newBlock('siraj_start');
     start.initSvg(); start.render();
     start.setDeletable(false);
-    start.moveBy(24, 20);
+    start.moveBy(16, 14);
     ws.clearUndo(); // زر التراجع ما يمسح بطاقة البداية
     ws.addChangeListener(Blockly.Events.disableOrphans);
+    // البطاقة المنفصلة (مش متوصّلة بـ start) تفضل بلونها، بخط متقطّع بدل التظليل المخطّط اللي يبان "مقفول"
+    ws.addChangeListener(e => { if (!e.isUiEvent || e.type === Blockly.Events.BLOCK_DRAG) tint(ws); });
+    // البطاقة اللي اتسابت لوحدها ما تقعد فوق بطاقة ثانية: تنزل تحت البرنامج في مكان فاضي
+    ws.addChangeListener(e => { if (e.type === Blockly.Events.BLOCK_DRAG && !e.isStart) setTimeout(() => untangle(ws, e.blockId), 0); });
+    // البرنامج كله يبان دايماً: لو كبر عن المساحة، البطاقات تصغر شوية بدل ما تستخبى تحت القائمة
+    let fitT;
+    const refit = f => { clearTimeout(fitT); fitT = setTimeout(() => fit(ws, f && f.id ? f : cursor ? ws.getBlockById(cursor) : null), 40); };
+    ws.addChangeListener(e => { if (!e.isUiEvent || e.type === Blockly.Events.BLOCK_DRAG) refit(); });
+    ws.__fit = refit;
 
     // بلوكلي ما بيعرف لو حجم مساحته اتغيّر (مثلاً لما لوحة بايثون تكبر)، فنبلّغه
-    const ro = new ResizeObserver(() => Blockly.svgResize(ws));
+    const ro = new ResizeObserver(() => { if (alive(ws)) { Blockly.svgResize(ws); refit(); } });
     ro.observe(div);
 
     // مكان الإضافة التالي: بطاقة عليها توهّج ذهبي. الضغط على بطاقة في البرنامج يغيّره،
@@ -221,7 +385,7 @@
       if (cursor) b.getSvgRoot().classList.add('siraj-cursor');
     };
     ws.addChangeListener(e => {
-      if (e.type === Blockly.Events.CLICK && e.workspaceId === ws.id) setCursor(e.blockId ? ws.getBlockById(e.blockId) : null);
+      if (e.type === Blockly.Events.CLICK && e.workspaceId === ws.id && !(e.blockId && e.blockId === ws.__ghostGone)) setCursor(e.blockId ? ws.getBlockById(e.blockId) : null);
       if (e.type === Blockly.Events.BLOCK_DELETE && cursor && !ws.getBlockById(cursor)) cursor = null;
     });
 
@@ -229,42 +393,63 @@
     const fw = ws.getFlyout().getWorkspace();
     let down = null;
     div.addEventListener('pointerdown', e => {
-      const g = e.target.closest && e.target.closest('.blocklyFlyout .blocklyDraggable');
-      down = g ? { id: g.getAttribute('data-id'), x: e.clientX, y: e.clientY, p: e.pointerId, sel: cursor && ws.getBlockById(cursor) } : null;
+      const t = e.target.closest ? e.target : null;
+      const g = t && t.closest('.blocklyFlyout .blocklyDraggable'), gh = t && t.closest('.siraj-ghost');
+      down = g || gh ? { id: g ? g.getAttribute('data-id') : null, ghost: !!gh && !g, x: e.clientX, y: e.clientY, p: e.pointerId, sel: cursor && ws.getBlockById(cursor) } : null;
     }, true);
     div.addEventListener('pointercancel', () => { down = null; }, true);
-    div.addEventListener('pointerup', e => {
-      if (!down || e.pointerId !== down.p || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) { down = null; return; }
-      const id = down.id, sel = down.sel;
-      down = null;
-      setTimeout(() => { if (!ws.isDisposed || !ws.isDisposed()) Blockly.hideChaff(); }, 0); // نقفل قائمة الكلمات لو اتفتحت بالضغطة
-      if ((ws.isReadOnly && ws.isReadOnly()) || (ws.isDisposed && ws.isDisposed())) return;
-      const src = fw.getBlockById(id);
-      if (!src) return;
-      if (ws.remainingCapacity() < 1) { on({ full: true }); return; }
-      const conn = target(ws, sel, src.type);
-      // البطاقة الجديدة تاخد نفس قيم بطاقة القائمة (لون الضوء، اسم الصندوق، اسم الكلمة...)
-      const fields = {};
-      src.inputList.forEach(inp => inp.fieldRow.forEach(f => { if (f.name && f.isSerializable()) fields[f.name] = src.getFieldValue(f.name); }));
+    // يضيف بطاقة جديدة (بنفس قيم الحقول) عند هذا الوصل
+    function addAt(conn, type, fields) {
       // الإضافة والتوصيل حدث واحد، عشان زر التراجع يشيل البطاقة مرة واحدة (بدل ما تنفصل الأول ثم تختفي)
       Blockly.Events.setGroup(true);
       let b;
       try {
-        b = Blockly.serialization.blocks.append({ type: src.type, fields }, ws, { recordUndo: true });
+        b = Blockly.serialization.blocks.append({ type, fields }, ws, { recordUndo: true });
         conn.connect(b.previousConnection);
       } finally { Blockly.Events.setGroup(false); }
       setCursor(b); // البطاقة الجديدة هي مكان الإضافة التالي (ولو تكرار، الإضافة التالية تدخل جواه)
+      reveal(ws, b);
       Sfx.snap();
-      on({ added: src.type, block: b });
+      on({ added: type, block: b });
+      return b;
+    }
+    ws.__addAt = addAt;
+    div.addEventListener('pointerup', e => {
+      if (!down || e.pointerId !== down.p || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) { down = null; return; }
+      const id = down.id, sel = down.sel, onGhost = down.ghost;
+      down = null;
+      setTimeout(() => { if (!ws.isDisposed || !ws.isDisposed()) Blockly.hideChaff(); }, 0); // نقفل قائمة الكلمات لو اتفتحت بالضغطة
+      if ((ws.isReadOnly && ws.isReadOnly()) || (ws.isDisposed && ws.isDisposed())) return;
+      // الضغط على البطاقة الشبح (التلميح) يضيفها هي نفسها في مكانها
+      if (onGhost) {
+        // بعد ما بلوكلي يخلّص الضغطة نفسها (عشان ما يتعامل مع بطاقة اتشالت)
+        setTimeout(() => {
+          if (ws.isDisposed && ws.isDisposed()) return;
+          const g = ws.__ghost && ws.getBlockById(ws.__ghost);
+          if (!g || (ws.isReadOnly && ws.isReadOnly())) return;
+          const conn = g.previousConnection.targetConnection, type = g.type, fields = fieldsOf(g);
+          clearGhost(ws);
+          if (!conn || conn.targetBlock() || ws.remainingCapacity() < 1) return;
+          addAt(conn, type, fields);
+        }, 0);
+        return;
+      }
+      const src = fw.getBlockById(id);
+      if (!src) return;
+      clearGhost(ws); // الشبح ما ياخدش مكان البطاقة الحقيقية
+      if (ws.remainingCapacity() < 1) { on({ full: true }); return; }
+      // البطاقة الجديدة تاخد نفس قيم بطاقة القائمة (لون الضوء، اسم الصندوق، اسم الكلمة...)
+      addAt(target(ws, sel && !sel.isDeadOrDying() ? sel : null, src.type), src.type, fieldsOf(src));
     }, true);
 
     ws.addChangeListener(e => {
       if (e.type === Blockly.Events.BLOCK_CHANGE && e.element === 'field') on({ field: e.name, value: e.newValue });
-      if (!e.isUiEvent) on({});
+      if (!e.isUiEvent) { clearGhost(ws); on({}); }
     });
     // حذف البطاقة المختارة (أو آخر بطاقة) بزر واحد، بدل السحب لسلة المهملات
     ws.__del = () => {
       if (ws.isReadOnly && ws.isReadOnly()) return false;
+      clearGhost(ws);
       let b = cursor && ws.getBlockById(cursor);
       if (!b) { b = lastIn(startOf(ws)); if (hasDo(b) && b.getInputTargetBlock('DO')) b = lastIn(b.getInputTargetBlock('DO')); }
       if (!b || b.type === 'siraj_start' || !b.isDeletable()) return false;
@@ -378,7 +563,7 @@
     const a = flatWs(ws), s = flatSol(solution);
     for (let i = 0; i < s.length; i++) {
       const x = a[i], w = s[i];
-      if (!x) return { kind: 'next', step: w.step, type: w.type, line: lineOf(w.step), after: a[i - 1] && a[i - 1].b };
+      if (!x) return { kind: 'next', step: w.step, type: w.type, line: lineOf(w.step), after: a[i - 1] && a[i - 1].b, afterDepth: a[i - 1] ? a[i - 1].d : -1, depth: w.d };
       const sameFields = Object.entries(w.fields).every(([k, v]) => String(x.b.getFieldValue(k)) === String(v));
       if (x.type === w.type && x.d === w.d && sameFields) continue;
       if (x.type === w.type && x.d === w.d) return { kind: 'field', block: x.b, line: lineOf(w.step) };
@@ -437,5 +622,6 @@
   root.Blocks = {
     DEFS, COLORS, LIGHTS, LIGHT_DOT, VARS, FUNCS, makeWorkspace, dispose, compile, python: toPython, countBlocks, startOf,
     load, opsOf, countOf, diff, glow, glowTool, clearGlow, clear, lineOf, peek, showTool,
+    ghost: showGhost, clearGhost, reveal, bugOn, BUG, tint,
   };
 })(window);

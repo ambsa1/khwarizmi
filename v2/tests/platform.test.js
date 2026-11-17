@@ -222,16 +222,54 @@ const check = (ok, name, extra) => { if (!ok) bad++; console.log(`${ok ? 'ok  ' 
     await pg.context().close();
   }
 
-  /* 6) الشعار والشاشات الجديدة بمقاسات صغيرة وكبيرة */
-  for (const [w, h] of [[320, 568], [1024, 768]]) {
+  /* 6) الشعار والشاشات الجديدة بمقاسات صغيرة وكبيرة: الأبواب الأربعة بالترتيب، جوّه الشاشة، وما بتتداخلش */
+  const DOORS = ['code', 'pc', 'en', 'math'];
+  for (const [w, h] of [[320, 568], [390, 844], [768, 1024], [1024, 768], [1366, 768]]) {
     const pg = await open(undefined, w, h);
     await shot(pg, `home-${w}`);
-    await pg.evaluate(() => { const p = SirajTest.player(7); Store.win(p, 't1', 3); SirajTest.screens.renderSections(); });
-    await wait(pg);
+    check(await pg.evaluate(() => { const m = document.querySelector('.x-mark'), t = document.querySelector('.x-word'); return !!m && m.complete && m.naturalWidth > 0 && !!t && t.textContent === 'خوارزمي'; }), `home logo lockup (mark + wordmark) at ${w}px`);
+    await pg.evaluate(() => { const p = SirajTest.player(7); Store.win(p, 't1', 3); Store.win(p, 'math:count', 3); Store.win(p, 'en:colors_learn', 2); SirajTest.screens.renderSections(); });
+    await wait(pg, 1100); // حركة دخول الأبواب
     const fit = await pg.evaluate(() => [...document.querySelectorAll('.x-tile, .x-title')].every(el => { const r = el.getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1; }));
     check(fit, `sections tiles fit at ${w}px`);
+    const d = await pg.evaluate(() => {
+      const ds = [...document.querySelectorAll('.sections .door')], rs = ds.map(e => e.getBoundingClientRect());
+      const overlap = rs.some((a, i) => rs.some((b, j) => j > i && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1));
+      const inside = rs.every(r => r.left >= -1 && r.right <= innerWidth + 1 && r.width > 200);
+      const titles = ds.every(e => { const h = e.querySelector('h3'); return h && h.scrollWidth <= h.clientWidth + 1; });
+      const lamps = ds.map(e => e.querySelectorAll('.lamps i').length), lit = ds.map(e => e.querySelectorAll('.lamps i.on').length);
+      return { acts: ds.map(e => e.dataset.act), overlap, inside, titles, lamps, lit, cols: new Set(rs.map(r => Math.round(r.left))).size };
+    });
+    check(JSON.stringify(d.acts) === JSON.stringify(DOORS) && !d.overlap && d.inside && d.titles, `4 doors in order, inside, no overlap at ${w}px`, JSON.stringify(d));
+    check(d.lamps.every(n => n > 0) && d.lit[0] === 1 && d.lit[2] === 1 && d.lit[3] === 1, `door lamps per activity (en/math keys light up) at ${w}px`, JSON.stringify({ lamps: d.lamps, lit: d.lit }));
+    check(w < 700 ? d.cols === 1 : d.cols === 2, `doors layout ${w < 700 ? '1 column' : '2×2'} at ${w}px`, String(d.cols));
+    await shot(pg, `sections-${w}`);
     await pg.click('[data-x="ency"]'); await wait(pg, 700);
     await shot(pg, `ency-${w}`);
+    await pg.context().close();
+  }
+
+  /* 7) كل باب يفتح قسمه، وزر الرجوع يرجّع لاختيار القسم (بالضغط الحقيقي، بدون أخطاء) */
+  {
+    const pg = await open(undefined, 390, 844);
+    await pg.evaluate(() => { SirajTest.player(7); SirajTest.screens.renderSections(); });
+    const BACK = { code: ['tracks', '[data-act="sections"]'], pc: ['cw', '[data-cw="exit"]'], en: ['en', '[data-en="exit"]'], math: ['math', '[data-mt="exit"]'] };
+    for (const act of DOORS) {
+      await wait(pg, 600);
+      await pg.click(`.door[data-act="${act}"]`);
+      await wait(pg, 700);
+      const [scr, back] = BACK[act];
+      const r = await pg.evaluate(s => ({ screen: SirajTest.S.screen, doors: document.querySelectorAll('.door').length, back: !!document.querySelector(s) }), back);
+      check(r.screen === scr && r.doors === 0 && r.back, `door ${act} opens its section`, JSON.stringify(r));
+      await pg.click(back);
+      await wait(pg, 700);
+      const b = await pg.evaluate(() => ({ screen: SirajTest.S.screen, doors: document.querySelectorAll('.sections .door').length }));
+      check(b.screen === 'sections' && b.doors === 4, `back from ${act} → sections`, JSON.stringify(b));
+    }
+    // الأهل: عدّ الإنجليزية والرياضيات
+    await pg.evaluate(() => { const p = SirajTest.S.player; Store.win(p, 'en:colors_learn', 3); Store.win(p, 'math:count', 2); });
+    const st = await pg.evaluate(() => { const p = SirajTest.S.player; const n = Object.keys(p.progress).length; return { stars: Store.stars(p), n, groups: Extras.groups(p).filter(g => /^[EM]-/.test(g.key)).length }; });
+    check(st.stars >= 5 && st.groups > 5, 'en/math stars counted; en/math certificate groups', JSON.stringify(st));
     await pg.context().close();
   }
 

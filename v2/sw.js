@@ -1,4 +1,4 @@
-/* يخزّن بيت الخوارزمي كله في الجهاز عشان يشتغل بدون إنترنت.
+/* يخزّن خوارزمي كله في الجهاز عشان يشتغل بدون إنترنت.
    قائمة الملفات والبصمة في precache.js (تُولَّد بـ node tools/precache.js قبل كل رفع). */
 importScripts('precache.js');
 const { version, files } = self.PRECACHE;

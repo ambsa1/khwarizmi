@@ -1,4 +1,4 @@
-/* إضافات بيت الخوارزمي: موسوعتي، الألقاب، الملصقات، الشهادات، ركن العائلة، تذكير الراحة، وحساب وقت اللعب.
+/* إضافات خوارزمي: موسوعتي، الألقاب، الملصقات، الشهادات، ركن العائلة، تذكير الراحة، وحساب وقت اللعب.
    تعتمد على window.App (من app.js): S, screen, showModal, closeModal, live, mini */
 (function () {
   'use strict';
@@ -19,12 +19,16 @@
   /* ---------- المحتوى: المراحل وأقسام عالم الكمبيوتر ---------- */
   const tracks = () => (Array.isArray(window.TRACKS) ? window.TRACKS : []);
   const cwSections = () => (window.CW && Array.isArray(window.CW.sections) ? window.CW.sections : []);
+  const enSections = () => (window.EN && Array.isArray(window.EN.sections) ? window.EN.sections : []);
+  const mathSections = () => (window.MATH && Array.isArray(window.MATH.sections) ? window.MATH.sections : []);
   // كل قسم له شهادة، وبيت في مدينة المصابيح
   // p (اختياري): المسارات التي يراها هذا الطفل فقط (بدون المختبر تحت ٨، وبدون الكلمات والحشرات للصغار)
   const tracksOf = p => (p && window.tracksFor ? window.tracksFor(p).map(x => x[0]) : tracks());
   function groups(p) {
     return tracksOf(p).map(t => ({ key: 'T-' + t.id, name: t.name, icon: t.icon, color: t.color, ids: (t.levels || []).map(l => l.id) }))
       .concat(cwSections().map(s => ({ key: 'C-' + s.id, name: s.name, icon: s.icon, color: s.color, ids: (s.activities || []).map(cwItem) })))
+      .concat(enSections().map(s => ({ key: 'E-' + s.id, name: 'الإنجليزية: ' + s.name, icon: s.icon, color: s.color, ids: (s.activities || []).map(a => 'en:' + s.id + '_' + a.id) })))
+      .concat(mathSections().map(s => ({ key: 'M-' + s.id, name: 'الرياضيات: ' + s.name, icon: s.icon, color: s.color, ids: (s.activities || []).map(a => 'math:' + a.id) })))
       .filter(g => g.ids.length);
   }
   // نشاط عالم الكمبيوتر: مفتاحه cw:<id>، أو (مثل مدرسة الكتابة) عدة دروس يلخّصها summary
@@ -239,6 +243,8 @@
     return `<svg class="x-city" viewBox="0 0 ${x} ${ground + 8}" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
       <rect x="0" y="${ground}" width="${x}" height="8" rx="4" fill="#1b1f55"/>${out}</svg>`;
   }
+  // مدينة لكل قسم من الأربعة: البرمجة، عالم الكمبيوتر، الإنجليزية، الرياضيات (حرف أول مفتاح المجموعة)
+  const CITIES = [['T', '🤖'], ['C', '💻'], ['E', '🔤'], ['M', '🔢']];
   function openFamily() {
     if (!Store.data.family) return;
     const kids = Store.data.players.filter(p => p.fid).sort((a, b) => String(a.fid).localeCompare(String(b.fid)));
@@ -247,7 +253,7 @@
     const lamps = p => groups(p).reduce((a, g) => a + doneIn(p, g), 0), all = p => groups(p).reduce((a, g) => a + g.ids.length, 0);
     const body = `<div class="x-fam-total"><span class="x-bigstar">⭐</span><b>${total}</b><p>نجوم عائلتنا معاً</p></div>
       <div class="x-kids">${ps.map(p => `<div class="x-kid" style="--pc:${esc(p.color)}"><span class="pic">${A().mini(p.color)}</span>
-        <div class="x-kid-main"><b>${esc(p.name) || '&nbsp;'}</b>${city(p, groups(p).filter(g => g.key[0] === 'T'))}${city(p, groups(p).filter(g => g.key[0] === 'C'))}<small>💡 ${frac(lamps(p), all(p))} · ${TITLES[titleIdx(p)][1]} ${esc(titleName(p))}</small></div></div>`).join('')}</div>`;
+        <div class="x-kid-main"><b><bdi>${esc(p.name) || '&nbsp;'}</bdi></b><div class="x-cities">${CITIES.map(([k, ic]) => { const c = city(p, groups(p).filter(g => g.key[0] === k)); return c ? `<div class="x-cty" data-k="${k}"><span>${ic}</span>${c}</div>` : ''; }).join('')}</div><small>💡 ${frac(lamps(p), all(p))} · ${TITLES[titleIdx(p)][1]} ${esc(titleName(p))}</small></div></div>`).join('')}</div>`;
     go('family', '🏠 ركن العائلة', body, 'x_family');
     gsap.from('.x-kid', { y: 24, opacity: 0, stagger: 0.1, duration: 0.45, ease: 'back.out(1.6)' });
     gsap.from('.x-bigstar', { scale: 0, rotation: -120, duration: 0.7, ease: 'back.out(2.5)' });
@@ -295,7 +301,7 @@
     const img = await sirajImage(p.color);
     if (img) { try { x.drawImage(img, 150, 560, 250, 288); } catch (e) { /* بدون صورة */ } }
     x.fillStyle = '#3d8bff'; x.font = `800 40px ${HEAD}`; x.fillText('صديقك سراج', 275, 892);
-    x.fillStyle = '#b3a891'; x.font = `500 26px ${BODY}`; x.fillText('بيت الخوارزمي', 275, 160);
+    x.fillStyle = '#b3a891'; x.font = `500 26px ${BODY}`; x.fillText('خوارزمي', 275, 160);
     return c;
   }
   let certUrl = null, certName = '', certTok = 0;
@@ -426,15 +432,8 @@
 
   /* ---------- الشعار وأزرار الشاشات ---------- */
   function logo() {
-    // سقف البيت الذهبي، وسراج (مصباح المدينة) واقف فوقه، وتحته اسم اللعبة
-    return `<svg class="x-logo" viewBox="0 52 640 196" role="img" aria-label="بيت الخوارزمي">
-      <defs><linearGradient id="xl-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff5c2"/><stop offset=".5" stop-color="#ffd23e"/><stop offset="1" stop-color="#f29a00"/></linearGradient>
-        <radialGradient id="xl-glow"><stop offset="0" stop-color="#fff3b0" stop-opacity=".8"/><stop offset=".4" stop-color="#ffd23e" stop-opacity=".3"/><stop offset="1" stop-color="#ffd23e" stop-opacity="0"/></radialGradient></defs>
-      <ellipse class="x-logo-glow" cx="320" cy="78" rx="190" ry="60" fill="url(#xl-glow)"/>
-      <path d="M60 150 L320 70 L580 150" fill="none" stroke="#0b0d2a" stroke-opacity=".55" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 6)"/>
-      <path d="M60 150 L320 70 L580 150" fill="none" stroke="url(#xl-gold)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-      <g fill="#fff"><circle cx="110" cy="84" r="3"/><circle cx="540" cy="74" r="4"/><circle cx="486" cy="104" r="2.5"/><circle cx="170" cy="112" r="2"/></g>
-      <text x="320" y="228" text-anchor="middle" class="x-logo-txt" fill="url(#xl-gold)">بيت الخوارزمي</text></svg>`;
+    // الشعار: علامة «خ» (icons/logo.svg) وجنبها اسم اللعبة بالخط العريض الذهبي
+    return `<div class="x-lockup" role="img" aria-label="خوارزمي"><img class="x-mark" src="icons/logo.svg" alt="" draggable="false"><h1 class="x-word">خوارزمي</h1></div>`;
   }
   function homeExtra() {
     return Store.data.family ? '<button class="x-fam-btn" data-x="family">🏠 ركن العائلة</button>' : '';

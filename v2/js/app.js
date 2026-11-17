@@ -1,4 +1,4 @@
-/* بيت الخوارزمي: الشاشات وتسلسل اللعب */
+/* خوارزمي: الشاشات وتسلسل اللعب */
 (function () {
   'use strict';
 
@@ -40,6 +40,8 @@
     if (S.stage) { S.stage.destroy(); S.stage = null; }
     S.sirajs.forEach(s => s.destroy()); S.sirajs = [];
     if (window.CW && CW.destroy) CW.destroy(); // لو عالم الكمبيوتر مفتوح، يقفل نفسه
+    if (window.EN && window.EN.destroy) window.EN.destroy(); // وكذلك الإنجليزية
+    if (window.MATH && MATH.destroy) MATH.destroy(); // والرياضيات
     closeModal();
     gsap.killTweensOf(app.querySelectorAll('*')); // حركات عناصر الشاشة القديمة ما تفضل شغّالة
     Voice.stop();
@@ -73,15 +75,15 @@
     const ps = Store.data.players.slice().sort((a, b) => (a.fid || 'z').localeCompare(b.fid || 'z'));
     screen(`<div class="sky"></div>
       <div class="home">
-        <div class="logo"><div class="hero" id="hero"></div>${window.Extras ? Extras.logo() : '<h1>بيت الخوارزمي</h1>'}<p>ساعد سراج يرجّع النور للمدينة</p></div>
+        <div class="logo"><div class="hero" id="hero"></div>${window.Extras ? Extras.logo() : '<h1>خوارزمي</h1>'}<p>ساعد سراج يرجّع النور للمدينة</p></div>
         <h2 class="who">من سيلعب اليوم؟</h2>
         <div class="players">
           ${ps.map(p => `<button class="player ${p.fid ? 'fam' : ''}" data-act="pick" data-id="${esc(p.id)}">
             <span class="pic">${mini(p.color)}</span><b>${esc(p.name) || '&nbsp;'}</b><small>⭐ ${Store.stars(p)}</small></button>`).join('')}
           <button class="player add" data-act="new"><span class="plus">＋</span><b>لاعب جديد</b></button>
         </div>${window.Extras ? Extras.homeExtra() : ''}
-      </div>
-      <button class="corner" data-act="parents" aria-label="للأهل">🔒</button>`, 'night');
+        <button class="corner" data-act="parents" aria-label="للأهل">🔒</button>
+      </div>`, 'night');
     live($('#hero'), '#3d8bff');
     gsap.from('.player', { y: 30, opacity: 0, stagger: 0.06, duration: 0.5, ease: 'back.out(2)' });
   }
@@ -121,16 +123,24 @@
   // مصابيح عالم الكمبيوتر: نشاط لكل مصباح (نفس حساب الشهادات في extras.js)
   const cwLamps = p => (window.Extras ? Extras.groups(p).filter(g => g.key[0] === 'C')
     .map(g => { const d = Extras.doneIn(p, g); return g.ids.map((x, i) => `<i class="${i < d ? 'on' : ''}"></i>`).join(''); }).join('') : '');
+  // مصابيح الإنجليزية والرياضيات: مصباح لكل نشاط (مفاتيح en:<القسم>_<النشاط> و math:<النشاط>)
+  const lamp = on => `<i class="${on ? 'on' : ''}"></i>`;
+  const enLamps = p => (window.EN && Array.isArray(window.EN.sections) ? window.EN.sections.flatMap(s => s.activities.map(a => lamp(p.progress['en:' + s.id + '_' + a.id]))).join('') : '');
+  const mathLamps = p => (window.MATH && Array.isArray(MATH.sections) ? MATH.sections.flatMap(s => s.activities).map(a => lamp(p.progress['math:' + a.id])).join('') : '');
+  const doorArt = (o, f, alt) => { try { return o && o.art && o.art[f] ? o.art[f]() : alt; } catch (e) { return alt; } };
+  // باب القسم: الصورة والعنوان والوصف، والمصابيح بعرض الباب كله تحتهم
+  const door = (cls, act, pic, h, d, lamps) => `<button class="door ${cls}" data-act="${act}"><span class="d-pic">${pic}</span>
+    <span class="d-txt"><h3>${h}</h3><p>${d}</p></span><span class="lamps">${lamps}</span></button>`;
   function renderSections() {
     const p = S.player;
     S.screen = 'sections';
     screen(`<div class="sky"></div>
-      <header class="bar"><button class="ib" data-act="home" aria-label="رجوع">→</button><span class="t">أهلاً ${esc(p.name)}!</span>${window.Extras ? Extras.titleChip(p) : ''}<span class="chip">⭐ ${Store.stars(p)}</span></header>
+      <header class="bar"><button class="ib" data-act="home" aria-label="رجوع">→</button><span class="t">أهلاً${p.name ? ` <bdi>${esc(p.name)}</bdi>` : ''}!</span>${window.Extras ? Extras.titleChip(p) : ''}<span class="chip">⭐ ${Store.stars(p)}</span></header>
       <div class="sections">
-        <button class="door code" data-act="code"><span class="d-pic">${mini(p.color)}</span><span><h3>البرمجة مع سراج</h3><p>برمج سراج يتكلم ويرسم وينوّر المدينة</p>
-          <span class="lamps">${myLevels(p).map(l => `<i class="${Store.solved(p, l.id) ? 'on' : ''}"></i>`).join('')}</span></span></button>
-        <button class="door cwd" data-act="pc"><span class="d-pic">${window.CW && CW.art && CW.art.monitor ? CW.art.monitor('on') : '💻'}</span><span><h3>عالم الكمبيوتر</h3><p>أجزاء الكمبيوتر، مدرسة الكتابة، والأمان في الإنترنت</p>
-          <span class="lamps">${cwLamps(p)}</span></span></button>
+        ${door('code', 'code', mini(p.color), 'البرمجة مع سراج', 'برمج سراج يتكلم ويرسم وينوّر المدينة', myLevels(p).map(l => lamp(Store.solved(p, l.id))).join(''))}
+        ${door('cwd', 'pc', window.CW && CW.art && CW.art.monitor ? CW.art.monitor('on') : '💻', 'عالم الكمبيوتر', 'أجزاء الكمبيوتر، مدرسة الكتابة، والأمان في الإنترنت', cwLamps(p))}
+        ${door('engd', 'en', doorArt(window.EN, 'door', '🔤'), 'الإنجليزية', 'الألوان والأرقام والحيوانات، وجمل نقولها كل يوم', enLamps(p))}
+        ${door('mathd', 'math', doorArt(window.MATH, 'door', '🔢'), 'الرياضيات', 'العدّ والأشكال، الجمع والضرب، الساعة والنقود', mathLamps(p))}
         ${window.Extras ? Extras.sectionsRow(p) : ''}
       </div>`, 'night');
     gsap.from('.door', { x: 60, opacity: 0, stagger: 0.12, duration: 0.5, ease: 'back.out(1.6)' });
@@ -224,7 +234,8 @@
     } else {
       S.ws = Blocks.makeWorkspace($('#ws'), flyOrder(t, L), L.max, onWs);
       if (L.preset) { Blocks.load(S.ws, L.preset, Blocks.startOf(S.ws).nextConnection); S.ws.clearUndo(); }
-      updateCode();
+      S.bugAt = null;
+      updateCode(); placeBug();
       later(() => { if (S.ws && !S.running) Blocks.peek(S.ws); }, 1600); // على التلفون: لمحة إن فيه بطاقات أكثر في القائمة
     }
     // الهدف أولاً، ثم النصيحة، في تسلسل واحد عشان ما يقطع بعض
@@ -291,7 +302,44 @@
     if (e.field === 'C' && EN[e.value]) Voice.playSeq([['en_' + e.value, EN[e.value], 'en'], ['c_' + e.value, SIRAJ_TEXTS.COLORS[e.value]]], NAME);
     if (e.field === 'V' && EN[e.value]) Voice.play('en_' + e.value, EN[e.value], 'en', NAME);
     if (e.field === 'N' && SIRAJ_TEXTS.NUMS[+e.value]) Voice.play('n_' + e.value, SIRAJ_TEXTS.NUMS[+e.value], undefined, NAME);
-    if (!S.running) { S.failId = null; updateCode(); }
+    if (!S.running) { S.failId = null; updateCode(); placeBug(); }
+  }
+
+  /* ---------- صيد الحشرات: دعسوقة صغيرة قاعدة على البطاقة الغلط، والطفل يمسكها لما يصلّح البرنامج ---------- */
+  const isBugs = () => S.screen === 'level' && !!S.ws && TRACKS[S.track].id === 'bugs';
+  function placeBug() {
+    if (!isBugs() || !level().solution) return;
+    const d = Blocks.diff(S.ws, level().solution);
+    const prev = S.bugAt && S.ws.getBlockById(S.bugAt);
+    // البرنامج صح: الحشرة تفضل مكانها خايفة لحد ما الطفل يشغّل ويمسكها
+    const b = d ? (d.block || d.after || Blocks.startOf(S.ws)) : (prev || Blocks.startOf(S.ws));
+    const g = Blocks.bugOn(S.ws, b);
+    S.bugAt = b && b.id;
+    if (g) g.classList.toggle('scared', !d);
+  }
+  const NET = '<svg viewBox="0 0 80 110" width="80" height="110" aria-hidden="true"><path d="M40 108 L40 56" stroke="#a0661a" stroke-width="6" stroke-linecap="round"/>'
+    + '<ellipse cx="40" cy="30" rx="30" ry="26" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="4"/>'
+    + '<path d="M18 14 L62 46 M62 14 L18 46 M10 30 H70 M40 4 V56" stroke="#fff" stroke-width="1.6" opacity=".8"/></svg>';
+  // المسكة: شبكة تنزل على الحشرة، والاثنين يطيروا لفوق
+  function catchBug() {
+    const g = document.querySelector('.siraj-bug'), host = $('.screen');
+    if (!g || !host) return Promise.resolve();
+    const r = g.getBoundingClientRect();
+    g.remove();
+    const el = document.createElement('div');
+    el.className = 'bug-catch';
+    el.style.left = r.left + r.width / 2 + 'px'; el.style.top = r.top + r.height / 2 + 'px';
+    el.innerHTML = `<div class="bc-bug">${Blocks.BUG}</div><div class="bc-net">${NET}</div>`;
+    host.appendChild(el);
+    Sfx.net();
+    return new Promise(res => {
+      const done = () => { el.remove(); res(); };
+      gsap.timeline({ onComplete: done })
+        .fromTo(el.querySelector('.bc-net'), { y: -120, x: 40, rotation: 50, opacity: 0 }, { y: 0, x: 0, rotation: 0, opacity: 1, duration: 0.4, ease: 'power2.in' })
+        .to(el.querySelector('.bc-bug'), { scale: 0.7, duration: 0.15, ease: 'back.in(2)' })
+        .to(el, { y: -160, scale: 0.6, opacity: 0, duration: 0.7, ease: 'power1.in', delay: 0.25 });
+      later(done, 2500); // لو الحركة اتقطعت (تغيّرت الشاشة)
+    });
   }
   function updateCode(activeId, bad) {
     if (!S.ws) return;
@@ -314,14 +362,27 @@
       .replace(/\b(\d+)\b/g, '<b class="n">$1</b>');
   }
 
-  function toast(text, kind) {
+  // الرسالة تظهر مكان الهدف (فوق المسرح) لثواني: ما تغطّي سراج ولا خطة الصور ولا البطاقات.
+  // code = كود بايثون معزول باتجاهه (عشان wave() ما تنقلب جوّا الجملة العربية)
+  function toast(text, kind, code) {
     const t = $('#toast');
     if (!t) return;
+    const wrap = t.parentNode;
     t.className = 'toast show ' + (kind || '');
-    t.textContent = plain(text);
-    gsap.fromTo(t, { y: -16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 });
+    t.innerHTML = esc(plain(text)) + (code ? ` <code dir="ltr">${esc(code)}</code>` : '');
+    // سطر واحد دايماً: الخط يصغر لحد ما الجملة تكفي
+    t.style.fontSize = '';
+    for (let f = 17; f >= 13 && t.scrollWidth > t.clientWidth + 1; f--) t.style.fontSize = f + 'px';
+    // لسه طويلة (كود طويل): سطرين، وخطة الصور تبهت لحظتها بدل ما الرسالة تغطّيها
+    const two = t.scrollWidth > t.clientWidth + 1;
+    t.classList.toggle('two', two);
+    wrap.classList.toggle('toast2', two);
+    wrap.classList.add('toasting');
+    gsap.fromTo(t, { y: -10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 });
     clearTimeout(S.toastT);
-    S.toastT = setTimeout(() => { if ($('#toast')) gsap.to('#toast', { opacity: 0, duration: 0.3 }); }, 3200);
+    S.toastT = setTimeout(() => {
+      if ($('#toast')) gsap.to('#toast', { opacity: 0, duration: 0.3, onComplete: () => wrap.classList.remove('toasting', 'toast2') });
+    }, 3200);
   }
 
   function setBusy(on) {
@@ -346,7 +407,7 @@
     Voice.stop();
     stage.reset();
     ws.highlightBlock(null);
-    Blocks.clearGlow(ws);
+    Blocks.clearGlow(ws); Blocks.clearGhost(ws);
     let failAt = null, reason = null;
     try {
       await sleep(250);
@@ -449,8 +510,11 @@
     const b = $('#hintBtn'); if (b) b.classList.remove('pulse');
     if (S.ed) {
       const d = PyLab.diffLines(S.ed.get(), L.solution);
-      if (d && d.text) { S.ed.error(d.line, `${girl() ? 'جرّبي' : 'جرّب'}: \`${d.text.trim()}\``, 'tip'); say('hint_next', ho); }
-      else if (d) { S.ed.error(d.line, 'هذا السطر زائد', 'tip'); say('hint_extra', ho); }
+      if (!d) { S.ed.clear(); return; } // الكود زي الحل: التلميح القديم يختفي
+      // المؤشر يروح مكان السطر (جديد بالمسافة الصح، أو السطر الغلط متحدّد)، فالأزرار تكتب في المكان الصح
+      const ln = S.ed.prepare(d.line, d.text);
+      if (d.text) { S.ed.error(ln, `${girl() ? 'جرّبي' : 'جرّب'}: \`${d.text.trim()}\``, 'tip', d.text); say('hint_next', ho); }
+      else { S.ed.error(ln, `هذا السطر زائد، ${girl() ? 'امسحيه' : 'امسحه'} بـ ⌫`, 'tip'); say('hint_extra', ho); }
       return;
     }
     if (!S.ws) return;
@@ -464,9 +528,10 @@
     const d = Blocks.diff(S.ws, L.solution);
     if (!d) return;
     const k = { field: 'hint_field', wrong: 'hint_wrong', next: 'hint_next', extra: 'hint_extra' }[d.kind];
-    if (d.block) Blocks.glow(d.block);
-    if (d.kind === 'next') Blocks.glowTool(S.ws, d.step);
-    toast(plain(SAY[key(k)]) + (d.line && d.kind !== 'wrong' && d.kind !== 'extra' ? '  ' + d.line : ''), 'tip');
+    if (d.block) { Blocks.glow(d.block); Blocks.reveal(S.ws, d.block); }
+    // البطاقة التالية: شبح شفاف في مكانها الصحيح من البرنامج (الضغط عليه يضيفها) + توهّج في القائمة
+    if (d.kind === 'next') { Blocks.ghost(S.ws, d); Blocks.glowTool(S.ws, d.step); }
+    toast(SAY[key(k)], 'tip', d.line && d.kind !== 'wrong' && d.kind !== 'extra' ? d.line : '');
     say(k, ho);
   }
   function offerSolution() {
@@ -481,7 +546,7 @@
     if (!L.solution || S.running) return;
     S.solShown = true;
     if (S.ed) S.ed.set(L.solution);
-    else if (S.ws) { Blocks.clear(S.ws); Blocks.load(S.ws, L.solution, Blocks.startOf(S.ws).nextConnection); Blocks.clearGlow(S.ws); updateCode(); }
+    else if (S.ws) { Blocks.clear(S.ws); Blocks.load(S.ws, L.solution, Blocks.startOf(S.ws).nextConnection); Blocks.clearGlow(S.ws); updateCode(); placeBug(); }
     S.stage.reset();
     toast(SAY[key('sol_shown')], 'tip'); say('sol_shown');
     const r = $('#run'); if (r) { r.classList.add('pulse'); later(() => r.classList.remove('pulse'), 4000); }
@@ -495,6 +560,8 @@
     const p = S.player;
     if (!Store.solved(p, L.id)) S.justLit = L.id; // نافذة جديدة تنوّر في المدينة
     Store.win(p, L.id, stars);
+    const bug = isBugs() && !!document.querySelector('.siraj-bug');
+    if (bug) { await catchBug(); if (my !== S.run) return; }
     Sfx.win();
     FX.confetti();
     await S.stage.celebrate();
@@ -502,7 +569,7 @@
     const w = Voice.pick(['win1', 'win2', 'win3']); // متنوّعة، وما تتكرر نفس الجملة مرتين ورا بعض
     const code = S.ed ? S.ed.get().split('\n').filter(l => l.trim()) : S.ws ? Blocks.python(S.ws).lines : (S.littleCode || []).join('\n').split('\n').filter(Boolean);
     const fewer = stars < 3 && !S.solShown, fk = S.ed ? 'fewer_py' : 'fewer'; // المختبر: سطور مش بطاقات
-    Voice.playSeq([line(w)].concat(fewer ? [line(fk)] : []), { pri: 'feedback', force: true });
+    Voice.playSeq((bug ? [line('bug_caught')] : []).concat([line(w)], fewer ? [line(fk)] : []), { pri: 'feedback', force: true });
     const t = TRACKS[S.track], last = S.li + 1 >= t.levels.length;
     showModal(`<div class="w-siraj" id="wsj"></div>
       <h2>${plain(SAY[key(w)])}</h2>
@@ -681,6 +748,36 @@
         back: () => renderSections(),
       });
     },
+    // الإنجليزية: نفس عقد عالم الكمبيوتر، والصوت إنجليزي (lang 'en')؛ المفتاح يصل كاملاً en:<القسم>_<النشاط>
+    en: () => {
+      Sfx.tap();
+      if (!window.EN || !window.EN.render) { say('soon'); return; }
+      cleanup(); S.screen = 'en'; S.lock = Date.now() + 350;
+      const p = S.player;
+      window.EN.render(app, {
+        player: p,
+        playSeq: (items, o) => Voice.playSeq(items, o),
+        say: (k, t, o) => Voice.play(k, t, 'en', o),
+        sfx: Sfx, Siraj, fx: FX,
+        saveProgress: (id, stars) => Store.win(p, id, stars),
+        back: () => renderSections(),
+      });
+    },
+    // الرياضيات: نفس العقد، والمفتاح يصل كاملاً math:<النشاط>
+    math: () => {
+      Sfx.tap();
+      if (!window.MATH || !MATH.render) { say('soon'); return; }
+      cleanup(); S.screen = 'math'; S.lock = Date.now() + 350;
+      const p = S.player;
+      MATH.render(app, {
+        player: p,
+        playSeq: (items, o) => Voice.playSeq(items, o),
+        say: (k, t, o) => Voice.play(k, t, undefined, o),
+        sfx: Sfx, Siraj, fx: FX,
+        saveProgress: (key, stars) => Store.win(p, key, stars),
+        back: () => renderSections(),
+      });
+    },
     tracks: () => { Voice.stop(); renderTracks(); },
     level: t => {
       if (t.classList.contains('locked')) { Sfx.oops(); return; }
@@ -691,7 +788,7 @@
     run: () => run(),
     undo: () => { if (!S.running && S.ws) { S.ws.undo(false); Sfx.tap(); } },
     del: () => { if (!S.running && S.ws && S.ws.__del()) Sfx.tap(); },
-    reset: () => { if (!S.running && S.stage) { S.stage.reset(); if (S.ws) { S.ws.highlightBlock(null); Blocks.clearGlow(S.ws); updateCode(); } if (S.ed) S.ed.clear(); Sfx.tap(); } },
+    reset: () => { if (!S.running && S.stage) { S.stage.reset(); if (S.ws) { S.ws.highlightBlock(null); Blocks.clearGlow(S.ws); Blocks.clearGhost(S.ws); updateCode(); } if (S.ed) S.ed.clear(); Sfx.tap(); } },
     hint: () => { if (S.running) return; Sfx.tap(); if (S.fails >= 4 && level().solution) offerSolution(); else hint(true); },
     'hint-only': () => { closeModal(); hint(true); },
     sol: () => showSolution(),

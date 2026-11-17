@@ -15,7 +15,7 @@ import edge_tts
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "voice"
 VOICE = "ar-EG-ShakirNeural"
-VOICES = {"en": "en-US-GuyNeural"}  # "lang": "en" في voice_texts.json = نطق إنجليزي لكلمات الكود
+VOICES = {"en": "en-US-GuyNeural", "en2": "en-US-AnaNeural"}  # "en" = كلمات الكود، "en2" = قسم الإنجليزية (صوت طفلة)
 HI_MAN = ROOT / "tools" / "voice_hi.local.json"
 
 

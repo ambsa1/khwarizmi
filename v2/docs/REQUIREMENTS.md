@@ -17,7 +17,7 @@ Reviewers: check each item; the final report lists every item with where it live
 - R10 Public users never feel the game is "someone else's".
 
 ## Learning content
-- R11 Programming world with story: Siraj (lamp robot) brings light back to "بيت الخوارزمي" city; every solved level lights a lamp on the map.
+- R11 Programming world with story: Siraj (lamp robot) brings light back to "خوارزمي" city; every solved level lights a lamp on the map.
 - R12 Code is the hero: Blockly blocks show real Python; live Python panel; running line highlighted; failing line marked.
 - R13 Programs make things: talk, draw (turtle), light show, memory boxes (variables), teach Siraj a new word (functions), bug hunt (debugging), adventure path; plus a Python lab where the eldest types real Python.
 - R14 One new idea per level; gentle difficulty; enough levels for weeks (target ≥ 60 programming levels total).

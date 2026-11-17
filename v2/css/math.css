@@ -1,0 +1,348 @@
+/* الرياضيات — نفس ألوان البيت (ليل أزرق ونور ذهبي)، وكل قسم له لونه. كل الأصناف تبدأ بـ mt- */
+.mt { height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; max-width: 1100px; margin: 0 auto; color: var(--ink);
+  padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+.mt.night { color: #fff; }
+.mt button { -webkit-user-select: none; user-select: none; }
+.mt-scroll { flex: 1; overflow: auto; padding: 8px 16px calc(28px + env(safe-area-inset-bottom)); position: relative; }
+.mt-bsj { width: 40px; height: 46px; flex: none; }
+.mt-bsj svg { width: 100%; height: 100%; overflow: visible; }
+.mt-nums-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; color: #fff; opacity: .05; font: 800 70px/1.5 var(--head); word-spacing: 30px; direction: ltr; padding: 60px 10px 0; }
+
+/* باب القسم في شاشة اختيار القسم (app.js يضيف <button class="door mathd">) */
+.door.mathd { background: linear-gradient(135deg, #ff9a2e, #e8579a); }
+.door.mathd .d-pic { display: flex; align-items: center; }
+.door.mathd .d-pic svg { height: auto; overflow: visible; }
+
+/* ---------- القوائم ---------- */
+.mt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; max-width: 900px; margin: 0 auto; }
+.mt-sec { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 150px; padding: 14px 8px 12px;
+  border-radius: 28px; color: #fff; background: var(--sc); background-image: linear-gradient(160deg, rgba(255,255,255,.26), rgba(0,0,0,.2)); box-shadow: 0 7px 0 rgba(0,0,0,.25); overflow: hidden; }
+.mt-sec::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 10%, rgba(255,255,255,.3), transparent 45%); pointer-events: none; }
+.mt-sec:active, .mt-act:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+.mt-sec-ic { font-size: 52px; line-height: 1; filter: drop-shadow(0 4px 4px rgba(0,0,0,.25)); }
+.mt-sec b, .mt-act b { font-family: var(--head); font-weight: 800; font-size: 19px; line-height: 1.25; text-align: center; }
+.mt-sec.rec { box-shadow: 0 0 0 3px var(--gold), 0 0 22px rgba(255,197,49,.55), 0 7px 0 rgba(0,0,0,.25); }
+.mt-sec.dim, .mt-act.dim { filter: saturate(.55); opacity: .8; }
+.mt-lamps { display: flex; gap: 5px; }
+.mt-lamps i { width: 11px; height: 11px; border-radius: 50%; background: rgba(0,0,0,.28); }
+.mt-lamps i.on { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.mt-age { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.4); color: #fff; border-radius: 999px; padding: 1px 9px; font: 800 13px var(--head); direction: ltr; z-index: 1; }
+.mt-act { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px 10px; min-height: 150px; border-radius: 26px; color: #fff;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.07)); border: 2px solid rgba(255,255,255,.16); box-shadow: 0 6px 0 rgba(0,0,0,.2); }
+.mt-act.done { border-color: rgba(255,214,90,.7); }
+.mt-act-ic { width: 70px; height: 70px; border-radius: 22px; background: var(--sc); display: flex; align-items: center; justify-content: center; font-size: 38px; box-shadow: 0 5px 0 rgba(0,0,0,.25), inset 0 2px 0 rgba(255,255,255,.3); }
+.mt-st { color: var(--gold); letter-spacing: 1px; font-size: 15px; font-weight: 700; font-family: var(--head); }
+.mt-st i { font-style: normal; color: rgba(255,255,255,.25); }
+
+/* ---------- شاشة النشاط ---------- */
+.mt-play { background: #f3efe6; }
+.mt-play .bar { background: var(--sc); background-image: linear-gradient(90deg, rgba(0,0,0,.22), rgba(255,255,255,.06)); color: #fff; gap: 8px; }
+.mt-bub { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.96); color: var(--ink); border-radius: 18px; padding: 5px 12px; min-height: 44px; box-shadow: 0 3px 0 rgba(0,0,0,.12); position: relative; }
+.mt-bub::before { content: ""; position: absolute; right: -7px; top: 50%; margin-top: -7px; border: 7px solid transparent; border-left-color: rgba(255,255,255,.96); border-right: 0; }
+.mt-bub-i { font-size: 22px; flex: none; }
+.mt-bub-t { font: 800 17px/1.3 var(--head); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; padding-bottom: 3px; }
+.mt .bar .t { padding-bottom: 3px; } /* ذيول الحروف العربية ما تتقص */
+@media (max-width: 420px) {
+  .mt-bar .mt-bub-i { display: none; }
+  .mt-bar { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  .mt-bar .mt-bsj { width: 30px; height: 35px; }
+  .mt-bub { padding: 4px 10px; }
+  .mt-bub-t { font-size: 15px; line-height: 1.25; -webkit-line-clamp: 3; }
+}
+.mt-stage { flex: 1; min-height: 0; position: relative; overflow: hidden; background: radial-gradient(120% 80% at 50% 0%, #ffffff, #eaf3ff); }
+.mt-s-count .mt-stage { background: radial-gradient(120% 80% at 50% 0%, #fdfdff, #dceaff); }
+.mt-s-shapes .mt-stage { background: radial-gradient(120% 80% at 50% 0%, #fffafd, #ffe1ef); }
+.mt-s-add .mt-stage { background: radial-gradient(120% 80% at 50% 0%, #fbfffc, #d6f5e3); }
+.mt-s-mult .mt-stage { background: radial-gradient(120% 80% at 50% 0%, #fdfbff, #e9e0ff); }
+.mt-s-measure .mt-stage { background: radial-gradient(120% 80% at 50% 0%, #fffdf8, #ffe8cc); }
+.mt-s-frac .mt-stage { background: radial-gradient(120% 80% at 50% 0%, #fffef6, #fbefc4); }
+.mt-s-speed .mt-stage { background: radial-gradient(120% 90% at 50% 0%, #3b3f8f, #12153a); }
+.mt-shake { animation: shake .4s; }
+.mt-draggable { cursor: grab; touch-action: none; }
+.mt-dragging { z-index: 40 !important; cursor: grabbing; filter: drop-shadow(0 10px 14px rgba(0,0,0,.25)); }
+
+/* ---------- محرّك الجولات ---------- */
+.mt-game { height: 100%; display: flex; flex-direction: column; align-items: center; padding: 28px 12px 14px; gap: 10px; position: relative; }
+.mt-dots { position: absolute; top: 9px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; z-index: 6; pointer-events: none; }
+.mt-dots i { width: 11px; height: 11px; border-radius: 50%; background: rgba(0,0,0,.14); transition: background .3s, transform .3s; }
+.mt-dots i.on { background: var(--gold); box-shadow: 0 0 6px rgba(255,197,49,.8); }
+.mt-dots i.cur { background: #fff; box-shadow: 0 0 0 2px var(--gold); transform: scale(1.25); }
+.mt-dots i.chal { width: 15px; height: 15px; margin-top: -2px; border-radius: 4px; transform: rotate(45deg); }
+.mt-dots i.chal.cur { transform: rotate(45deg) scale(1.25); background: var(--gold); box-shadow: 0 0 0 2px #fff, 0 0 10px var(--gold); }
+.mt-s-speed .mt-dots i { background: rgba(255,255,255,.2); }
+.mt-scene { flex: 1; min-height: 0; width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; position: relative; }
+.mt-choices { flex: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 640px; }
+.mt-choices:empty { display: none; }
+.mt-choices.many { display: grid; grid-template-columns: repeat(3, auto); }
+.mt-ch { min-width: 78px; height: 74px; padding: 0 14px; border-radius: 22px; background: #fff; color: var(--ink); box-shadow: 0 6px 0 rgba(0,0,0,.12); display: flex; align-items: center; justify-content: center;
+  font: 800 36px/1 var(--head); transition: background .2s, opacity .3s, filter .3s, box-shadow .2s; position: relative; }
+.mt-ch b { font: inherit; }
+.mt-ch:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+.mt-ch.ok { background: #3ee08a; color: #fff; box-shadow: 0 6px 0 #0d7a45, 0 0 0 4px #fff, 0 0 22px rgba(62,224,138,.8); }
+.mt-ch.no { opacity: .35; filter: grayscale(1); pointer-events: none; }
+.mt-ch.hint, .mt-ch.glow, .mt-hop.hint, .mt-bin.hint, .mt-coinb.hint { animation: mtpulse 1s ease-in-out infinite; }
+@keyframes mtpulse { 50% { box-shadow: 0 0 0 5px var(--gold), 0 0 24px rgba(255,197,49,.9); } }
+.mt-s-speed .mt-ch { background: #fff; }
+.mt-chal-b { position: absolute; top: 34%; left: 0; right: 0; margin: 0 auto; width: max-content; z-index: 20; pointer-events: none; display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(#ffe48a, #ffc531); color: #6b4300; border-radius: 999px; padding: 10px 26px; font: 800 32px var(--head); box-shadow: 0 8px 0 #c9971c, 0 14px 30px rgba(0,0,0,.25); }
+.mt-chal-b span { font-size: 36px; }
+.mt-flystar { position: absolute; z-index: 30; width: 40px; height: 40px; margin: -20px 0 0 -20px; font-size: 30px; line-height: 40px; text-align: center; pointer-events: none; filter: drop-shadow(0 0 6px rgba(255,197,49,.9)); }
+
+/* المسألة */
+.mt-eq { display: flex; align-items: center; justify-content: center; gap: 6px; flex: none; flex-wrap: wrap; }
+.mt-eq b, .mt-eq i { font: 800 clamp(26px, 7vmin, 44px)/1 var(--head); font-style: normal; }
+.mt-eq b { min-width: 1.5em; padding: 8px 10px; background: #fff; border-radius: 16px; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,.1); }
+.mt-eq i { color: #e8579a; padding: 0 2px; }
+.mt-eq b.q { background: #fff8de; color: #c9971c; box-shadow: 0 0 0 3px var(--gold); animation: mtq 1.2s ease-in-out infinite; }
+@keyframes mtq { 50% { box-shadow: 0 0 0 3px var(--gold), 0 0 16px rgba(255,197,49,.8); } }
+.mt-eq b.ans { background: #3ee08a; color: #fff; }
+.mt-eq.xl b, .mt-eq.xl i { font-size: clamp(40px, 12vmin, 76px); }
+.mt-s-speed .mt-eq i { color: #ffd23e; }
+.mt-frac { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font: 800 1em var(--head); }
+.mt-frac b { font: inherit; padding: 0 .1em; }
+.mt-frac i { font: inherit; font-style: normal; border-top: .09em solid currentColor; padding: 0 .1em; }
+
+/* سراج داخل المشهد + زر الاستماع */
+.mt-sj { width: clamp(70px, 20vmin, 130px); aspect-ratio: 200 / 230; flex: none; }
+.mt-sj.sm { width: clamp(56px, 13vmin, 90px); }
+.mt-sj svg { width: 100%; height: 100%; overflow: visible; }
+.mt-ear-row { display: flex; align-items: center; gap: 18px; flex: none; }
+.mt-ear { width: 76px; height: 76px; border-radius: 50%; font-size: 34px; background: linear-gradient(#ffe48a, #ffc531); box-shadow: 0 6px 0 #c9971c; display: flex; align-items: center; justify-content: center; }
+.mt-ear:active { transform: translateY(4px); box-shadow: 0 2px 0 #c9971c; }
+.mt-ear-row.sm .mt-sj { width: clamp(52px, 12vmin, 80px); }
+.mt-ear-row.sm .mt-ear { width: 58px; height: 58px; font-size: 26px; }
+
+/* أشياء للعد */
+.mt-objs { display: grid; gap: 6px; justify-content: center; align-content: center; flex: 1; min-height: 0; min-width: 0; width: 100%; --c: 40px; }
+.mt-obj, .mt-gone { width: var(--c); height: var(--c); font-size: calc(var(--c) * .72); line-height: 1; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 30%; }
+.mt-obj { cursor: pointer; }
+.mt-obj.counted { background: rgba(255,197,49,.28); }
+.mt-obj i { position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px; padding: 0 4px; border-radius: 11px; background: #16a865; color: #fff; font: 800 14px/22px var(--head); font-style: normal; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+
+/* أين الرقم؟ — الاختيارات الكثيرة */
+.mt-g-tapnum .mt-choices.many .mt-ch { min-width: 86px; }
+
+/* أكثر أم أقل */
+.mt-scene.mt-trays { flex-direction: row; align-items: center; gap: 12px; }
+.mt-scene.mt-trays.nums .mt-ch.mt-tray { height: auto; aspect-ratio: 1; max-width: 230px; max-height: 230px; }
+.mt-ch.mt-tray { flex: 1 1 0; min-width: 0; height: 100%; max-height: 420px; padding: 10px 8px; display: flex; flex-direction: column; border-radius: 26px; border: 4px solid #e6eefc; }
+.mt-tray .mt-objs { gap: 4px; }
+.mt-bignum { font: 800 clamp(48px, 16vmin, 110px)/1 var(--head); margin: auto; }
+
+/* قطار الأرقام */
+.mt-train-wrap { width: 100%; max-width: 640px; display: flex; flex-direction: column; align-items: stretch; }
+.mt-train { display: flex; align-items: flex-end; gap: 5px; padding: 0 4px; }
+.mt-car { flex: 1 1 0; min-width: 0; max-width: 88px; height: clamp(58px, 14vmin, 88px); position: relative; border-radius: 14px 14px 6px 6px; background: hsl(var(--h) 72% 58%);
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.18), inset 0 4px 0 rgba(255,255,255,.3); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.mt-car b { font: 800 clamp(22px, 6.4vmin, 38px)/1 var(--head); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.mt-car i { position: absolute; bottom: -10px; width: 18px; height: 18px; border-radius: 50%; background: #3a3f66; border: 3px solid #c4cbe0; }
+.mt-car i:first-of-type { left: 12%; } .mt-car i:last-of-type { right: 12%; }
+.mt-car.q { background: #fff; box-shadow: 0 0 0 3px var(--gold); animation: mtq 1.2s ease-in-out infinite; }
+.mt-car.q b { color: #c9971c; text-shadow: none; }
+.mt-car.fill { background: #3ee08a; }
+.mt-loco { font-size: clamp(50px, 15vmin, 92px); line-height: 1; flex: none; margin-bottom: 2px; transform: scaleX(-1); }
+.mt-rail { height: 7px; border-radius: 4px; background: #6b5b4a; box-shadow: 0 5px 0 #b59b7c; }
+
+/* الأشكال */
+.mt-fitbox { flex: 1; min-height: 0; width: 100%; display: grid; gap: 6px; justify-content: center; align-content: center; --c: 100px; }
+.mt-fit.mt-ch { width: var(--c); height: var(--c); min-width: 0; padding: 12%; border-radius: 26px; }
+.mt-fit .mt-shape { width: 100%; height: 100%; }
+.mt-shape { display: block; overflow: visible; }
+.mt-oneshape { width: min(60vmin, 100%, 260px); aspect-ratio: 1; margin: auto; background: #fff; border-radius: 30px; padding: 20px; box-shadow: 0 6px 0 rgba(0,0,0,.08); }
+.mt-oneshape .mt-shape { width: 100%; height: 100%; }
+
+/* النمط */
+.mt-patrow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; max-width: 680px; padding: 12px; background: rgba(255,255,255,.7); border-radius: 26px; }
+.mt-tok { width: clamp(42px, 11vmin, 72px); height: clamp(42px, 11vmin, 72px); display: flex; align-items: center; justify-content: center; }
+.mt-tok .mt-shape { width: 100%; height: 100%; }
+/* النمط في سطر واحد: حجم العنصر على قد عددها */
+.mt-patrow { flex-wrap: nowrap; gap: 6px; }
+.mt-patrow .mt-tok { width: min(clamp(42px, 11vmin, 72px), calc((min(100vw, 900px) - 76px - var(--n) * 6px) / var(--n))); height: auto; aspect-ratio: 1; }
+.mt-patrow .mt-tnum { font-size: min(clamp(24px, 6.6vmin, 38px), calc((min(100vw, 900px) - 76px) / var(--n) / 2)); padding: 6px 4px; }
+.mt-tok.q { border-radius: 16px; background: #fff8de; box-shadow: 0 0 0 3px var(--gold); animation: mtq 1.2s ease-in-out infinite; }
+.mt-tok.q b { font: 800 30px var(--head); color: #c9971c; }
+.mt-tnum { font: 800 clamp(24px, 6.6vmin, 38px)/1 var(--head); background: #fff; border-radius: 14px; padding: 6px 8px; box-shadow: 0 3px 0 rgba(0,0,0,.08); }
+.mt-tokb.mt-ch { width: 92px; height: 92px; min-width: 0; padding: 8px; }
+.mt-tokb .mt-tok { width: 100%; height: 100%; }
+.mt-tokb .mt-tnum { box-shadow: none; padding: 0; }
+
+/* رتّب في الصناديق */
+.mt-pool { flex: 1; min-height: 0; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 12px; }
+.mt-item { width: clamp(58px, 15vmin, 92px); height: clamp(58px, 15vmin, 92px); padding: 9px; border-radius: 20px; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.1); position: relative; z-index: 2; }
+.mt-item .mt-shape { width: 100%; height: 100%; pointer-events: none; }
+.mt-item.sel { box-shadow: 0 0 0 4px var(--gold), 0 5px 0 rgba(0,0,0,.1); }
+.mt-item.used { visibility: hidden; }
+.mt-choices.mt-bins { width: 100%; max-width: 760px; flex-wrap: nowrap; gap: 10px; }
+.mt-bin { flex: 1 1 0; min-width: 0; min-height: clamp(96px, 19vh, 150px); border: 4px dashed var(--bc); background: rgba(255,255,255,.85); border-radius: 24px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; transition: transform .2s, background .2s; }
+.mt-bin.over { background: #fff6d6; transform: scale(1.05); }
+.mt-bin-lbl { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+.mt-bin-lbl .mt-shape { width: 100%; height: 100%; }
+.mt-sw { width: 40px; height: 40px; border-radius: 50%; background: var(--bc); box-shadow: inset 0 -4px 0 rgba(0,0,0,.18); }
+.mt-got { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+.mt-got span { width: 24px; height: 24px; display: block; }
+.mt-got .mt-shape { width: 100%; height: 100%; }
+
+/* الجمع والطرح بالأشياء */
+.mt-addrow { flex: 1; min-height: 0; width: 100%; display: flex; align-items: stretch; gap: 6px; }
+.mt-grp { flex: 1 1 0; min-width: 0; display: flex; background: rgba(255,255,255,.65); border-radius: 22px; padding: 6px; }
+.mt-op { align-self: center; font: 800 44px var(--head); font-style: normal; color: #16a865; flex: none; }
+.mt-wire-box { flex: 1; min-height: 0; width: 100%; display: flex; background: linear-gradient(#cfe9ff, #f2fbff); border-radius: 24px; padding: 6px; }
+.mt-objs.birds { column-gap: 0; }
+.mt-objs.birds > span { background: linear-gradient(transparent 80%, #7a5432 80%, #7a5432 85%, transparent 85%); border-radius: 0; }
+.mt-ghost { opacity: .28; filter: grayscale(1); }
+.mt-fly { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 3; }
+
+/* خط الأعداد */
+.mt-nl { width: 100%; max-width: 680px; padding: 36px 26px 30px; background: rgba(255,255,255,.7); border-radius: 26px; }
+.mt-nl-in { position: relative; height: 50px; }
+.mt-nl-line { position: absolute; top: 18px; left: -10px; right: -10px; height: 6px; border-radius: 3px; background: #2f5d3a; }
+.mt-tick { position: absolute; top: 12px; width: 30px; margin-left: -15px; display: flex; flex-direction: column; align-items: center; }
+.mt-tick::before { content: ""; width: 3px; height: 18px; background: #2f5d3a; border-radius: 2px; }
+.mt-tick b { font: 800 clamp(13px, 3.6vmin, 20px)/1 var(--head); margin-top: 3px; padding: 2px 3px; border-radius: 8px; }
+.mt-tick.from b { background: var(--gold); }
+.mt-tick.to b { background: #3ee08a; color: #fff; }
+.mt-frog { position: absolute; top: -30px; width: 44px; margin-left: -22px; text-align: center; font-size: 36px; line-height: 1; }
+.mt-nl-ctl { display: flex; gap: 14px; align-items: center; justify-content: center; flex: none; }
+.mt-hop { height: 64px; padding: 0 18px; border-radius: 22px; background: linear-gradient(#3ee08a, #16a865); color: #fff; box-shadow: 0 6px 0 #0d7a45; display: flex; align-items: center; gap: 6px; position: relative; }
+.mt-hop span { font-size: 30px; }
+.mt-hop b { font: 800 30px/1 var(--head); }
+.mt-hop small { position: absolute; top: -10px; left: -8px; min-width: 28px; height: 28px; border-radius: 14px; background: #fff; color: #0d7a45; font: 800 17px/28px var(--head); text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+.mt-hop:active, .mt-reset:active { transform: translateY(4px); box-shadow: none; }
+.mt-reset { width: 56px; height: 56px; border-radius: 50%; background: #fff; color: #16a865; font-size: 26px; box-shadow: 0 5px 0 rgba(0,0,0,.12); }
+
+/* الضرب */
+.mt-plates { flex: 1; min-height: 0; width: 100%; display: grid; gap: 6px; justify-content: center; align-content: center; --c: 100px; }
+.mt-plate { width: var(--c); height: var(--c); border-radius: 50%; background: radial-gradient(#fff 60%, #f1e9da 62%, #fff 70%); box-shadow: 0 4px 0 rgba(0,0,0,.1); display: flex; align-items: center; justify-content: center; }
+.mt-plate-in { display: grid; grid-template-columns: repeat(var(--k), auto); gap: 1px; justify-content: center; }
+.mt-plate-in i { font-style: normal; font-size: calc(var(--c) * .2); line-height: 1.1; }
+.mt-arr { display: grid; grid-template-columns: repeat(var(--cols), var(--c)); gap: 6px; justify-content: center; --c: 30px; flex: none; }
+.mt-arr i { width: var(--c); height: var(--c); border-radius: 50%; background: hsl(calc(var(--d) * 50 + 200) 75% 60%); box-shadow: inset 0 -3px 0 rgba(0,0,0,.18); }
+.mt-rep { font: 800 clamp(18px, 5vmin, 26px)/1.2 var(--head); color: #5b3cc4; background: rgba(255,255,255,.7); padding: 4px 12px; border-radius: 12px; flex: none; text-align: center; }
+.mt-pickt { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 16px; }
+.mt-pickt-sj { width: clamp(90px, 26vmin, 160px); aspect-ratio: 200 / 230; }
+.mt-pickt-sj svg { width: 100%; height: 100%; overflow: visible; }
+.mt-pickt-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; max-width: 520px; }
+.mt-tbtn { width: clamp(92px, 25vmin, 132px); aspect-ratio: 1; border-radius: 30px; color: #fff; background: linear-gradient(#a98bff, #7448e6); box-shadow: 0 7px 0 #4d2ba8; font: 800 34px var(--head); display: flex; align-items: center; justify-content: center; }
+.mt-tbtn.mix { background: linear-gradient(#ffb15c, #f08a24); box-shadow: 0 7px 0 #b25b0b; }
+.mt-tbtn:active { transform: translateY(4px); box-shadow: none; }
+.mt-ladder { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: min(100%, 520px); flex: none; }
+.mt-ladder span { background: rgba(255,255,255,.7); border-radius: 12px; padding: 3px 2px; display: flex; flex-direction: column; align-items: center; }
+.mt-ladder small { font: 700 12px var(--head); color: #8a84b0; }
+.mt-ladder b { font: 800 clamp(16px, 4.4vmin, 22px)/1.1 var(--head); color: #b9b3d6; }
+.mt-ladder span.on { background: var(--gold); }
+.mt-ladder span.on b { color: var(--ink); }
+
+/* أطول أم أقصر */
+.mt-scene.mt-pencils { gap: 14px; }
+.mt-prow.mt-ch { width: 100%; max-width: 640px; height: clamp(64px, 12vh, 92px); justify-content: flex-start; padding: 0 16px; }
+.mt-pencil { display: flex; height: 30px; width: var(--w); min-width: 60px; filter: drop-shadow(0 3px 0 rgba(0,0,0,.15)); }
+.mt-pencil .pe { width: 14px; flex: none; background: #ff9db8; border-radius: 0 6px 6px 0; }
+.mt-pencil .pb { flex: 1; background: linear-gradient(var(--pc) 0 33%, #fff3 33% 36%, var(--pc) 36% 66%, #0002 66% 69%, var(--pc) 69%); }
+.mt-pencil .pt { width: 24px; flex: none; background: linear-gradient(90deg, #333 0 22%, #f3d6a4 22%); clip-path: polygon(0 50%, 100% 0, 100% 100%); }
+[dir="ltr"] .mt-pencil .pe { border-radius: 6px 0 0 6px; }
+[dir="ltr"] .mt-pencil .pt { background: linear-gradient(270deg, #333 0 22%, #f3d6a4 22%); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.mt-ruler { width: min(100%, 620px); display: flex; flex-direction: column; gap: 8px; padding: 16px; background: rgba(255,255,255,.7); border-radius: 24px; }
+.mt-ruler .mt-pencil { min-width: 0; }
+.mt-cubes { display: grid; grid-template-columns: repeat(10, 1fr); }
+.mt-cubes i { aspect-ratio: 1; border: 2px solid #fff; border-radius: 6px; background: hsl(var(--h) 55% 82%); }
+.mt-cubes i.on { background: hsl(var(--h) 75% 58%); }
+
+/* الميزان */
+.mt-scale { position: relative; width: min(100%, 560px); height: min(100%, 360px); flex: none; }
+.mt-beam { position: absolute; top: 30%; left: 18%; right: 18%; height: 12px; margin-top: -6px; border-radius: 6px; background: #8a6d4b; box-shadow: 0 3px 0 #5e4a33; z-index: 2; }
+.mt-post { position: absolute; left: 50%; top: 30%; bottom: 7%; width: 16px; margin-left: -8px; background: linear-gradient(90deg, #a07f58, #c49a6a); border-radius: 4px; }
+.mt-post::before { content: ""; position: absolute; top: -14px; left: -6px; width: 28px; height: 28px; border-radius: 50%; background: #ffc531; box-shadow: 0 0 0 3px #8a6d4b; }
+.mt-base { position: absolute; bottom: 0; left: 30%; right: 30%; height: 7%; min-height: 14px; border-radius: 10px 10px 4px 4px; background: #8a6d4b; }
+/* الكفّة معلّقة من طرف العارضة بخيطين، والشيء فوق الطبق */
+.mt-pan.mt-ch { position: absolute; top: 30%; width: 40%; height: 50%; min-width: 0; padding: 0; background: transparent; box-shadow: none; flex-direction: column; justify-content: flex-end; z-index: 3; }
+.mt-pan.mt-ch:active { transform: none; }
+.mt-pan::before { content: ""; position: absolute; top: 0; bottom: 14px; left: 8%; right: 8%; z-index: -1;
+  background: linear-gradient(to bottom right, transparent calc(50% - 1.5px), #8a6d4b calc(50% - 1.5px), #8a6d4b calc(50% + 1.5px), transparent calc(50% + 1.5px)) left / 50% 100% no-repeat,
+    linear-gradient(to bottom left, transparent calc(50% - 1.5px), #8a6d4b calc(50% - 1.5px), #8a6d4b calc(50% + 1.5px), transparent calc(50% + 1.5px)) right / 50% 100% no-repeat; }
+.mt-pan.L { left: -2%; } .mt-pan.R { right: -2%; }
+.mt-pan-e { font-size: clamp(46px, 14vmin, 92px); line-height: 1; margin-bottom: -4px; }
+.mt-dish { display: block; width: 92%; height: 18px; border-radius: 0 0 60% 60% / 0 0 100% 100%; background: linear-gradient(#ffe48a, #e0a800); box-shadow: 0 3px 0 rgba(0,0,0,.15); flex: none; }
+.mt-pan.ok { background: transparent; box-shadow: none; }
+.mt-pan.ok .mt-dish { background: linear-gradient(#7cff8a, #16a865); }
+.mt-pan.no { opacity: .55; }
+.mt-mbox { width: clamp(56px, 16vmin, 96px); aspect-ratio: 1; border-radius: 14px; background: var(--bc); color: #fff; font: 800 clamp(30px, 8vmin, 50px)/1 var(--head); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 -6px 0 rgba(0,0,0,.2); margin-bottom: 2px; }
+
+/* الساعة */
+.mt-clockbox { flex: 1; min-height: 0; aspect-ratio: 1; max-width: 100%; max-height: 340px; }
+.mt-clock { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 0 rgba(0,0,0,.08)); }
+.mt-clock-n { font: 800 9px var(--head); }
+.mt-dig { font: 800 32px var(--head); }
+.mt-digital { font: 800 clamp(48px, 15vmin, 90px)/1 var(--head); background: #20213a; color: #7cff8a; border-radius: 22px; padding: 14px 26px; letter-spacing: 2px; box-shadow: 0 6px 0 rgba(0,0,0,.2); }
+.mt-clockb.mt-ch { width: clamp(92px, 27vmin, 150px); height: clamp(92px, 27vmin, 150px); min-width: 0; padding: 6px; border-radius: 26px; }
+
+/* البيتزا */
+.mt-pz-goal { font: 800 clamp(30px, 8vmin, 48px) var(--head); background: #fff; border-radius: 18px; padding: 4px 18px; box-shadow: 0 4px 0 rgba(0,0,0,.08); color: #d63a2b; flex: none; }
+.mt-pz-box { flex: 1; min-height: 0; aspect-ratio: 1; max-width: 100%; max-height: 380px; border-radius: 50%; }
+.mt-pz-box.hint { animation: mtpulse 1s ease-in-out infinite; }
+.mt-pizza { width: 100%; height: 100%; display: block; }
+.mt-slice { cursor: pointer; transition: opacity .25s; }
+.mt-slice.eaten path { fill: #f4efe6; stroke: #e2d9c9; stroke-dasharray: 4 4; }
+.mt-slice.eaten circle { opacity: 0; }
+.mt-frb.mt-ch { width: 84px; height: 100px; min-width: 0; font-size: 30px; line-height: 1.15; color: #d63a2b; }
+.mt-frb.ok { color: #fff; }
+
+/* الدكّان */
+.mt-shop { flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.mt-item-card { position: relative; background: #fff; border-radius: 28px; padding: 10px 30px; box-shadow: 0 6px 0 rgba(0,0,0,.08); }
+.mt-goods { font-size: clamp(60px, 18vmin, 110px); line-height: 1.1; display: block; }
+.mt-tag { position: absolute; top: -12px; left: -16px; background: var(--gold); color: var(--ink); font: 800 28px/1 var(--head); padding: 6px 12px; border-radius: 14px; transform: rotate(-8deg); box-shadow: 0 3px 0 #c9971c; }
+.mt-tray { width: min(100%, 540px); min-height: 92px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,255,255,.75); border: 3px dashed #d9a400; border-radius: 24px; }
+.mt-paid { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 48px; }
+.mt-paidc { width: 46px; height: 46px; padding: 0; display: flex; align-items: center; justify-content: center; }
+.mt-paidc .mt-coin { transform: scale(.78); }
+.mt-sum { font: 800 30px var(--head); flex: none; white-space: nowrap; }
+.mt-choices.mt-wallet { gap: 18px; align-items: center; }
+.mt-coinb { padding: 4px; border-radius: 50%; }
+.mt-coinb:active { transform: translateY(3px); }
+.mt-coin { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font: 800 24px/1 var(--head); color: #5a4300; flex: none;
+  background: radial-gradient(circle at 35% 30%, #fff6c4, #ffd23e 45%, #d9a400); box-shadow: inset 0 0 0 4px rgba(255,255,255,.35), 0 4px 0 #a07800; width: 56px; height: 56px; }
+.mt-coin.c5 { width: 64px; height: 64px; font-size: 28px; color: #2d3a55; background: radial-gradient(circle at 35% 30%, #ffffff, #cfd8e6 45%, #8e9ab0); box-shadow: inset 0 0 0 4px rgba(255,255,255,.4), 0 4px 0 #6b778c; }
+.mt-coin.c10 { width: 72px; height: 72px; font-size: 30px; color: #fff; background: radial-gradient(circle at 35% 30%, #a8f0c0, #22b573 45%, #0d7a45); box-shadow: inset 0 0 0 5px rgba(255,255,255,.3), 0 4px 0 #075a32; }
+
+/* تحدّي السرعة */
+.mt-g-speed { padding-left: 70px; }
+.mt-track { position: absolute; left: 12px; top: 30px; bottom: 14px; width: 46px; border-radius: 23px; background: linear-gradient(#0d1033, #2b2f7a); box-shadow: inset 0 0 0 2px rgba(255,255,255,.12); z-index: 1; }
+.mt-moon { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font-size: 30px; line-height: 1; }
+.mt-rk { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; font-size: 30px; line-height: 1; }
+.mt-rk.fire::after { content: "🔥"; position: absolute; top: 100%; left: 0; right: 0; font-size: 20px; animation: mtfire .3s ease-in-out infinite alternate; }
+@keyframes mtfire { to { transform: scaleY(1.3); opacity: .7; } }
+.mt-timer { width: min(100%, 420px); height: 12px; border-radius: 6px; background: rgba(255,255,255,.18); overflow: hidden; flex: none; }
+.mt-timer i { display: block; height: 100%; background: linear-gradient(90deg, #ffd23e, #3ee08a); transform-origin: left center; }
+.mt-s-speed .mt-objs { background: rgba(255,255,255,.1); border-radius: 22px; }
+.mt-s-speed .mt-bub { background: #fff; }
+
+/* الفوز */
+.mt-win { position: absolute; inset: 0; z-index: 60; background: rgba(15,16,45,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.mt-wcard { background: var(--paper); border-radius: 30px; padding: 18px 20px; width: 100%; max-width: 380px; max-height: 100%; overflow: auto; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.35); color: var(--ink); }
+.mt-wcard h2 { font: 800 32px var(--head); margin: 2px 0; color: #0d7a45; }
+.mt-wsj { width: 120px; height: 138px; margin: 0 auto; }
+.mt-wsj svg { width: 100%; height: 100%; overflow: visible; }
+.mt-wnote { margin: 6px 0 0; font: 800 21px var(--head); color: #5b3cc4; direction: ltr; }
+.mt-wacts { display: flex; gap: 10px; margin-top: 12px; }
+
+/* الشاشات القصيرة */
+@media (max-height: 700px) {
+  .mt-ch { height: 64px; min-width: 68px; font-size: 32px; }
+  .mt-game { gap: 8px; padding-bottom: 10px; }
+  .mt-ear { width: 64px; height: 64px; font-size: 28px; }
+  .mt-hop { height: 58px; }
+  .mt-tokb.mt-ch { width: 80px; height: 80px; }
+}
+@media (max-height: 560px) {
+  .mt-wsj { width: 66px; height: 76px; } .mt-wcard h2 { font-size: 24px; } .mt-wcard .w-stars { font-size: 36px; } .mt-wcard { padding: 10px 16px; }
+}
+/* أفقي وقصير (تلفون بالعرض): المشهد يمين والاختيارات شمال */
+@media (orientation: landscape) and (max-height: 520px) {
+  .mt-game { flex-direction: row; padding-top: 26px; }
+  .mt-choices { flex-direction: column; flex-wrap: wrap; max-height: 100%; align-content: center; max-width: 46%; }
+  .mt-choices.many { grid-template-columns: repeat(2, auto); }
+  .mt-choices.mt-bins { flex-direction: row; max-width: 50%; }
+  .mt-bin { min-height: 0; height: 100%; }
+}
+/* آيفون (شاشة كاملة / من الشاشة الرئيسية): أزرار النشاط ما تقعدش تحت شريط الرجوع للبيت */
+.mt-play { padding-bottom: env(safe-area-inset-bottom); }

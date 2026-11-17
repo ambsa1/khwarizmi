@@ -63,9 +63,9 @@
   }
   // عدد المراحل والأنشطة، والمحلول منها لكل طفل (من أقسام الشهادات في extras.js)
   function counts(p) {
-    const gs = window.Extras ? Extras.groups(p) : [], r = { lv: 0, lvAll: 0, cw: 0, cwAll: 0 };
+    const gs = window.Extras ? Extras.groups(p) : [], r = { lv: 0, lvAll: 0, cw: 0, cwAll: 0, en: 0, enAll: 0, mt: 0, mtAll: 0 };
     for (const g of gs) {
-      const k = g.key[0] === 'C' ? 'cw' : 'lv';
+      const k = { C: 'cw', E: 'en', M: 'mt' }[g.key[0]] || 'lv';
       r[k + 'All'] += g.ids.length; r[k] += Extras.doneIn(p, g);
     }
     return r;
@@ -79,10 +79,10 @@
     if (Store.saveFailed) notices.push('⚠️ المتصفح لا يسمح بحفظ التقدّم. لا تستخدم التصفح الخفي، وتأكد أن ذاكرة الجهاز ليست ممتلئة.');
     if (Store.backupDue()) notices.push('💾 لم تُحفظ نسخة احتياطية منذ أكثر من أسبوع. احفظ نسخة الآن واحتفظ بها في مكان آمن. <button class="p-btn gold" data-p="backup">💾 احفظ نسخة الآن</button>');
     const kid = p => {
-      const c = counts(p), all = c.lvAll + c.cwAll, pct = all ? Math.round((c.lv + c.cw) / all * 100) : 0;
+      const c = counts(p), all = c.lvAll + c.cwAll + c.enAll + c.mtAll, pct = all ? Math.round((c.lv + c.cw + c.en + c.mt) / all * 100) : 0;
       return `<div class="p-kid"><span class="pic">${A().mini(p.color)}</span><div class="p-kid-main">
-        <h4>${esc(p.name) || 'بدون اسم'} <small>${p.gender === 'g' ? '👧' : '👦'} ${p.age} سنوات</small></h4>
-        <div class="p-stats"><span>⭐ ${Store.stars(p)}</span><span>💡 <bdi dir="ltr">${c.lv} / ${c.lvAll}</bdi> مرحلة</span>${c.cwAll ? `<span>💻 <bdi dir="ltr">${c.cw} / ${c.cwAll}</bdi> نشاط</span>` : ''}
+        <h4><bdi>${esc(p.name) || 'بدون اسم'}</bdi> <small>${p.gender === 'g' ? '👧' : '👦'} ${p.age} سنوات</small></h4>
+        <div class="p-stats"><span>⭐ ${Store.stars(p)}</span><span>💡 <bdi dir="ltr">${c.lv} / ${c.lvAll}</bdi> مرحلة</span>${c.cwAll ? `<span>💻 <bdi dir="ltr">${c.cw} / ${c.cwAll}</bdi> نشاط</span>` : ''}${c.enAll ? `<span>🔤 <bdi dir="ltr">${c.en} / ${c.enAll}</bdi> إنجليزي</span>` : ''}${c.mtAll ? `<span>🔢 <bdi dir="ltr">${c.mt} / ${c.mtAll}</bdi> رياضيات</span>` : ''}
           <span>⏱ اليوم ${mins(Store.todaySec(p))} د</span><span>⌛ المجموع ${timeText(p.total)}</span><span>📅 ${ago(p.last)}</span></div>
         <div class="x-bar"><i style="width:${pct}%"></i></div>
         <div class="p-acts"><button class="p-btn" data-p="export-one" data-id="${esc(p.id)}">📤 نقل لجهاز آخر</button>
@@ -123,7 +123,7 @@
 
   /* ---------- النسخ الاحتياطي ---------- */
   const stamp = () => { const d = new Date(); return [d.getFullYear(), d.getMonth() + 1, d.getDate()].map(n => String(n).padStart(2, '0')).join('-'); };
-  const fileName = who => `بيت-الخوارزمي-${who ? who.replace(/[\\/:*?"<>|]/g, '') + '-' : ''}${stamp()}.json`;
+  const fileName = who => `خوارزمي-${who ? who.replace(/[\\/:*?"<>|]/g, '') + '-' : ''}${stamp()}.json`;
   function download(obj, name) {
     const blob = new Blob([JSON.stringify(obj)], { type: 'application/json' });
     const url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -134,17 +134,17 @@
   async function share(obj, name) {
     try {
       const file = new File([JSON.stringify(obj)], name, { type: 'application/json' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'بيت الخوارزمي' }); return; }
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'خوارزمي' }); return; }
     } catch (e) { if (e && e.name === 'AbortError') return; }
     download(obj, name);
   }
   function importFile(file) {
     if (!file) return;
-    if (file.size > 5e6) { message('❌ الملف كبير جداً', 'هذا ليس ملف نسخة من بيت الخوارزمي.'); return; }
+    if (file.size > 5e6) { message('❌ الملف كبير جداً', 'هذا ليس ملف نسخة من لعبة خوارزمي.'); return; }
     const r = new FileReader();
     r.onload = () => {
       let res;
-      try { res = Store.importData(String(r.result)); } catch (e) { if (onPanel()) message('❌ لم يتم الاسترجاع', 'هذا الملف ليس نسخة صحيحة من بيت الخوارزمي، أو لا يحتوي على أي طفل.'); return; }
+      try { res = Store.importData(String(r.result)); } catch (e) { if (onPanel()) message('❌ لم يتم الاسترجاع', 'هذا الملف ليس نسخة صحيحة من لعبة خوارزمي، أو لا يحتوي على أي طفل.'); return; }
       if (!onPanel()) return;
       panel();
       message('✔ تم الاسترجاع', `تقدّم ${res.count} ${res.count === 1 ? 'طفل' : 'أطفال'}${res.added ? ` (جديد: ${res.added})` : ''}. احتفظنا بأفضل نتيجة لكل مرحلة.`);

@@ -1,4 +1,4 @@
-# معيار الجودة — بيت الخوارزمي
+# معيار الجودة — خوارزمي
 
 Every reviewer scores each dimension 1–10. A part ships only when **every dimension ≥ 8**.
 

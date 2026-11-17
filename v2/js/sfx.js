@@ -27,6 +27,7 @@
     bump: () => { tone(150, 0.25, 'sawtooth', 0.08, 0, 70); tone(520, 0.3, 'sine', 0.05, 0.1, 380); },
     oops: () => { tone(392, 0.14, 'triangle', 0.09); tone(330, 0.24, 'triangle', 0.09, 0.14); },
     win: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.26, 'triangle', 0.1, i * 0.1)),
+    net: () => { tone(1400, 0.22, 'sine', 0.05, 0, 500); tone(880, 0.1, 'triangle', 0.08, 0.3, 1320); }, // شبكة الحشرات: هَوْب ثم طَق
     light: () => { tone(220, 0.6, 'sine', 0.06, 0, 880); tone(1320, 0.4, 'sine', 0.05, 0.25); },
   };
 
@@ -39,9 +40,9 @@
      - التشجيع مرة كل ١٥ ثانية على الأكثر، ومتنوّع (Voice.pick). */
   const PRI = { ambient: 1, name: 2, feedback: 3, instruction: 4 };
   const COOL = 6000, AMBIENT_GAP = 15000, LEARN = 3;
-  const NAME = /^(en_|k_|c_|n_|ph_|cw_(en_)?l_|cw_en_w_|cw_wd_|cw_n_|cw_f_|cw_p_|cw_alg_\d)/;
-  const AMBIENT = /^(hi_|cw_hello$|cw_good\d|cw_bal_good(_f)?$|cw_yum$)/;
-  const FEEDBACK = /^(win\d|cw_win\d|fewer|retry|empty|full$|hint_|sol_|predict_(ok|no)|py_err|use_|talk_|draw_|path_|bump$|edge$|light_|var_(empty|wrong|say)|func_(unknown|empty|loop)|x_(cert$|cert_f|title_new|sticker_new|locked|t\d))/;
+  const NAME = /^(en_|k_|c_|n_|ph_|cw_(en_)?l_|cw_en_w_|cw_wd_|cw_n_|cw_f_|cw_p_|cw_alg_\d|m_(sh_|fr_|t_|wt_|h_\d))/;
+  const AMBIENT = /^(hi_|cw_hello$|cw_good\d|cw_bal_good(_f)?$|cw_yum$|m_good\d|m_hello$|m_sp_fire)/;
+  const FEEDBACK = /^(win\d|cw_win\d|fewer|retry|empty|full$|hint_|sol_|predict_(ok|no)|py_err|use_|talk_|draw_|path_|bump$|edge$|light_|var_(empty|wrong|say)|func_(unknown|empty|loop)|x_(cert$|cert_f|title_new|sticker_new|locked|t\d)|en2_(win\d|good\d|try)$|m_(win\d|try|look|sort_no|pz_much|shop_much|shop_ok|sp_time|sp_moon))/;
   // تصنيف الجملة من مفتاحها لو المستدعي ما حدّد الأولوية
   const cls = k => (AMBIENT.test(k) ? 'ambient' : NAME.test(k) ? 'name' : FEEDBACK.test(k) ? 'feedback' : 'instruction');
 

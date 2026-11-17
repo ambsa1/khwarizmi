@@ -403,6 +403,8 @@
   };
   const SYMS = ['⏎', '⇥', '⌫', '(', ')', '"', ':', '=', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   const escH = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // مقارنة سطرين بدون فرق المسافات حوالين العلامات (a=1 زي a = 1)
+  const spc = l => l.replace(/\s+/g, ' ').replace(/ ?([()=+,:<>-]) ?/g, '$1');
 
   function editor(el, level, kind, onEdit) {
     const words = (level.keys || []).concat(KEYS[kind] || []); // كلمات المرحلة الجديدة أولاً، عشان تبان على التلفون
@@ -421,34 +423,119 @@
       gut.scrollTop = ta.scrollTop;
       if (mark) { hl.style.display = 'block'; hl.className = 'ed-hl ' + (mark.bad ? 'bad' : ''); hl.style.top = (PAD + (mark.line - 1) * LH - ta.scrollTop) + 'px'; } else hl.style.display = 'none';
     }
-    function insert(text) {
-      if (ta.readOnly) return;
-      let s = ta.selectionStart, e = ta.selectionEnd;
-      if (document.activeElement !== ta && s === 0 && e === 0 && ta.value) s = e = ta.value.length; // أول ضغطة بدون مؤشر: في الآخر
-      const caret = text.indexOf('|');
-      const t = text.replace('|', '');
+
+    /* مكان المؤشر الحقيقي: سفاري الآيفون يضيّع التحديد لما الطفل يضغط زر (الكتابة تفقد التركيز)،
+       فنحفظه بنفسنا وقت ما الكتابة مركّزة، ونستعمل المحفوظ لما مش مركّزة */
+    let pos = null;
+    const focused = () => document.activeElement === ta;
+    const clamp = n => Math.max(0, Math.min(ta.value.length, n));
+    const save = () => { if (focused()) pos = { s: ta.selectionStart, e: ta.selectionEnd }; };
+    ['select', 'keyup', 'input', 'click', 'focus', 'pointerup', 'touchend'].forEach(ev => ta.addEventListener(ev, () => setTimeout(save, 0)));
+    const onSel = () => { if (!ta.isConnected) { document.removeEventListener('selectionchange', onSel); return; } save(); };
+    document.addEventListener('selectionchange', onSel);
+    function sel() {
+      if (focused()) return { s: ta.selectionStart, e: ta.selectionEnd };
+      const n = ta.value.length;
+      return pos ? { s: clamp(pos.s), e: clamp(pos.e) } : { s: n, e: n }; // أول ضغطة بدون مؤشر: في الآخر
+    }
+    function put(s, e, t, caret) { // يكتب النص ويحفظ مكان المؤشر الجديد
       ta.setRangeText(t, s, e, 'end');
-      if (caret >= 0) ta.selectionStart = ta.selectionEnd = s + caret;
+      const c = caret == null ? s + t.length : caret;
+      try { ta.setSelectionRange(c, c); } catch (x) { /* */ }
+      pos = { s: c, e: c };
+    }
+    // السطر اللي فيه المؤشر
+    const lineAt = (v, s) => { const a = v.lastIndexOf('\n', s - 1) + 1; let b = v.indexOf('\n', s); if (b < 0) b = v.length; return { a, b, text: v.slice(a, b), before: v.slice(a, s), after: v.slice(s, b) }; };
+    const indentOf = l => l.match(/^ */)[0];
+    const count = (l, c) => l.split(c).length - 1;
+    // سطر كامل: فيه كلام، الأقواس والتنصيص مقفولة، وما بيخلصش بعلامة (= + ( ,) لسه مستنية حاجة بعدها
+    const complete = l => { const t = l.trim(); return !!t && count(t, '"') % 2 === 0 && count(t, '(') === count(t, ')') && !/[=+\-*/<>(,]$/.test(t); };
+    // زر يبدأ أمر جديد (نداء دالة، أو for/if/else/def)
+    const STMT = /^(?:[A-Za-z_]+\(|for |if |elif |else:|def |while )/;
+    // مسافة السطر الجديد بعد هذا السطر: نفس المسافة، وأربعة زيادة بعد ":"، و else ترجع لمستوى if بتاعها
+    function indentFor(v, lineStart, prevText, key) {
+      let ind = indentOf(prevText) + (/:\s*$/.test(prevText) ? '    ' : '');
+      if (/^(else:|elif )/.test(key)) {
+        const before = v.slice(0, lineStart).split('\n');
+        for (let i = before.length - 1; i >= 0; i--) {
+          const m = before[i].match(/^( *)(if|elif) /);
+          if (m && m[1].length < ind.length + (prevText.trim() ? 0 : 1)) { ind = m[1]; break; }
+        }
+      }
+      return ind;
+    }
+    function insert(text, smart) {
+      if (ta.readOnly) return;
+      let { s, e } = sel();
+      const v = ta.value;
+      let t = text.replace('|', ''), caret = text.indexOf('|');
+      if (smart && s === e) {
+        const L = lineAt(v, s);
+        if (/^".*"$/.test(t) && L.before.endsWith('"') && L.after.startsWith('"')) { t = t.slice(1, -1); caret = -1; } // "red" بين علامتين: الكلمة بس
+        else if (STMT.test(text) || /^[A-Za-z_؀-ۿ]+$/.test(t)) {
+          // كلمة لوحدها (apples, count, i...) تبدأ سطر جديد بس لو اللي قبل المؤشر قيمة كاملة: range(5| أو say(x)|، مش say(| ولا "|
+          const inStr = count(L.before, '"') % 2 === 1, filled = !inStr && /[\w؀-ۿ)":]$/.test(L.before);
+          if (L.text.trim() && (STMT.test(text) ? complete(L.text) || !L.after.trim() : complete(L.text) && filled)) {
+            // بعد أمر كامل: سطر جديد بنفس المسافة (حتى لو المؤشر كان جوّه علامتي التنصيص)
+            const ind = indentFor(v, L.b + 1, L.text, text);
+            s = e = L.b; t = '\n' + ind + t; if (caret >= 0) caret += 1 + ind.length;
+          } else if (!L.text.trim() && /^(else:|elif )/.test(text)) {
+            // سطر فاضي: else ترجع لمستوى if
+            const ind = indentFor(v, L.a, v.slice(0, Math.max(0, L.a - 1)).split('\n').pop() || '', text);
+            s = L.a; e = L.b; t = ind + t; if (caret >= 0) caret += ind.length;
+          }
+        }
+      }
+      put(s, e, t, caret >= 0 ? s + caret : null);
       changed();
     }
     function newline() {
-      const s = ta.selectionStart, before = ta.value.slice(0, s), cur = before.slice(before.lastIndexOf('\n') + 1);
+      const { s } = sel(), cur = lineAt(ta.value, s).before;
       let ind = cur.match(/^ */)[0];
       if (/:\s*$/.test(cur)) ind += '    ';
       insert('\n' + ind);
     }
     function back() {
       if (ta.readOnly) return;
-      let s = ta.selectionStart, e = ta.selectionEnd;
-      if (document.activeElement !== ta && s === 0 && e === 0) s = e = ta.value.length;
-      if (s !== e) { ta.setRangeText('', s, e, 'end'); return changed(); }
+      const { s, e } = sel();
+      if (s !== e) { put(s, e, ''); return changed(); }
       if (!s) return;
-      const before = ta.value.slice(0, s), cur = before.slice(before.lastIndexOf('\n') + 1);
+      const cur = lineAt(ta.value, s).before;
       const n = /^ +$/.test(cur) ? (cur.length % 4 || 4) : 1; // في المسافات الأولى نمسح أربعة
-      ta.setRangeText('', s - n, s, 'end');
+      put(s - n, s, '');
       changed();
     }
-    function changed() { mark = null; err.hidden = true; sync(); onEdit && onEdit(); }
+    // التلميح (💡 جرّب: ...) يفضل ظاهر والطفل بيكتب السطر، والخطأ يختفي مع أول تعديل
+    // (ويختفي هو كمان لما السطر اللي فيه المؤشر يبقى زي المطلوب بالظبط)
+    const same = (a, b) => spc(a).trim() === spc(b).trim();
+    function changed() {
+      mark = null;
+      if (!err.classList.contains('tip') || (err.dataset.want && same(lineAt(ta.value, sel().s).text, err.dataset.want))) err.hidden = true;
+      sync(); onEdit && onEdit();
+    }
+    // التلميح يجهّز مكان السطر: سطر جديد بالمسافة الصح، أو يحدّد السطر الغلط (الضغطة الجاية تستبدله)، أو السطر الزائد كله (⌫ يمسحه)
+    // n = رقم السطر بين سطور الكود الحقيقية (من غير الفاضية والتعليقات)، مثل diffLines. يرجّع رقم السطر في المحرّر
+    function prepare(n, text) {
+      if (ta.readOnly) return n;
+      const ls = ta.value.split('\n'), real = [];
+      ls.forEach((l, i) => { if (l.replace(/#.*/, '').trim()) real.push(i); });
+      const off = i => ls.slice(0, i).reduce((a, l) => a + l.length + 1, 0);
+      const ind = indentOf(text || '');
+      if (n <= real.length) {
+        const i = real[n - 1], a = off(i), l = ls[i];
+        if (!text) { const s = i ? a - 1 : a, e = i ? a + l.length : Math.min(ta.value.length, a + l.length + 1); ta.setSelectionRange(s, e); pos = { s, e }; return i + 1; }
+        put(a, a + indentOf(l).length, ind);
+        const s = a + ind.length, e = a + ind.length + l.trim().length;
+        ta.setSelectionRange(s, e); pos = { s, e };
+        sync(); onEdit && onEdit();
+        return i + 1;
+      }
+      // سطر ناقص: في آخر الكود (بعد آخر سطر حقيقي)
+      const last = real.length ? real[real.length - 1] : -1, a = last < 0 ? 0 : off(last) + ls[last].length;
+      put(a, ta.value.length, (last < 0 ? '' : '\n') + ind);
+      sync(); onEdit && onEdit();
+      return last + 2;
+    }
     ta.addEventListener('input', changed);
     ta.addEventListener('scroll', sync);
     ta.addEventListener('keydown', e => {
@@ -462,25 +549,35 @@
     });
     const keys = el.querySelector('.keys');
     // الضغط على الأزرار ما يقفل لوحة مفاتيح التلفون ولا يحرّك المؤشر
-    keys.addEventListener('pointerdown', e => { if (e.target.closest('.key')) e.preventDefault(); });
+    let wasFocused = false;
+    // بالماوس: نمنع الزر ياخد التركيز من الكتابة. باللمس لا (سفاري يلغي الضغطة كلها لو منعنا pointerdown)، والمؤشر محفوظ أصلاً
+    const keep = e => { if (e.target.closest('.key')) { wasFocused = wasFocused || focused(); save(); if (e.type === 'mousedown' || e.pointerType === 'mouse') e.preventDefault(); } };
+    keys.addEventListener('pointerdown', keep);
+    keys.addEventListener('mousedown', keep);
     keys.addEventListener('click', e => {
       const b = e.target.closest('.key');
       if (!b) return;
       const k = b.dataset.k;
       Sfx.tap();
-      if (k === '⏎') newline(); else if (k === '⌫') back(); else if (k === '⇥') insert('    '); else insert(k);
+      if (k === '⏎') newline(); else if (k === '⌫') back(); else if (k === '⇥') insert('    '); else insert(k, b.classList.contains('w'));
+      // لوحة مفاتيح التلفون كانت مفتوحة: نرجّع التركيز في نفس المكان (ولو كانت مقفولة ما نفتحهاش)
+      if (wasFocused && !focused() && pos) { try { ta.focus({ preventScroll: true }); ta.setSelectionRange(pos.s, pos.e); } catch (x) { /* */ } }
+      wasFocused = false;
     });
     sync();
     return {
       get: () => ta.value,
-      set(v) { ta.value = v; changed(); },
-      caret(i) { ta.selectionStart = ta.selectionEnd = i; }, // بدون focus عشان لوحة مفاتيح التلفون ما تفتح لوحدها
+      set(v) { ta.value = v; pos = { s: v.length, e: v.length }; changed(); },
+      caret(i) { pos = { s: i, e: i }; try { ta.setSelectionRange(i, i); } catch (x) { /* */ } }, // بدون focus عشان لوحة مفاتيح التلفون ما تفتح لوحدها
+      prepare,
+      sel,
       mark(line, bad) {
         mark = line ? { line, bad } : null; sync();
         if (line) { const y = PAD + (line - 1) * LH; if (y < ta.scrollTop || y > ta.scrollTop + ta.clientHeight - LH) ta.scrollTop = y - ta.clientHeight / 2; }
       },
-      error(line, msg, kind2) {
+      error(line, msg, kind2, want) {
         err.hidden = false; err.className = 'py-err ' + (kind2 || '');
+        err.dataset.want = want || '';
         const html = escH(msg).replace(/`([^`]*)`/g, '<code dir="ltr">$1</code>');
         err.innerHTML = (line ? `<b>${kind2 === 'tip' ? '💡' : '⚠️'} السطر <bdi>${line}</bdi>:</b> ` : '') + html;
         this.mark(line, kind2 !== 'tip');
@@ -494,7 +591,7 @@
   function diffLines(src, sol) {
     const clean = s => norm(s).split('\n').map(l => l.replace(/#.*/, '').replace(/\s+$/, '')).filter(l => l.trim());
     const a = clean(src), b = clean(sol);
-    const sp = l => l.replace(/\s+/g, ' ').replace(/ ?([()=+,:<>-]) ?/g, '$1');
+    const sp = spc;
     for (let i = 0; i < b.length; i++) if (!a[i] || sp(a[i]) !== sp(b[i])) return { line: i + 1, text: b[i] };
     return a.length > b.length ? { line: b.length + 1, text: '' } : null;
   }
