@@ -251,13 +251,19 @@ small = await smallText(); ok('passport: no text under 18px', small.length === 0
   await cx.addInitScript(() => localStorage.setItem('khawarizmi.v2', JSON.stringify({ state: { tierOverride: 'low' }, version: 0 })));
   const pg = await cx.newPage();
   const worst = { calls: 0, tris: 0 };
-  for (const m of [0, 24, 37]) {
-    await pg.goto(`${base}?view=world&w=kassala&m=${m}`, { waitUntil: 'load' }); await pg.waitForTimeout(6000);
-    const st = await pg.evaluate(() => window.__stats);
-    worst.calls = Math.max(worst.calls, st.calls); worst.tris = Math.max(worst.tris, st.tris);
+  const each = [];
+  for (const [w, n] of [['kassala', 37], ['saqiya', 11], ['mogran', 19], ['suakin', 17], ['meroe', 26], ['marra', 30]]) {
+    const one = { calls: 0, tris: 0, fps: 999 };
+    for (const m of [0, Math.round(n * 0.6), n]) {
+      await pg.goto(`${base}?view=world&w=${w}&m=${m}`, { waitUntil: 'load' }); await pg.waitForTimeout(6500);
+      const st = await pg.evaluate(() => window.__stats);
+      one.calls = Math.max(one.calls, st.calls); one.tris = Math.max(one.tris, st.tris); one.fps = Math.min(one.fps, st.fps);
+    }
+    each.push(`${w} ${one.calls}/${Math.round(one.tris / 1000)}k/${one.fps}fps`);
+    worst.calls = Math.max(worst.calls, one.calls); worst.tris = Math.max(worst.tris, one.tris);
   }
-  ok('low tier: at most 80 draw calls', worst.calls > 0 && worst.calls <= 80, `${worst.calls}`);
-  ok('low tier: at most 150,000 triangles', worst.tris > 0 && worst.tris <= 150000, `${worst.tris}`);
+  ok('low tier: at most 80 draw calls (all worlds)', worst.calls > 0 && worst.calls <= 80, each.join(', '));
+  ok('low tier: at most 150,000 triangles (all worlds)', worst.tris > 0 && worst.tris <= 150000, each.join(', '));
   await cx.close();
 }
 

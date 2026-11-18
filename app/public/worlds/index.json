@@ -43,6 +43,10 @@
     "bytes": 889904
    },
    {
+    "path": "worlds/marra/terraces.bin",
+    "bytes": 217640
+   },
+   {
     "path": "worlds/marra/terrain.bin",
     "bytes": 99588
    },
@@ -52,10 +56,10 @@
    },
    {
     "path": "worlds/marra/world.json",
-    "bytes": 1894578
+    "bytes": 40208
    }
   ],
-  "bytes": 3935239
+  "bytes": 2298509
  },
  "meroe": {
   "files": [
@@ -81,10 +85,10 @@
    },
    {
     "path": "worlds/meroe/world.json",
-    "bytes": 16337
+    "bytes": 16331
    }
   ],
-  "bytes": 678468
+  "bytes": 678462
  },
  "mogran": {
   "files": [

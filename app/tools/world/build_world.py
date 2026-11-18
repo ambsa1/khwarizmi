@@ -29,7 +29,7 @@ CFG = {
         # channel with branches that water continuous fields and palm groves; the finish is the great old saqiya
         water=('dem', 221.6), relief=None, life='saqiya',
         route=[(19.1361, 30.482), (19.1514, 30.4814), (19.1667, 30.4802)], shore=(10, 'land'),
-        kits=[(0, 'saqiya', 'water')], kitScale=1.6, beacon=('end', 4), fog=(260, 950),
+        kits=[(0, 'saqiya', 'water')], kitScale=1.6, beacon=('end', 4), fog=(200, 700),
         path={'w': 3.2, 'color': '#C4A57A'},
         palette={'waterA': '#7A6E52', 'waterB': '#4E7468', 'green': '#4E7E34', 'built': '#BFA27C', 'rock': '#CDB38C', 'street': '#C4A57A', 'fog': '#F1DDBA', 'ground': '#CDB38C', 'groundDark': '#A88B66'},
     ),
@@ -39,7 +39,7 @@ CFG = {
         water=('dem', 371.4), relief=None, life='mogran',
         route=[(15.6368, 32.5015), (15.631, 32.4955), (15.6229, 32.4943), (15.6142, 32.4991)], shore=(9, 'land'), land=(15.6241, 32.5051),
         focus=[(15.6151, 32.4885), (15.6055, 32.5133)],
-        kits=[(0, 'mooring', 'water')], kitScale=1.15, beacon=('latlon', 15.6118, 32.4975, 4), fog=(260, 950),
+        kits=[(0, 'mooring', 'water')], kitScale=1.15, beacon=('latlon', 15.6118, 32.4975, 4), fog=(200, 720),
         path={'w': 2.8, 'color': '#C9AE86'},
         palette={'waterA': '#8C6A46', 'waterB': '#5C7F62', 'green': '#5E8A3A', 'built': '#B9A07E', 'rock': '#C9AE86', 'street': '#C9AE86', 'fog': '#EFDDBE', 'ground': '#C2A57E', 'groundDark': '#9C8462'},
     ),
@@ -50,7 +50,7 @@ CFG = {
         route=[(19.1046, 37.3288), (19.1050, 37.3305), (19.1053, 37.3322), (19.1052, 37.3340), (19.1055, 37.3352), (19.1066, 37.3343), (19.1078, 37.3337), (19.1088, 37.3334), (19.1094, 37.3338), (19.1100, 37.3346),
                (19.1110, 37.3346), (19.1122, 37.3349), (19.1131, 37.3358), (19.1133, 37.3370), (19.1128, 37.3381), (19.1117, 37.3386),
                (19.1105, 37.3383), (19.1098, 37.3373), (19.1098, 37.3360)],
-        kits=[(0, 'coralHouse', 'land'), (3, 'mooring', 'water'), (7, 'coralHouse', 'land')], kitScale=1.0, beacon=('latlon', 19.1122, 37.33736, 10), fog=(220, 850),
+        kits=[(0, 'coralHouse', 'land'), (3, 'mooring', 'water'), (7, 'coralHouse', 'land')], kitScale=1.0, beacon=('latlon', 19.1122, 37.33736, 10), fog=(180, 620),
         path={'w': 3.2, 'color': '#E3D8C2'},
         palette={'waterA': '#2E8A8C', 'waterB': '#1F6E7E', 'green': '#7A8A4E', 'built': '#E2D8C4', 'rock': '#D9CBB0', 'street': '#E3D8C2', 'fog': '#EADFC8', 'ground': '#D8C8A8', 'groundDark': '#B5A281',
                  'walls': '#EDE6D6,#E4DCCB,#F2ECE0,#D9CFBD,#E8DFCC'},
@@ -61,7 +61,7 @@ CFG = {
         water=('dem', 352.6), relief=dict(vexag=1.5), meshErr=1.6, life='meroe',
         route=[(16.9238, 33.7318), (16.9256, 33.7340), (16.9272, 33.7352), (16.9288, 33.7368), (16.9300, 33.7385), (16.9318, 33.7405), (16.9338, 33.7428), (16.9352, 33.7450), (16.9366, 33.7466), (16.9378, 33.7479), (16.9386, 33.7488)],
         focus=[(16.9394, 33.7512)],
-        kits=[(0, 'nubianPyramid', 'land')], kitScale=0.8, beacon=('latlon', 16.9390, 33.7495, 8), fog=(320, 1150),
+        kits=[(0, 'nubianPyramid', 'land')], kitScale=0.8, placeOn='crests', beacon=('latlon', 16.9390, 33.7495, 8), fog=(240, 720),
         path={'w': 2.4, 'color': '#B88A55'},
         palette={'waterA': '#6E6A52', 'waterB': '#58705E', 'green': '#B08A50', 'built': '#C9A57C', 'rock': '#7E5236', 'street': '#B88A55', 'fog': '#F3D9A8', 'ground': '#E2B46C', 'groundDark': '#C48E4E'},
     ),
@@ -72,7 +72,7 @@ CFG = {
         route=[(12.9040, 24.2935), (12.9100, 24.2915), (12.9150, 24.2885), (12.9205, 24.2840), (12.9255, 24.2790), (12.9300, 24.2745),
                (12.9345, 24.2715), (12.9395, 24.2700), (12.9450, 24.2705), (12.9505, 24.2720), (12.9555, 24.2740), (12.9590, 24.2760)],
         focus=[(12.9514, 24.2576), (12.9644, 24.2748)],
-        kits=[(0, 'terraceFarm', 'land')], kitScale=1.3, beacon=('lake', 1, 3), fog=(380, 1500),
+        kits=[(0, 'terraceFarm', 'land')], kitScale=1.3, beacon=('lake', 1, 3), fog=(320, 1050),
         path={'w': 1.8, 'color': '#8C6A48'},
         palette={'waterA': '#2A5560', 'waterB': '#3E7C9A', 'green': '#4E7E30', 'built': '#A08060', 'rock': '#6E6A58', 'street': '#8C6A48', 'fog': '#DDE3D2', 'ground': '#6E8E44', 'groundDark': '#4E6A34'},
     ),
@@ -317,6 +317,8 @@ plain_at = ground
 
 # ---------------------------------------------------------------- stations along the path
 NST = json.load(open(REPO / 'content' / 'worlds' / 'stations.json', encoding='utf-8'))['worlds'][wid]['stations']
+PROM = Hs - box_blur(Hs, 6)                              # how much a spot stands above its surroundings (crests)
+def inside_stage(x, z): return x0 + 5 < x < x1 - 5 and z0 + 5 < z < z1 - 5
 gap = L / (NST + 0.6); plots = []
 for i in range(NST):
     s = gap * (i + 0.8); k = min(int(s / 2), len(P) - 2)
@@ -332,6 +334,17 @@ for i in range(NST):
     if kside != 'water' and is_water(x, z):
         sd = -sd; x, z = sx + nx * sd * off, sz + nz * sd * off
         if is_water(x, z): off = 4.5; x, z = sx + nx * sd * off, sz + nz * sd * off
+    if C.get('placeOn') == 'crests':
+        prom = PROM
+        best = None
+        for _ in range(90):
+            a_, r_ = rng.uniform(0, 6.28), rng.uniform(5.5, 26)
+            cx_, cz_ = sx + math.cos(a_) * r_, sz + math.sin(a_) * r_
+            if not inside_stage(cx_, cz_) or is_water(cx_, cz_) or street_dist(cx_, cz_) < 4.5: continue
+            if any(math.hypot(cx_ - q['x'], cz_ - q['z']) < 5.5 for q in plots): continue
+            sc = float(grid_at(prom, cx_, cz_)) * 3 + float(grid_at(Hs, cx_, cz_)) * 0.25 - r_ * 0.02 + rng.uniform(0, 0.25)
+            if best is None or sc > best[0]: best = (sc, cx_, cz_)
+        if best: x, z = best[1], best[2]
     face = math.atan2(sx - x, sz - z)                   # kit front (+z) toward the path
     if kside == 'water': face += math.pi                 # jetty / wheel side out over the water, its back to the path
     plots.append({'n': i + 1, 'zone': f'{wid}.s{i + 1}', 'skill': '', 'kit': kit, 'sx': round(float(sx), 2), 'sz': round(float(sz), 2),
@@ -562,6 +575,11 @@ world = {
     'credits': ['Elevation: Copernicus GLO-30 (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the EU and ESA',
                 'Map data: (c) OpenStreetMap contributors, ODbL'],
 }
+terr_lines = [l for l in world['lines'] if l['kind'] == 'terrace']
+if terr_lines:
+    np.array([[round(v * 20) for pt in l['points'] for v in pt] for l in terr_lines], dtype='<i2').tofile(OUT / 'terraces.bin')
+    world['lines'] = [l for l in world['lines'] if l['kind'] != 'terrace']; world['terraceFile'] = 'terraces.bin'
+elif (OUT / 'terraces.bin').exists(): (OUT / 'terraces.bin').unlink()
 (OUT / 'world.json').write_text(json.dumps(world, separators=(',', ':')), encoding='utf-8')
 sizes = {f.name: f.stat().st_size // 1024 for f in OUT.iterdir()}
 print(f'stations {len(plots)} gap {gap:.1f}, water cells {len(wcells)}, beacon {beacon}; files KB {sizes}')

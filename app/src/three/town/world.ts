@@ -56,6 +56,8 @@ export type WorldData = {
   marks?: { src: 'kits' | 'bg' | 'pyr'; kit: string; x: number; z: number; rot: number; s: number }[];
   /** bridges along their real lines (Tuti Bridge has towers and cables) */
   bridges?: { name: string; towers: boolean; points: [number, number][] }[];
+  /** terrace contour segments, int16 x0 z0 x1 z1 in twentieths of a unit */
+  terraceFile?: string;
   /** living colours of this world (overrides of PAL) */
   palette?: Record<string, string>;
   /** ground colour per terrain grid vertex (RGB bytes), taken from the satellite picture of the real place */
@@ -145,12 +147,17 @@ export function loadWorld(id: string): Promise<World> {
     const base = `${import.meta.env.BASE_URL}worlds/${id}/`;
     cache.set(id, (async () => {
       const d: WorldData = await (await fetch(base + 'world.json')).json();
-      const [heights, massif, field, tint] = await Promise.all([
+      const [heights, massif, field, tint, terr] = await Promise.all([
         fetch(base + d.grid.file).then(r => r.arrayBuffer()).then(b => new Float32Array(b)),
         fetch(base + d.massif.file).then(r => r.arrayBuffer()),
         fetch(base + d.field.file).then(r => r.arrayBuffer()).then(b => new Float32Array(b)),
         d.tint ? fetch(base + d.tint).then(r => r.arrayBuffer()).then(b => new Uint8Array(b)) : Promise.resolve(undefined),
+        d.terraceFile ? fetch(base + d.terraceFile).then(r => r.arrayBuffer()).then(b => new Int16Array(b)) : Promise.resolve(undefined),
       ]);
+      if (terr) {
+        const L = d.lines ?? (d.lines = []);
+        for (let i = 0; i + 3 < terr.length; i += 4) L.push({ kind: 'terrace', w: 1.5, points: [[terr[i] / 20, terr[i + 1] / 20], [terr[i + 2] / 20, terr[i + 3] / 20]] });
+      }
       return build(id, d, heights, massif, field, tint);
     })());
   }
