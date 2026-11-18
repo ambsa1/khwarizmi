@@ -5,9 +5,9 @@ import { Html } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { T, type WorldId } from '../lib/tokens';
+import type { WorldId } from '../lib/tokens';
 import { Landmark } from './Diorama';
-import { skyMaterial } from './kit';
+import { SUBJECT_COLOR } from '../screens/Map';
 
 const C = { lon: 30.2, lat: 15.3 };
 const P = (lon: number, lat: number) => new THREE.Vector2(lon - C.lon, lat - C.lat);
@@ -67,21 +67,52 @@ function Rivers() {
 }
 
 function Sea() {
+  // shallow turquoise at the coast to deep blue offshore, fading softly at the sea's outer edge
   const geo = useMemo(() => {
-    const g = new THREE.ShapeGeometry(new THREE.Shape(RED_SEA.map(([a, b]) => P(a, b))));
-    g.rotateX(-Math.PI / 2); return g;
+    const g = new THREE.ShapeGeometry(new THREE.Shape(RED_SEA.map(([a, b]) => P(a, b))), 24);
+    g.rotateX(-Math.PI / 2);
+    const pos = g.attributes.position, xs: number[] = [];
+    for (let i = 0; i < pos.count; i++) xs.push(pos.getX(i));
+    const lo = Math.min(...xs), hi = Math.max(...xs), col = new Float32Array(pos.count * 4);
+    const shallow = new THREE.Color('#5ED6D0'), deep = new THREE.Color('#1F7FA8'), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const k = (xs[i] - lo) / (hi - lo || 1); c.copy(shallow).lerp(deep, Math.min(1, k * 1.3));
+      col.set([c.r, c.g, c.b, 1 - THREE.MathUtils.smoothstep(k, 0.75, 1) * 0.85], i * 4);
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 4)); return g;
   }, []);
-  const ref = useRef<THREE.MeshLambertMaterial>(null!);
-  useFrame(s => { ref.current.emissiveIntensity = 0.18 + Math.sin(s.clock.elapsedTime * 1.2) * 0.05; });
-  return <mesh geometry={geo} position-y={0.12}><meshLambertMaterial ref={ref} color="#2EC4C4" emissive="#1C8F9F" emissiveIntensity={0.2} /></mesh>;
+  return <mesh geometry={geo} position-y={0.12}><meshLambertMaterial vertexColors transparent color="#ffffff" emissive="#0E5A73" emissiveIntensity={0.12} /></mesh>;
 }
 
-function Ring({ value, color, dim }: { value: number; color: string; dim: boolean }) {
-  const arc = Math.max(0.0001, Math.min(1, value)) * Math.PI * 2;
+/** soft shadow under the floating map (a radial texture, no box) */
+function Shadow() {
+  const tex = useMemo(() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d')!;
+    const g = x.createRadialGradient(64, 64, 10, 64, 64, 64); g.addColorStop(0, 'rgba(120,80,40,0.38)'); g.addColorStop(1, 'rgba(120,80,40,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+  }, []);
+  return <mesh rotation-x={-Math.PI / 2} position={[0.4, -0.6, 0.8]} scale={[22, 20, 1]}><planeGeometry /><meshBasicMaterial map={tex} transparent depthWrite={false} /></mesh>;
+}
+
+/** a 3D map pin in the world's colour; the selected one glows with Siraj's golden aura and bobs */
+function Pin({ color, selected, dim }: { color: string; selected: boolean; dim: boolean }) {
+  const g = useRef<THREE.Group>(null!), halo = useRef<THREE.Sprite>(null!);
+  const glow = useMemo(() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d')!;
+    const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,226,140,1)'); gr.addColorStop(0.4, 'rgba(255,200,90,0.5)'); gr.addColorStop(1, 'rgba(255,190,80,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c);
+  }, []);
+  useFrame((s, dt) => {
+    const t = s.clock.elapsedTime;
+    g.current.position.y = THREE.MathUtils.damp(g.current.position.y, selected ? 3.3 + Math.sin(t * 2.6) * 0.15 : 2.6, 6, dt);
+    const k = THREE.MathUtils.damp(halo.current.scale.x, selected ? 3.2 + Math.sin(t * 3) * 0.3 : 0.001, 6, dt); halo.current.scale.set(k, k, 1);
+  });
   return (
-    <group rotation-x={-Math.PI / 2} position-y={LAND_TOP + 0.04}>
-      <mesh><ringGeometry args={[0.95, 1.18, 48]} /><meshBasicMaterial color={dim ? '#BFAE92' : '#FFF4DE'} transparent opacity={0.9} /></mesh>
-      {value > 0 && <mesh rotation-z={Math.PI / 2} position-z={0.005}><ringGeometry args={[0.95, 1.18, 48, 1, 0, arc]} /><meshBasicMaterial color={color} toneMapped={false} /></mesh>}
+    <group ref={g} position-y={2.6}>
+      <sprite ref={halo}><spriteMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} /></sprite>
+      <mesh><sphereGeometry args={[0.5, 20, 14]} /><meshLambertMaterial color={dim ? '#BFAE92' : color} emissive={selected ? '#FFB840' : '#000000'} emissiveIntensity={selected ? 0.35 : 0} /></mesh>
+      <mesh position-y={-0.75} rotation-x={Math.PI}><coneGeometry args={[0.32, 0.9, 16]} /><meshLambertMaterial color={dim ? '#BFAE92' : color} /></mesh>
+      <mesh position-y={0.08}><sphereGeometry args={[0.2, 12, 10]} /><meshBasicMaterial color="#FFF8E8" /></mesh>
     </group>
   );
 }
@@ -95,7 +126,7 @@ function Rig() {
   useFrame((_, dt) => {
     const aspect = size.width / size.height;
     const t = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
-    const dist = Math.max(14 / 2 / t, 18 / 2 / (t * aspect)) * 1.04;
+    const dist = Math.max(16.5 / 2 / t, 19.5 / 2 / (t * aspect)) * (aspect < 1 ? 1.12 : 1.06);   // the whole country with a margin, also on narrow phones
     const target = new THREE.Vector3(0.4, dist * 0.8, dist * 0.6);
     cam.position.lerp(target, 1 - Math.exp(-dt * 4));
     cam.lookAt(0.4, 0, 0.6);
@@ -104,8 +135,7 @@ function Rig() {
 }
 
 /** labels: 'all' on wide screens; on portrait phones only the listed worlds (the cards below name the rest). */
-export function SudanMapScene({ spots, onPick, labels = 'all' }: { spots: MapSpot[]; onPick: (id: WorldId) => void; labels?: 'all' | WorldId[] }) {
-  const bg = useMemo(() => skyMaterial('#F4E3C1', '#FFF6E6'), []);
+export function SudanMapScene({ spots, onPick, labels = 'all', selected }: { spots: MapSpot[]; onPick: (id: WorldId) => void; labels?: 'all' | WorldId[]; selected?: WorldId }) {
   const [hover, setHover] = useState<WorldId | null>(null);
   const lift = useRef<Record<string, THREE.Group | null>>({});
   useFrame((s, dt) => {
@@ -118,29 +148,26 @@ export function SudanMapScene({ spots, onPick, labels = 'all' }: { spots: MapSpo
   });
   return (
     <group>
-      <mesh material={bg} scale={200}><sphereGeometry args={[1, 16, 8]} /></mesh>
       <hemisphereLight args={['#FFF1D6', '#9A7456', 1.3]} />
       <directionalLight position={[-8, 14, 10]} intensity={1.5} color="#FFE1B0" />
-      {/* the table under the model */}
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.05}><circleGeometry args={[34, 48]} /><meshLambertMaterial color="#E7C98F" /></mesh>
+      <Shadow />
       <Sea />
       <Land />
       <Rivers />
       {spots.map(s => {
         const [lon, lat] = MAP_PLACES[s.id];
-        const c = T.worlds[s.id];
         return (
           <group key={s.id} position={to3(lon, lat, 0)}
             onClick={e => { e.stopPropagation(); onPick(s.id); }}
             onPointerOver={e => { e.stopPropagation(); setHover(s.id); document.body.style.cursor = 'pointer'; }}
             onPointerOut={() => { setHover(null); document.body.style.cursor = ''; }}>
-            <Ring value={s.value} color={s.id === 'suakin' ? '#2EC4C4' : c.primary} dim={s.locked} />
+            <Pin color={SUBJECT_COLOR[s.id]} selected={selected === s.id} dim={s.locked} />
             <group ref={g => (lift.current[s.id] = g)} position-y={LAND_TOP} scale={0.5}><Landmark world={s.id} /></group>
             {/* invisible, generous tap target for small fingers */}
             <mesh position-y={1} visible={false}><cylinderGeometry args={[1.5, 1.5, 2.6, 12]} /></mesh>
             {(labels === 'all' || labels.includes(s.id)) && (
               <Html position={labels === 'all' ? LABEL_AT[s.id] ?? [0, 0, 1.6] : [0, 0, 1.6]} center zIndexRange={[10, 0]} wrapperClass="html-anchor" style={{ pointerEvents: 'none' }}>
-                <span className={'map-label' + (s.current ? ' current' : '') + (s.locked ? ' locked' : '')}>{s.name}</span>
+                <span className={'map-label' + (selected === s.id ? ' current' : '') + (s.locked ? ' locked' : '')}>{s.name}</span>
               </Html>
             )}
           </group>

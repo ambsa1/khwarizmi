@@ -53,3 +53,14 @@ export const IconClose = (p: P) => (
 export const IconSchool = (p: P) => (
   <svg {...base(p)}><path d="M3 12l13-6 13 6-13 6z" /><path d="M8 15v6c3 3 13 3 16 0v-6" /><path d="M29 12v8" /></svg>
 );
+export const IconPlus = (p: P) => (
+  <svg {...base(p)}><path d="M16 6v20M6 16h20" /></svg>
+);
+
+/** subject icons for the six worlds (coding, technology & AI, English, thinking games, school, little explorer) */
+export const IconCode = (p: P) => (<svg {...base(p)}><path d="M11 9l-7 7 7 7M21 9l7 7-7 7M18 6l-4 20" /></svg>);
+export const IconChip = (p: P) => (<svg {...base(p)}><rect x="9" y="9" width="14" height="14" rx="3" /><path d="M13 13h6v6h-6zM13 4v5M19 4v5M13 23v5M19 23v5M4 13h5M4 19h5M23 13h5M23 19h5" /></svg>);
+export const IconLetters = (p: P) => (<svg {...base(p)}><path d="M4 24l6-16 6 16M6.5 18h7" /><path d="M20 14c2-2 7-2 7 2v8M27 19c-4-1-8 0-8 3s5 3 8 0" /></svg>);
+export const IconPuzzle = (p: P) => (<svg {...base(p)}><path d="M6 10h6a3 3 0 1 1 6 0h6v6a3 3 0 1 0 0 6v4H18a3 3 0 1 0-6 0H6v-6a3 3 0 1 1 0-6z" /></svg>);
+export const IconBag = (p: P) => (<svg {...base(p)}><path d="M8 12c0-4 4-6 8-6s8 2 8 6v14H8z" /><path d="M12 6V4h8v2M8 17h16M14 17v4h4v-4" /></svg>);
+export const IconLens = (p: P) => (<svg {...base(p)}><circle cx="14" cy="14" r="8" /><path d="M20 20l7 7" /><path d="M10.5 12a4 4 0 0 1 4-3" /></svg>);

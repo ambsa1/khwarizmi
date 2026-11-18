@@ -19,6 +19,7 @@ import { Parents, Passport, Perf } from './screens/Others';
 import { Path } from './screens/Path';
 import { Lesson } from './screens/Lesson';
 import { SirajPreview, WorldTour } from './screens/Preview';
+import { PlayTime } from './ui/PlayTime';
 
 const q = new URLSearchParams(location.search);
 
@@ -81,6 +82,7 @@ export function App() {
           {body}
         </motion.div>
       </AnimatePresence>
+      <PlayTime />
     </MotionConfig>
   );
 }

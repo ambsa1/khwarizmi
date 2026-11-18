@@ -1,11 +1,10 @@
 // Passport (stamps), the parents' corner (family code, numerals, motion, quality) and the performance page.
 import { useEffect, useMemo, useState } from 'react';
-import { stationCount, subjectName, WORLDS, worldSkills } from '../lib/content';
-import { unlockWithCode } from '../lib/family';
+import { placeName, stationCount, subjectName, WORLDS, worldSkills } from '../lib/content';
 import { fmt, useNum } from '../lib/num';
 import { gpuName, guessTier, hasWebGL2, SETTINGS } from '../lib/tier';
-import { T, type WorldId } from '../lib/tokens';
-import { masteredIn, useLearning } from '../data/learning';
+import type { WorldId } from '../lib/tokens';
+import { isMastered, masteredIn, useLearning } from '../data/learning';
 import { lowSpace, mb, usePacks, worldBytes } from '../data/packs';
 import { CONTENT } from '../lib/content';
 import { clearErrors, readErrors, type ErrorEntry } from '../ui/ErrorBoundary';
@@ -13,53 +12,102 @@ import { useApp, useProfile } from '../state/store';
 import { KassalaTown, TOWN_FAR, TOWN_FOG } from '../three/town/KassalaTown';
 import { Stage, stats, useTier } from '../three/Stage';
 import { IconBack, IconClose, IconStar } from '../ui/Icons';
-import { TabBar } from '../ui/kit';
-import { SHORT_NAME } from './Map';
+import { Avatar, TabBar } from '../ui/kit';
+import { TopBar } from '../ui/TopBar';
+import { SHORT_NAME, SUBJECT_COLOR } from './Map';
+
+/** line drawings of each world's landmark: engraved watermark while in progress, inked stamp when complete */
+const LANDMARK_ART: Record<WorldId, JSX.Element> = {
+  kassala: <path d="M8 46c4-10 7-22 12-24s5 10 9 6 5-18 11-18 7 16 10 18 6 2 8 18M4 46h56" />,
+  saqiya: <g><circle cx="26" cy="26" r="14" /><path d="M26 12v28M12 26h28M16 16l20 20M36 16 16 36M40 26h16v20M4 46h56" /></g>,
+  mogran: <g><path d="M6 10c10 8 16 14 26 18M58 10c-10 8-16 14-26 18M32 28v20" /><path d="M14 40l8-12 2 12zM4 48h56" /></g>,
+  suakin: <g><path d="M34 46V12l2-4 2 4v34M30 20h10" /><path d="M8 46V26h18v20M12 30h10v8H12zM4 48h56" /></g>,
+  meroe: <g><path d="M6 46l10-28 10 28M22 46l12-34 12 34M40 46l8-22 8 22M4 46h56" /><path d="M13 30h6M29 26h10" /></g>,
+  marra: <g><path d="M4 44c8-4 12-16 20-22 6 4 10 4 16 0 8 6 12 18 20 22" /><ellipse cx="32" cy="26" rx="6" ry="2.5" /><path d="M10 50h44M14 46h36" /></g>,
+};
+const RANKS: [number, string][] = [[0, 'مستكشف صغير'], [5, 'رحّال'], [20, 'مستكشف ماهر'], [50, 'حارس الخريطة'], [100, 'خوارزمي']];
 
 export function Passport() {
   const p = useProfile();
   const learners = useLearning(s => s.learners);
   const num = useNum();
+  const [open, setOpen] = useState<WorldId | null>(null);
   if (!p) return null;
+  const me = learners[p.id];
+  const stations = WORLDS.reduce((a, w) => a + masteredIn(me, w.id), 0);
+  const stars = WORLDS.reduce((a, w) => a + worldSkills(w.id).filter(k => isMastered(me?.skills[k.id])).length, 0);
+  const rank = [...RANKS].reverse().find(([n]) => stations >= n)![1];
+  const name = (p.kind === 'family' ? p.name : p.gender === 'f' ? 'ضيفة' : 'ضيف') ?? '';
   return (
     <div className="screen sand has-rail">
       <div className="main col grow scroll">
-        <header className="map-head"><h1 className="t-h1" style={{ margin: 0 }}>جوازي</h1></header>
+        <TopBar title="جوازي" />
+        <section className="explorer-id glass" aria-label="بطاقة المستكشف">
+          <Avatar profile={p} size={84} />
+          <div className="explorer-text">
+            <b className="t-h2">{name}</b>
+            <span className="explorer-rank">{rank}</span>
+            <span className="explorer-stats">
+              <span><IconStar size={22} style={{ color: 'var(--c-gold)' }} /> {num(stars)} {stars === 1 ? 'نجمة' : 'نجوم'}</span>
+              <span>{num(stations)} {stations === 1 ? 'محطة' : 'محطات'} معمورة</span>
+            </span>
+          </div>
+        </section>
         <div className="stamps">
           {WORLDS.map(w => {
-            const total = Math.max(1, stationCount(w.id)), got = masteredIn(learners[p.id], w.id), done = got >= total && stationCount(w.id) > 0;
-            const c = T.worlds[w.id as WorldId];
+            const id = w.id as WorldId, total = stationCount(id), got = Math.min(masteredIn(me, id), total), done = total > 0 && got >= total;
+            const col = SUBJECT_COLOR[id];
             return (
-              <div key={w.id} className={'stamp card' + (done ? ' done' : '')}>
-                <span className="stamp-seal" style={{ background: done ? c.primary : 'transparent', borderColor: c.primary === '#F3EDE2' ? c.secondary : c.primary }}>
-                  <IconStar size={34} style={{ color: done ? '#FFFFFF' : c.primary === '#F3EDE2' ? c.secondary : c.primary, opacity: done ? 1 : 0.45 }} />
+              <button key={id} className={'stamp card' + (done ? ' done' : '')} onClick={() => setOpen(id)} aria-label={`${subjectName(id)} في ${placeName(id)}`}>
+                <span className="stamp-art" style={{ color: done ? col : 'rgba(107, 90, 72, .32)', borderColor: done ? col : 'rgba(107, 90, 72, .22)' }}>
+                  <svg viewBox="0 0 64 56" width="96" height="84" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{LANDMARK_ART[id]}</svg>
                 </span>
-                <b className="t-h2">{subjectName(w.id)}</b>
-                <span className="soft num">{stationCount(w.id) ? `${num(Math.min(got, total))} / ${num(total)}` : 'قريبًا'}</span>
-              </div>
+                <b className="stamp-title">{subjectName(id)}<span className="stamp-place">{placeName(id)}</span></b>
+                <span className="soft">{total ? `${num(got)} من أصل ${num(total)} ${total > 10 ? 'محطة' : 'محطات'}` : 'قريبًا'}</span>
+              </button>
             );
           })}
         </div>
       </div>
       <TabBar current="passport" />
+      {open && <StampSheet world={open} name={name} onClose={() => setOpen(null)} />}
     </div>
+  );
+}
+
+/** a stamp opened: the skills mastered in that world, and a small certificate when the world is complete */
+function StampSheet({ world, name, onClose }: { world: WorldId; name: string; onClose: () => void }) {
+  const p = useProfile(); const learners = useLearning(s => s.learners); const num = useNum();
+  const me = p ? learners[p.id] : undefined;
+  const skills = worldSkills(world).filter(k => isMastered(me?.skills[k.id]));
+  const total = stationCount(world), done = total > 0 && masteredIn(me, world) >= total;
+  return (
+    <>
+      <div className="sheet-scrim" onClick={onClose} />
+      <div className="sheet page" role="dialog" aria-modal="true" aria-label={subjectName(world)}>
+        <div className="sheet-grip" />
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <h2 className="t-h2">{subjectName(world)} • {placeName(world)}</h2>
+          <button className="btn paper" style={{ minHeight: 52 }} onClick={onClose}>رجوع</button>
+        </div>
+        {done && (
+          <div className="certificate">
+            <b>شهادة إتمام</b>
+            <span>{name} عمّر كل محطات عالم {placeName(world)}</span>
+            <span className="soft">{new Date().toLocaleDateString('ar-SD')}</span>
+          </div>
+        )}
+        {skills.length ? (
+          <ul className="mastered">{skills.map(k => <li key={k.id}><IconStar size={20} style={{ color: 'var(--c-gold)' }} /> {k.title.ar}</li>)}</ul>
+        ) : <p>لسه ما في مهارات هنا. يلا نبدأ الرحلة!</p>}
+        <p className="soft">{num(skills.length)} {skills.length === 1 ? 'مهارة' : 'مهارات'}</p>
+      </div>
+    </>
   );
 }
 
 export function Parents() {
   const s = useApp();
-  const [code, setCode] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const unlock = async () => {
-    setBusy(true); setMsg(null);
-    const r = await unlockWithCode(code);
-    setBusy(false);
-    if (!r) { setMsg('الكود ما اتطابق. جرّب تاني.'); return; }
-    s.setFamilyKey(r.keyB64); s.setFamily(r.manifest); setCode('');
-    setMsg('اتفتح وضع الأسرة.');
-  };
-  const lock = () => { s.setFamilyKey(null); s.setFamily(null); if (s.current?.startsWith('m')) s.setCurrent(null); setMsg('اتقفل وضع الأسرة في الجهاز دا.'); };
   const Seg = <V extends string>({ value, options, onChange, label }: { value: V; options: [V, string][]; onChange: (v: V) => void; label: string }) => (
     <div className="seg" role="radiogroup" aria-label={label}>
       {options.map(([v, l]) => <button key={v} role="radio" aria-checked={value === v} className={value === v ? 'on' : ''} onClick={() => onChange(v)}>{l}</button>)}
@@ -74,17 +122,9 @@ export function Parents() {
       </header>
       <div className="scroll grow parents-body">
         <section className="card pc">
-          <h2 className="t-h2">وضع الأسرة</h2>
-          {s.family ? (
-            <><p className="soft">مفتوح في الجهاز دا. الأسماء والصور مشفّرة، وما بتظهر قبل الكود.</p>
-              <button className="btn paper" onClick={lock}>اقفل وضع الأسرة</button></>
-          ) : (
-            <form className="row" style={{ flexWrap: 'wrap' }} onSubmit={e => { e.preventDefault(); if (code.trim()) unlock(); }}>
-              <input className="code" type="password" inputMode="text" autoComplete="off" aria-label="كود الأسرة" placeholder="كود الأسرة" value={code} onChange={e => setCode(e.target.value)} />
-              <button className="btn nile" disabled={busy || !code.trim()}>{busy ? '...' : 'افتح'}</button>
-            </form>
-          )}
-          {msg && <p role="status" className="t-body">{msg}</p>}
+          <h2 className="t-h2">وقت اللعب في اليوم</h2>
+          <Seg label="وقت اللعب في اليوم" value={String(s.playLimit) as '0'} onChange={v => s.setPlayLimit(+v)} options={[['0', 'بلا حد'], ['20', '٢٠ دقيقة'], ['30', '٣٠ دقيقة'], ['45', '٤٥ دقيقة'], ['60', 'ساعة']] as ['0', string][]} />
+          <p className="t-small soft">لما الوقت يخلص، سراج يقول «وقت الراحة». الأهل يقدروا يزيدوا ربع ساعة بضغطة مطوّلة.</p>
         </section>
         <section className="card pc">
           <h2 className="t-h2">الأرقام</h2>

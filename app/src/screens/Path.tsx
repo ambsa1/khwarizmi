@@ -3,7 +3,9 @@
 //   world view  - the live drone view of the child's world; nothing sits on it except Siraj's speech bubble
 //   action band - one golden button (with the next skill inside it) and today's three steps as one progress bar
 // Navigation is the bottom bar on phones, a side rail on wide screens. The passport lives only in the navigation.
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Sound } from '../audio/SoundManager';
+import { TopBar } from '../ui/TopBar';
 import { useEffect, useState } from 'react';
 import { lessonFor, placeName, stationCount, subjectName, worldById, worldSkills } from '../lib/content';
 // (Phase 3: the golden button completes the next real skill in the learner database; lessons arrive in phase 6.)
@@ -14,7 +16,7 @@ import { useApp, useProfile } from '../state/store';
 import type { SirajAction } from '../three/Siraj';
 import { WorldWindow } from '../three/WorldWindow';
 import { IconCheck, IconGift, IconLamp, IconPlay, IconRefresh } from '../ui/Icons';
-import { Avatar, Bubble, Confetti, TabBar, say, useGuard } from '../ui/kit';
+import { Bubble, Confetti, TabBar, say, useGuard } from '../ui/kit';
 
 const GREETED = new Set<string>();
 
@@ -33,6 +35,13 @@ export function Path() {
   const [action, setAction] = useState<SirajAction>('wave');
   const [party, setParty] = useState(0);
   const [line, setLine] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  // the celebration never covers the scene: a glass banner slides down at the top for three seconds
+  const cheer = () => {
+    setToast(say(p!, 'عفارم عليك! عمّرت محطة جديدة!', 'عفارم عليكِ! عمّرتي محطة جديدة!'));
+    Sound.onSirajCelebrate('station'); setTimeout(() => Sound.play('star'), 900);
+    setTimeout(() => setToast(null), 3000);
+  };
   if (!p) return null;
   const world = currentWorld(p.id, p.age, chosen);
   const name = subjectName(world);
@@ -54,10 +63,9 @@ export function Path() {
     if (!celebrate) return;
     const t1 = setTimeout(() => {
       setHoldBack(0); setAction('celebrate'); setParty(n => n + 1);
-      setLine(say(p!, 'عفارم عليك! بنيت بيت جديد!', 'عفارم عليكِ! بنيتي بيت جديد!'));
-      celebrated();
+      cheer(); celebrated();
     }, 900);
-    const t2 = setTimeout(() => { setAction('idle'); setLine(null); }, 3300);
+    const t2 = setTimeout(() => setAction('idle'), 3300);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -68,9 +76,8 @@ export function Path() {
     setAction('hop');
     setTimeout(() => {
       if (next) complete(p.id, next.id);
-      setAction('celebrate'); setParty(n => n + 1);
-      setLine(say(p, 'عفارم عليك! بنيت بيت جديد!', 'عفارم عليكِ! بنيتي بيت جديد!'));
-      setTimeout(() => { setAction('idle'); setLine(null); }, 2400);
+      setAction('celebrate'); setParty(n => n + 1); cheer();
+      setTimeout(() => setAction('idle'), 2400);
     }, 650);
   };
   const steps = [
@@ -82,21 +89,19 @@ export function Path() {
   return (
     <div className="screen sand has-rail path">
       <div className="main col grow">
-        <header className="topbar">
-          <div className="topbar-row">
-            <button onClick={() => go('entry')} aria-label="تغيير اللاعب" className="topbar-me"><Avatar profile={p} size={56} /></button>
-            <div className="world-pill" role="img" aria-label={`عالم ${name}: ${num(mastered)} من ${num(total)}`}>
-              <span className="world-pill-name">{name}</span>
-              <span className="world-pill-bar" aria-hidden><i style={{ width: `${Math.round(mastered / total * 100)}%` }} /></span>
-            </div>
-            <span className="topbar-balance" aria-hidden />
-          </div>
-        </header>
+        <TopBar title={
+          <div className="world-pill" role="img" aria-label={`عالم ${name}: ${num(mastered)} من ${num(total)}`}>
+            <span className="world-pill-name">{name}</span>
+            <span className="world-pill-bar" aria-hidden><i style={{ width: `${Math.round(mastered / total * 100)}%` }} /></span>
+          </div>} />
         <div className="path-body">
           <section className="path-window" aria-label={`عالم ${name}`}>
             <WorldWindow world={world} mastered={Math.max(0, mastered - holdBack)} total={total} action={action} label={name}
               onSirajTap={() => { setAction('wave'); setLine(say(p, 'يلا يا بطل!', 'يلا يا بطلة!')); setTimeout(() => setLine(null), 1600); }} />
             {line && <div className="window-line"><Bubble>{line}</Bubble></div>}
+            <AnimatePresence>{toast && (
+              <motion.div key="toast" className="toast" role="status" initial={{ y: -70, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -70, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 26 }}>{toast}</motion.div>)}</AnimatePresence>
             <Confetti run={party} />
           </section>
           <section className="path-panel">
@@ -111,7 +116,7 @@ export function Path() {
               <span className="sr" aria-live="polite">{num(lit)} {lit === 1 ? 'لمبة اليوم' : 'لمبات اليوم'}</span>
               <ol className="today-bar">
                 {steps.map(s => (
-                  <li key={s.id} className={s.done ? 'done' : undefined}>
+                  <li key={s.id} className={(s.done ? 'done' : '') + (s.id === 'surprise' && !s.done && lit >= 2 ? ' ready' : '')}>
                     <span className="today-seg" aria-hidden />
                     <span className="today-label">{s.done ? <IconCheck size={22} /> : s.icon}{s.label}</span>
                   </li>

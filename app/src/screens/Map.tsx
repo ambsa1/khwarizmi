@@ -1,5 +1,6 @@
 // Map of Sudan with the five worlds (and Siraj's water wheel for the little ones). Tap a world to travel there.
 import { useEffect, useState } from 'react';
+import { TopBar } from '../ui/TopBar';
 import { SHORT_NAME, stationCount, subjectName, WORLDS } from '../lib/content';
 import { useNum } from '../lib/num';
 import type { WorldId } from '../lib/tokens';
@@ -8,11 +9,14 @@ import { useApp, useProfile } from '../state/store';
 import { Stage } from '../three/Stage';
 import { SudanMapScene, type MapSpot } from '../three/SudanMap';
 import { Bubble, TabBar, say, useGuard } from '../ui/kit';
-import { IconLock } from '../ui/Icons';
-import { T } from '../lib/tokens';
+import { IconBag, IconChip, IconCode, IconLens, IconLetters, IconLock, IconPuzzle } from '../ui/Icons';
 import { currentWorld } from './Path';
 
 export { SHORT_NAME };
+
+/** each world's subject icon and colour (map cards, passport) */
+export const SUBJECT_ICON: Record<WorldId, (p: { size?: number }) => JSX.Element> = { kassala: IconCode, mogran: IconChip, meroe: IconLetters, suakin: IconPuzzle, marra: IconBag, saqiya: IconLens };
+export const SUBJECT_COLOR: Record<WorldId, string> = { kassala: '#E08A2E', mogran: '#2F7FD8', meroe: '#C2416E', suakin: '#1FA3A3', marra: '#3E9A4A', saqiya: '#8A5AC8' };
 
 export function MapScreen() {
   const p = useProfile();
@@ -46,22 +50,23 @@ export function MapScreen() {
   return (
     <div className="screen sand has-rail map">
       <div className="main col grow" style={{ position: 'relative' }}>
-        <header className="map-head"><h1 className="t-h1" style={{ margin: 0 }}>خريطة السودان</h1></header>
+        <TopBar title="خريطة السودان" />
         <div className="grow" style={{ position: 'relative' }}>
-          <Stage camera={{ position: [0.6, 24, 16], fov: 40 }} label="خريطة السودان بالعوالم الخمسة">
-            <SudanMapScene spots={spots} onPick={pick} labels={portrait ? [cur, ...(picked && picked !== cur ? [picked] : [])] : 'all'} />
+          <Stage transparent camera={{ position: [0.6, 24, 16], fov: 40 }} label="خريطة السودان بالعوالم الخمسة">
+            <SudanMapScene spots={spots} onPick={pick} selected={picked ?? cur} labels={portrait ? [cur, ...(picked && picked !== cur ? [picked] : [])] : 'all'} />
           </Stage>
           {line && <div className="window-line"><Bubble>{line}</Bubble></div>}
         </div>
         <div className="world-cards">
           {spots.map(s => {
-            const c = T.worlds[s.id]; const ring = s.id === 'suakin' ? '#2EC4C4' : c.primary;
+            const Icon = SUBJECT_ICON[s.id], col = SUBJECT_COLOR[s.id];
             return (
-              <button key={s.id} className={'world-card card' + (s.current ? ' current' : '') + (s.locked ? ' locked' : '')} onClick={guard(() => pick(s.id))}>
-                <span className="world-ring" style={{ background: `conic-gradient(${ring} ${Math.round(s.value * 360)}deg, var(--c-sandLine) 0)` }}>
-                  <span aria-label={s.locked ? 'مقفول' : `${num(Math.round(s.value * 100))} بالمية`}>{s.locked ? <IconLock size={22} /> : null}</span>
+              <button key={s.id} className={'world-card card' + (s.current ? ' current' : '') + (s.locked ? ' locked' : '') + ((picked ?? cur) === s.id ? ' picked' : '')} onClick={guard(() => pick(s.id))}>
+                <span className="subject-icon" style={{ background: col }}>{s.locked ? <IconLock size={24} /> : <Icon size={26} />}</span>
+                <span className="world-card-text">
+                  <b>{s.name}</b>
+                  <span className="world-bar" aria-label={s.locked ? 'مقفول' : `${num(Math.round(s.value * 100))} بالمية`}><i style={{ width: `${Math.round(s.value * 100)}%`, background: col }} /></span>
                 </span>
-                <b>{s.name}</b>
               </button>
             );
           })}

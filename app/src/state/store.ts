@@ -26,6 +26,8 @@ type State = {
   numerals: 'hindi' | 'latin';
   motion: 'auto' | 'reduced';
   tierOverride: 'auto' | Tier;
+  /** daily play time on this device, minutes (0 = no limit); set in the parents' corner */
+  playLimit: number;
   measuredTier: Tier | null;          // result of the 2-second test on first run
   world: Record<string, string>;      // profileId -> world chosen on the map
   lesson: { world: string; skill: string } | null;   // the lesson being played (not persisted)
@@ -39,6 +41,7 @@ type State = {
   setFamilyKey: (k: string | null) => void;
   setFamily: (f: FamilyManifest | null) => void;
   setNumerals: (n: 'hindi' | 'latin') => void;
+  setPlayLimit: (m: number) => void;
   setMotion: (m: 'auto' | 'reduced') => void;
   setTierOverride: (t: 'auto' | Tier) => void;
   setMeasuredTier: (t: Tier | null) => void;
@@ -63,6 +66,7 @@ export const useApp = create<State>()(persist((set, get) => ({
   numerals: 'hindi',
   motion: 'auto',
   tierOverride: 'auto',
+  playLimit: 0,
   measuredTier: null,
   world: {},
   lesson: null,
@@ -80,6 +84,7 @@ export const useApp = create<State>()(persist((set, get) => ({
   setFamilyKey: familyKey => set({ familyKey }),
   setFamily: family => set({ family }),
   setNumerals: numerals => set({ numerals }),
+  setPlayLimit: playLimit => set({ playLimit }),
   setMotion: motion => set({ motion }),
   setTierOverride: tierOverride => set({ tierOverride }),
   setMeasuredTier: measuredTier => set({ measuredTier }),
@@ -88,7 +93,7 @@ export const useApp = create<State>()(persist((set, get) => ({
 }), {
   name: 'khawarizmi.v2',
   storage: safeStorage,
-  partialize: s => ({ profiles: s.profiles, current: s.current, familyKey: s.familyKey, numerals: s.numerals, motion: s.motion, tierOverride: s.tierOverride, measuredTier: s.measuredTier, world: s.world }),
+  partialize: s => ({ profiles: s.profiles, current: s.current, familyKey: s.familyKey, numerals: s.numerals, motion: s.motion, tierOverride: s.tierOverride, playLimit: s.playLimit, measuredTier: s.measuredTier, world: s.world }),
 }));
 
 /** Current player: a family member (from the decrypted manifest) or a saved guest. */

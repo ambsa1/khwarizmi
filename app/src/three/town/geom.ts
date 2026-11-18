@@ -153,14 +153,12 @@ export function doorGeometry() {
   return mergeGeometries(parts)!;
 }
 /** Grass tuft: three crossed blades. */
+/** a small rounded low-poly bush (8 faces), lighter on top */
 export function grassGeometry() {
-  const pos: number[] = [];
-  for (let k = 0; k < 3; k++) {
-    const a = k / 3 * Math.PI, c = Math.cos(a) * 0.45, s = Math.sin(a) * 0.45;
-    pos.push(-c, 0, -s, c, 0, s, 0, 0.9, 0);
-  }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
-  return paint(g, col(PAL.grass));
+  const g = new THREE.OctahedronGeometry(0.42, 0).toNonIndexed();
+  g.scale(1, 0.62, 1); g.translate(0, 0.2, 0); g.computeVertexNormals();
+  const top = col(PAL.grass).clone().lerp(new THREE.Color('#C8D86A'), 0.25), base = col(PAL.grass).clone().multiplyScalar(0.8);
+  return paint(g, (_i, p) => (p.y > 0.25 ? top : base));
 }
 /** The Gash water ribbon along the river's centre line; uv.x runs upstream (0) to downstream (1). */
 export function waterGeometry(w: World) {

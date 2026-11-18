@@ -47,7 +47,7 @@ await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
 await page.waitForSelector('.entry', { timeout: 15000 }).catch(() => {});
 const offlineOk = await page.locator('.entry').count();
-const fontsOk = await page.evaluate(async () => Promise.all([['24px Lalezar', 'سراج'], ['700 24px Rubik', 'سراج'], ['500 28px "Noto Naskh Arabic"', 'سَرَاج'], ['28px Andika', 'abc']].map(async ([f, t]) => (await document.fonts.load(f, t)).length > 0)));
+const fontsOk = await page.evaluate(async () => Promise.all([['800 24px Cairo', 'سراج'], ['700 24px Cairo', 'سراج'], ['500 28px "Noto Naskh Arabic"', 'سَرَاج'], ['28px Andika', 'abc']].map(async ([f, t]) => (await document.fonts.load(f, t)).length > 0)));
 ok('opens offline after first visit', offlineOk === 1);
 ok('bundled fonts available offline', fontsOk.every(Boolean), JSON.stringify(fontsOk));
 await ctx.setOffline(false);
@@ -98,7 +98,7 @@ const overlaps = () => page.evaluate(() => {
   // nothing positioned on top of the world view except Siraj's bubble and the confetti
   const win = document.querySelector('.path-window');
   for (const el of win ? win.querySelectorAll(':scope > *') : []) {
-    if (el.matches('canvas, div:has(> canvas), .window-line, .confetti, [aria-hidden="true"], [role="img"]') || el.querySelector('canvas')) continue;
+    if (el.matches('canvas, div:has(> canvas), .window-line, .toast, .confetti, [aria-hidden="true"], [role="img"]') || el.querySelector('canvas')) continue;
     const r = el.getBoundingClientRect(); if (r.width && r.height) bad.push(`extra element on the world view: ${el.className}`);
   }
   return bad;
@@ -120,7 +120,7 @@ ok('3D window renders frames', fps > 0, `fps=${fps}`);
 const pill = () => page.locator('.world-pill').getAttribute('aria-label').catch(() => '');
 const builtFrom = t => { const m = String(t).match(/:\s*([٠-٩0-9]+)/); return m ? +m[1].replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660) : -1; };
 // the installed app always opens on "who's playing?": reopen, then tap the (only) player card, as a child would
-const openPath = async pg => { await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.who-card', { timeout: 10000 }).catch(async e => { await pg.screenshot({ path: process.env.TEMP + '/openpath-fail.png' }); console.log('openPath stalled; storage:', await pg.evaluate(() => localStorage.getItem('khawarizmi.v2'))); console.log('app error log:', await pg.evaluate(() => new Promise(res => { const r = indexedDB.open('khawarizmi'); r.onsuccess = () => { const q = r.result.transaction('meta').objectStore('meta').get('errors'); q.onsuccess = () => res(JSON.stringify(q.result)); }; r.onerror = () => res('no db'); }))); throw e; }); await pg.locator('.who-card').last().click(); await pg.waitForSelector('.path', { timeout: 10000 }); };
+const openPath = async pg => { await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.who-card:not(.who-new)', { timeout: 10000 }).catch(async e => { await pg.screenshot({ path: process.env.TEMP + '/openpath-fail.png' }); console.log('openPath stalled; storage:', await pg.evaluate(() => localStorage.getItem('khawarizmi.v2'))); console.log('app error log:', await pg.evaluate(() => new Promise(res => { const r = indexedDB.open('khawarizmi'); r.onsuccess = () => { const q = r.result.transaction('meta').objectStore('meta').get('errors'); q.onsuccess = () => res(JSON.stringify(q.result)); }; r.onerror = () => res('no db'); }))); throw e; }); await pg.locator('.who-card:not(.who-new)').last().click(); await pg.waitForSelector('.path', { timeout: 10000 }); };
 const toPath = () => openPath(page);
 const openParents = async pg => { await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.entry', { timeout: 10000 }); await pg.locator('.entry-corner button').dispatchEvent('keydown', { key: 'Enter' }); await pg.waitForSelector('.learner-data', { timeout: 10000 }); };
 const guestId = () => page.evaluate(() => JSON.parse(localStorage.getItem('khawarizmi.v2')).state.current);
@@ -273,21 +273,23 @@ if (existsSync(codeFile)) {
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'load' });
   await page.waitForSelector('.entry');
-  ok('family hidden before the code', await page.locator('.who-card').count() === 0);
-  await page.locator('.entry-corner button').dispatchEvent('keydown', { key: 'Enter' });
-  await page.waitForSelector('.parents');
+  ok('family hidden before the code', await page.locator('.who-card:not(.who-new)').count() === 0);
+  // the secret gesture: hold Siraj for three seconds
+  const sj = await page.locator('.entry-siraj').boundingBox();
+  await page.mouse.move(sj.x + sj.width / 2, sj.y + sj.height / 2); await page.mouse.down(); await page.waitForTimeout(3300); await page.mouse.up();
+  await page.waitForSelector('.family-gate');
+  ok('family code opens from the secret gesture on Siraj (not the lock)', true);
   await page.locator('input.code').fill('wrong-code');
   await page.getByRole('button', { name: 'افتح' }).click();
   await page.waitForTimeout(2500);
-  ok('wrong code is refused', await page.locator('.parents [role=status]').innerText().then(t => t.includes('ما اتطابق')).catch(() => false));
+  ok('wrong code is refused', await page.locator('.family-gate [role=status]').innerText().then(t => t.includes('ما اتطابق')).catch(() => false));
   await page.locator('input.code').fill(readFileSync(codeFile, 'utf8').trim());
   await page.getByRole('button', { name: 'افتح' }).click();
   await page.waitForTimeout(3000);
-  await page.getByRole('button', { name: 'رجوع' }).click();
   await page.waitForSelector('.who-card');
   await page.waitForTimeout(2500);
-  const cards = await page.locator('.who-card').count();
-  const imgs = await page.locator('.who-card img').evaluateAll(els => els.filter(e => e.complete && e.naturalWidth > 0).length);
+  const cards = await page.locator('.who-card:not(.who-new)').count();
+  const imgs = await page.locator('.who-card:not(.who-new) img').evaluateAll(els => els.filter(e => e.complete && e.naturalWidth > 0).length);
   ok('family mode shows four children with portraits', cards === 4 && imgs === 4, `cards=${cards} portraits=${imgs}`);
   mkdirSync(join(PRIVATE, 'shots'), { recursive: true });
   await page.screenshot({ path: join(PRIVATE, 'shots', 'family-entry-360x800.png') });
@@ -301,7 +303,7 @@ if (existsSync(codeFile)) {
   await page.screenshot({ path: join(PRIVATE, 'shots', 'family-path-360x800.png') });
   await page.reload({ waitUntil: 'load' });
   await page.waitForSelector('.who-card', { timeout: 8000 }).catch(() => {});
-  ok('family stays open after reload (saved key, not the code)', await page.locator('.who-card').count() === 4);
+  ok('family stays open after reload (saved key, not the code)', await page.locator('.who-card:not(.who-new)').count() === 4);
   const stored = await page.evaluate(() => localStorage.getItem('khawarizmi.v2') || '');
   ok('the code itself is never stored', !stored.includes(readFileSync(codeFile, 'utf8').trim()));
 } else ok('family mode', true, 'skipped: no private code on this machine');

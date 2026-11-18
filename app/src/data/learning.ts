@@ -79,6 +79,7 @@ export function mergeSkills(l: Learner, skills: Record<string, SkillStatus>, now
 
 // ---------- reading progress ----------
 const done = (s?: SkillState) => !!s && RANK[s.status] >= RANK.mastered;
+export const isMastered = done;
 /** Stations built in a world: counted along the path, a station being built when every skill inside it is mastered
  *  (a reserved station with no lessons yet is never built). */
 export const masteredIn = (l: Learner | undefined, world: string) => {

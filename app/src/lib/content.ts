@@ -34,7 +34,13 @@ async function json<T>(file: string): Promise<T> {
 }
 
 /** Start-up: the manifest and the core pack. Throws if the content cannot be read (the error screen explains). */
-export async function loadContent() {
+let loading: Promise<void> | null = null;
+/** Loads the content packs once; concurrent callers share the same load (filling twice would duplicate the worlds). */
+export function loadContent(): Promise<void> {
+  if (!loading) loading = fillContent().catch(e => { loading = null; throw e; });
+  return loading;
+}
+async function fillContent() {
   if (WORLDS.length) return;
   const [manifest, core] = await Promise.all([json<Manifest>('manifest.json').catch(() => null), json<Core>('core.json')]);
   CONTENT = manifest;

@@ -5,7 +5,8 @@
 // birds circle, lamps light. Ahead of Siraj everything stays grey and silent. After the 37th house the whole town turns
 // into a green oasis and the drone climbs for the wide shot. (Mechanic: revive.ts)
 import { useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Sound } from '../../audio/SoundManager';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { skyMaterial } from '../kit';
@@ -116,7 +117,7 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
   const trees = useMemo(() => w.trees.filter((_, i) => density >= 1 || i % 4 === 0).map(([x, z, s]) => m4(x, w.ground(x, z), z, s * 3, s, s, s)), [w, density]);
   const palms = useMemo(() => w.palms.map(([x, z, s, r]) => m4(x, w.ground(x, z), z, r, s, s, s)), [w]);
   const yard = useMemo(() => w.yardTrees.filter((_, i) => density >= 1 || i % 3 === 0).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i * 2.3, s, s, s)), [w, density]);
-  const grass = useMemo(() => w.grass.filter((_, i) => density >= 1 || i % 3 === 0).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i, s, s, s)), [w, density]);
+  const grass = useMemo(() => w.grass.filter((_, i) => (density >= 1 ? i % 2 === 0 : i % 8 === 0)).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i, s, s, s)), [w, density]);
   const mq = w.landmarks.mosque;
   return (
     <group>
@@ -152,14 +153,15 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
 
 /** The 37 lesson houses: empty plot -> scaffold (current lesson) -> warm house with a painted door, a tree in the
  *  yard and its lamp lit. Doors take their zone's colour. */
-function Lessons({ w, u, mastered }: { w: World; u: ReviveUniforms; mastered: number }) {
+function Lessons({ w, u, mastered, pop }: { w: World; u: ReviveUniforms; mastered: number; pop?: { at: number; t0: number } | null }) {
   const g = useMemo(() => ({ house: lessonHouseGeometry(), door: doorGeometry(), scaffold: scaffoldGeometry(), plot: plotGeometry(), tree: treeGeometry() }), []);
   const mat = useMat(u), grow = useMat(u, { grow: true, sway: 0.03 });
   const sets = useMemo(() => {
-    const out = { house: [] as THREE.Matrix4[], door: [] as THREE.Matrix4[], doorCol: [] as THREE.Color[], scaffold: [] as THREE.Matrix4[], plot: [] as THREE.Matrix4[], tree: [] as THREE.Matrix4[], lamps: [] as number[] };
+    const out = { house: [] as THREE.Matrix4[], door: [] as THREE.Matrix4[], doorCol: [] as THREE.Color[], scaffold: [] as THREE.Matrix4[], plot: [] as THREE.Matrix4[], tree: [] as THREE.Matrix4[], lamps: [] as number[], popBase: null as THREE.Matrix4 | null };
     w.plots.forEach((p, i) => {
       const base = m4(p.x, w.ground(p.x, p.z), p.z, p.face);
       if (i < mastered) {
+        if (pop?.at === i) { out.popBase = base; return; }
         out.house.push(base); out.door.push(base); out.doorCol.push(new THREE.Color(DOOR[p.zone] ?? '#2F7FD8'));
         out.tree.push(base.clone().multiply(new THREE.Matrix4().compose(new THREE.Vector3(1.4, 0, 2.4), new THREE.Quaternion(), new THREE.Vector3(0.8, 0.8, 0.8))));
         const v = new THREE.Vector3(0, 2.35, 1.2).applyMatrix4(base); out.lamps.push(v.x, v.y, v.z);
@@ -167,7 +169,7 @@ function Lessons({ w, u, mastered }: { w: World; u: ReviveUniforms; mastered: nu
       else out.plot.push(base);
     });
     return out;
-  }, [w, mastered]);
+  }, [w, mastered, pop?.at]);
   const glow = useMemo(() => {
     const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d')!;
     const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,236,170,1)'); gr.addColorStop(0.35, 'rgba(255,200,110,0.55)'); gr.addColorStop(1, 'rgba(255,190,100,0)');
@@ -177,6 +179,7 @@ function Lessons({ w, u, mastered }: { w: World; u: ReviveUniforms; mastered: nu
   return (
     <group>
       <Instanced geo={g.house} mats={sets.house} mat={mat} />
+      {sets.popBase && pop && <PopMesh geo={g.house} base={sets.popBase} mat={mat} t0={pop.t0} />}
       <Instanced geo={g.door} mats={sets.door} mat={mat} colors={sets.doorCol} />
       <Instanced geo={g.scaffold} mats={sets.scaffold} mat={mat} />
       <Instanced geo={g.plot} mats={sets.plot} mat={mat} />
@@ -187,34 +190,41 @@ function Lessons({ w, u, mastered }: { w: World; u: ReviveUniforms; mastered: nu
 }
 
 /** Small flocks circling over the revived street: life returns with the water and the trees. */
+const OPEN_SKY = new Set(['kassala', 'suakin', 'marra']);
+/** Flocks over the revived land (open-sky worlds only): small birds whose wings beat, all in one draw call. */
 function Birds({ w, mastered }: { w: World; mastered: number }) {
-  const geo = useMemo(() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-0.7, 0, 0.2, 0, 0, -0.3, 0, 0.05, 0.25, 0, 0, -0.3, 0.7, 0, 0.2, 0, 0.05, 0.25], 3)); g.computeVertexNormals(); return g; }, []);
+  const geo = useMemo(() => {
+    // body + two wings; the wing tips (|x| > 0.1) flap in the shader
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([-0.9, 0, 0.1, -0.08, 0, -0.2, -0.08, 0, 0.3, 0.9, 0, 0.1, 0.08, 0, 0.3, 0.08, 0, -0.2, -0.08, 0, -0.2, 0.08, 0, -0.2, 0, -0.02, 0.55], 3));
+    g.computeVertexNormals(); return g;
+  }, []);
+  const mat = useMemo(() => {
+    const m = new THREE.MeshBasicMaterial({ color: '#3B2E26', side: THREE.DoubleSide });
+    const u = { uT: { value: 0 } };
+    m.onBeforeCompile = sh => { Object.assign(sh.uniforms, u); sh.vertexShader = 'uniform float uT;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n transformed.y += abs(position.x) * 0.7 * sin(uT * 11.0 + float(gl_InstanceID) * 1.7);'); };
+    (m as unknown as { u: typeof u }).u = u; return m;
+  }, []);
   const flocks = useMemo(() => {
-    if (mastered <= 0) return [];
+    if (mastered <= 0 || !OPEN_SKY.has(w.id)) return [];
     const picks = [...new Set([0, Math.floor((mastered - 1) / 2), mastered - 1])];
     return picks.map((i, k) => { const p = w.plots[i]; return { x: p.x, z: p.z, y: w.ground(p.x, p.z) + 16 + k * 3, r: 9 + k * 2, sp: 0.35 + k * 0.07 }; });
   }, [w, mastered]);
-  const refs = useRef<THREE.Group[]>([]);
+  const ref = useRef<THREE.InstancedMesh>(null!), M = useMemo(() => new THREE.Matrix4(), []), q = useMemo(() => new THREE.Quaternion(), []), e = useMemo(() => new THREE.Euler(), []);
+  const n = flocks.length * 6;
   useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    flocks.forEach((f, k) => {
-      const grp = refs.current[k]; if (!grp) return;
-      grp.children.forEach((b, j) => {
-        const a = t * f.sp + j * 0.45 + k;
-        b.position.set(f.x + Math.cos(a) * (f.r + j * 0.8), f.y + Math.sin(t * 2 + j) * 0.6, f.z + Math.sin(a) * (f.r + j * 0.8));
-        b.rotation.y = -a; b.scale.setScalar(1 + 0.25 * Math.sin(t * 9 + j));
-      });
-    });
+    const t = clock.elapsedTime; (mat as unknown as { u: { uT: { value: number } } }).u.uT.value = t;
+    if (!ref.current) return;
+    flocks.forEach((f, k) => { for (let j = 0; j < 6; j++) {
+      const a = t * f.sp + j * 0.45 + k;
+      q.setFromEuler(e.set(0, -a, 0));
+      M.compose(new THREE.Vector3(f.x + Math.cos(a) * (f.r + j * 0.8), f.y + Math.sin(t * 2 + j) * 0.6, f.z + Math.sin(a) * (f.r + j * 0.8)), q, new THREE.Vector3(1, 1, 1));
+      ref.current.setMatrixAt(k * 6 + j, M);
+    } });
+    ref.current.instanceMatrix.needsUpdate = true;
   });
-  return (
-    <group>
-      {flocks.map((_, k) => (
-        <group key={k} ref={el => { if (el) refs.current[k] = el; }}>
-          {Array.from({ length: 6 }, (_, j) => <mesh key={j} geometry={geo}><meshBasicMaterial color="#3B2E26" side={THREE.DoubleSide} /></mesh>)}
-        </group>
-      ))}
-    </group>
-  );
+  if (!n) return null;
+  return <instancedMesh ref={ref} args={[geo, mat, n]} frustumCulled={false} />;
 }
 
 function Beacon({ w, lit }: { w: World; lit: boolean }) {
@@ -382,26 +392,28 @@ function Generic({ w, u, life, density }: { w: World; u: ReviveUniforms; life: T
 
 /** Stations of a generic world, drawn with their kits (a world can change kit along its path) in their four looks
  *  (plot, scaffold, built, thriving). */
-function KitStations({ w, u, mastered }: { w: World; u: ReviveUniforms; mastered: number }) {
+type Pop = { at: number; t0: number } | null;
+function KitStations({ w, u, mastered, pop }: { w: World; u: ReviveUniforms; mastered: number; pop: Pop }) {
   const kits = useMemo(() => [...new Set(w.plots.map(p => p.kit ?? w.stationKit!))], [w]);
-  return <>{kits.map(k => <KitSet key={k} w={w} u={u} mastered={mastered} kitId={k} />)}</>;
+  return <>{kits.map(k => <KitSet key={k} w={w} u={u} mastered={mastered} kitId={k} pop={pop} />)}</>;
 }
-function KitSet({ w, u, mastered, kitId }: { w: World; u: ReviveUniforms; mastered: number; kitId: string }) {
+function KitSet({ w, u, mastered, kitId, pop }: { w: World; u: ReviveUniforms; mastered: number; kitId: string; pop: Pop }) {
   const kit = useMemo(() => KITS[kitId]?.(), [kitId]);
   const mat = useMat(u), grow = useMat(u, { grow: true, sway: 0.03 }), spin = useMat(u, { spin: 0.9 });
   const sets = useMemo(() => {
-    const o = { plot: [] as THREE.Matrix4[], scaffold: [] as THREE.Matrix4[], built: [] as THREE.Matrix4[], extra: [] as THREE.Matrix4[], spin: [] as THREE.Matrix4[] };
+    const o = { plot: [] as THREE.Matrix4[], scaffold: [] as THREE.Matrix4[], built: [] as THREE.Matrix4[], extra: [] as THREE.Matrix4[], spin: [] as THREE.Matrix4[], popBase: null as THREE.Matrix4 | null };
     w.plots.forEach((p, i) => {
       if ((p.kit ?? w.stationKit) !== kitId) return;
       const k = w.kitScale ?? 1, base = m4(p.x, w.ground(p.x, p.z), p.z, p.face, k, k, k);
       if (i < mastered) {
+        if (pop?.at === i) { o.popBase = base; return; }
         o.built.push(base); o.extra.push(base);
         if (kit?.spin) o.spin.push(base.clone().multiply(new THREE.Matrix4().makeTranslation(...kit.spin.at)));
       } else if (i === mastered) o.scaffold.push(base);
       else o.plot.push(base);
     });
     return o;
-  }, [w, mastered, kit, kitId]);
+  }, [w, mastered, kit, kitId, pop?.at]);
   if (!kit) return null;
   return (
     <group>
@@ -410,8 +422,43 @@ function KitSet({ w, u, mastered, kitId }: { w: World; u: ReviveUniforms; master
       <Instanced geo={kit.built} mats={sets.built} mat={mat} />
       <Instanced geo={kit.extra} mats={sets.extra} mat={grow} />
       {kit.spin && <Instanced geo={kit.spin.geo} mats={sets.spin} mat={spin} />}
+      {sets.popBase && pop && <PopMesh geo={kit.built} base={sets.popBase} mat={mat} t0={pop.t0} />}
     </group>
   );
+}
+
+/** The celebration at the newest station: golden sparkles burst from it and a little Siraj hovers above for ~3 s. */
+function BuildCelebration({ w, at, t0 }: { w: World; at: number; t0: number }) {
+  const p = w.plots[at];
+  const pts = useMemo(() => {
+    const a = new Float32Array(60 * 3), v: THREE.Vector3[] = [];
+    for (let i = 0; i < 60; i++) v.push(new THREE.Vector3(Math.random() - 0.5, Math.random() * 1.2 + 0.4, Math.random() - 0.5).normalize().multiplyScalar(4 + Math.random() * 5));
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(a, 3)); return { g, v };
+  }, []);
+  const tex = useMemo(() => glowTex(), []);
+  const mini = useRef<THREE.Group>(null!), mat = useRef<THREE.PointsMaterial>(null!);
+  const y0 = w.ground(p.x, p.z);
+  useFrame(() => {
+    const t = (performance.now() - t0) / 1000, pos = pts.g.attributes.position as THREE.BufferAttribute;
+    pts.v.forEach((v, i) => pos.setXYZ(i, p.x + v.x * Math.min(t, 1.2), y0 + 2 + v.y * Math.min(t, 1.2) - t * t * 1.5, p.z + v.z * Math.min(t, 1.2)));
+    pos.needsUpdate = true; if (mat.current) mat.current.opacity = Math.max(0, 1 - t / 3);
+    if (mini.current) { const k = THREE.MathUtils.clamp(t * 3, 0, 1) * THREE.MathUtils.clamp((3.2 - t) * 2, 0, 1); mini.current.scale.setScalar(0.55 * k); mini.current.position.set(p.x, y0 + 7 + Math.sin(t * 3) * 0.4, p.z); mini.current.rotation.y = t * 1.5; }
+  });
+  return (
+    <group>
+      <points geometry={pts.g}><pointsMaterial ref={mat} map={tex} size={2.4} sizeAttenuation transparent depthWrite={false} blending={THREE.AdditiveBlending} color="#FFD36A" toneMapped={false} /></points>
+      <group ref={mini} scale={0.001}><Siraj action="celebrate" glow={1} stamps={0} outfit={outfitFor(w.id)} /></group>
+    </group>
+  );
+}
+/** a station springing up: scale 0 -> 1 with an overshoot */
+function PopMesh({ geo, base, mat, t0 }: { geo: THREE.BufferGeometry; base: THREE.Matrix4; mat: THREE.Material; t0: number }) {
+  const ref = useRef<THREE.Mesh>(null!), pos = useMemo(() => new THREE.Vector3(), []), q = useMemo(() => new THREE.Quaternion(), []), sc = useMemo(() => new THREE.Vector3(), []);
+  useFrame(() => {
+    const t = Math.min((performance.now() - t0) / 900, 1), k = 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2) * (t > 0.01 ? 1 : 0);
+    base.decompose(pos, q, sc); ref.current.position.copy(pos); ref.current.quaternion.copy(q); ref.current.scale.copy(sc).multiplyScalar(Math.max(0.001, t < 1 ? k : 1));
+  });
+  return <mesh ref={ref} geometry={geo} material={mat} />;
 }
 
 export function KassalaTown({ world = 'kassala', mastered, density = 1, interactive = true, sirajAction = 'idle', onSirajTap, focus = null }: Props) {
@@ -458,10 +505,16 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
   const first = useRef(true);
   const cel = useRef<Celebrate>({ t: -1, houseS: 0 });
   const lastM = useRef(mastered);
+  const [pop, setPop] = useState<{ at: number; t0: number } | null>(null);
   useEffect(() => {
-    if (mastered > lastM.current && !done && focus == null) cel.current = { t: 0, houseS: w.plotSRoute[mastered - 1] };
+    if (mastered > lastM.current && focus == null) {
+      if (!done) cel.current = { t: 0, houseS: w.plotSRoute[mastered - 1] };
+      setPop({ at: mastered - 1, t0: performance.now() }); Sound.play('fog'); setTimeout(() => Sound.play('build'), 500);
+      const t = setTimeout(() => setPop(null), 3300); lastM.current = mastered; return () => clearTimeout(t);
+    }
     lastM.current = mastered;
   }, [mastered, done, focus, w]);
+  useEffect(() => { Sound.ambient(w.id); return () => Sound.ambient(null); }, [w.id]);
   useEffect(() => {
     if (!first.current) return;
     first.current = false;
@@ -523,7 +576,8 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
       <directionalLight position={[-300, 110, 170]} intensity={2.6} color="#FFD8A0" />
       <Static w={w} u={u} water={water} density={density} />
       <Generic w={w} u={u} life={life} density={density} />
-      {w.stationKit ? <KitStations w={w} u={u} mastered={mastered} /> : <Lessons w={w} u={u} mastered={mastered} />}
+      {w.stationKit ? <KitStations w={w} u={u} mastered={mastered} pop={pop} /> : <Lessons w={w} u={u} mastered={mastered} pop={pop} />}
+      {pop && <BuildCelebration key={pop.t0} w={w} at={pop.at} t0={pop.t0} />}
       <Birds w={w} mastered={mastered} />
       {w.id === 'kassala' && <Beacon w={w} lit={done} />}
       <group ref={siraj} onClick={onSirajTap}>

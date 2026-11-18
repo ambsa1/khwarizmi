@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@fontsource/andika": "5.1.0",
+    "@fontsource/cairo": "^5.3.0",
     "@fontsource/lalezar": "5.1.0",
     "@fontsource/noto-naskh-arabic": "5.1.0",
     "@fontsource/rubik": "5.1.0",

@@ -73,7 +73,7 @@ export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o
         ${o.green ? `float rvNear = 1.0 - smoothstep(10.0, 70.0, rvField(vRevWorld.xz).g);
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.62, 0.25), rvA * ${o.green === 'soft' ? 'rvNear * 0.45' : 'max(rvNear * 0.78, uAll * 0.55)'});` : ''}
         float rvL = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
-        vec3 rvDust = mix(vec3(rvL) * vec3(0.93, 0.93, 0.92), vec3(0.58, 0.57, 0.55), 0.5);
+        vec3 rvDust = mix(vec3(rvL) * vec3(1.02, 0.95, 0.82), vec3(0.88, 0.78, 0.60), 0.62);   // warm golden-sand mist
         diffuseColor.rgb = mix(rvDust, diffuseColor.rgb, rvA);`);
   };
   mat.customProgramCacheKey = () => `revive-${o.grow ? 1 : 0}${o.build ? 1 : 0}${o.appear ? 1 : 0}${o.green === 'soft' ? 2 : o.green ? 1 : 0}${o.detail ? 1 : 0}-${o.sway ?? 0}-${o.spin ?? 0}`;
