@@ -60,7 +60,8 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
     if (since.current.action !== action || since.current.t < 0) since.current = { action, t };
     const held = t - since.current.t;
     // breathing + per-action body language
-    let bodyY = Math.sin(t * 2.2) * 0.03, bodyRotZ = 0, headRotZ = Math.sin(t * 1.1) * 0.04, headRotX = 0, headRotY = 0;
+    // a soft, continuous float (he hovers a little and drifts side to side), with his breathing on top
+    let bodyY = 0.06 + Math.sin(t * 1.4) * 0.06 + Math.sin(t * 2.2) * 0.015, bodyRotZ = Math.sin(t * 0.9) * 0.03, headRotZ = Math.sin(t * 1.1) * 0.04, headRotX = 0, headRotY = 0;
     let lx = -0.62, ly = 0.55 + Math.sin(t * 2.2 + 1) * 0.04, rx = 0.62, ry = 0.55 + Math.sin(t * 2.2) * 0.04;
     let face: Face = FACE_OF[action];
     switch (action) {

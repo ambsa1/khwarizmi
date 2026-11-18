@@ -24,7 +24,6 @@ const OUTLINE: [number, number][] = [
   [27.9, 9.6], [26.6, 10.1], [25.3, 10.3], [24.5, 9.4], [23.6, 9.0], [23.0, 9.9], [22.5, 11.0], [22.8, 12.4], [22.1, 13.2],
   [22.2, 13.9], [22.7, 14.6], [22.9, 15.6], [23.6, 15.9], [24.0, 17.2], [24.0, 19.5],
 ];
-const RED_SEA: [number, number][] = [[36.9, 22.0], [37.15, 21.0], [37.3, 20.2], [37.22, 19.6], [37.35, 19.1], [37.6, 18.7], [38.1, 18.3], [38.6, 18.0], [39.6, 17.6], [42, 17.6], [42, 23.5], [35.6, 23.5]];
 const NILES: [number, number][][] = [
   [[32.75, 12.0], [32.66, 13.17], [32.3, 13.99], [32.4, 14.9], [32.53, 15.6]],                               // White Nile
   [[34.9, 10.95], [34.38, 11.8], [33.9, 12.8], [33.6, 13.55], [33.52, 14.4], [33.1, 15.1], [32.53, 15.6]],       // Blue Nile
@@ -66,22 +65,43 @@ function Rivers() {
   return <group>{tubes.map((g, i) => <mesh key={i} geometry={g}><meshLambertMaterial color={i === 1 ? '#2F6FC0' : '#4FA3D1'} emissive="#1F5FAD" emissiveIntensity={0.15} /></mesh>)}</group>;
 }
 
+/** The Red Sea as a floating water channel with rounded corners, parallel to the east coast (between Sudan and the
+ *  Arabian shore): the same thickness as the land, warm turquoise deepening to the middle, a soft sand rim, its own
+ *  floating shadow and a slow shimmer. */
+const SEA_A = P(37.95, 22.7), SEA_B = P(40.35, 16.45), SEA_W = 1.9, SEA_R = 0.62;
 function Sea() {
-  // shallow turquoise at the coast to deep blue offshore, fading softly at the sea's outer edge
-  const geo = useMemo(() => {
-    const g = new THREE.ShapeGeometry(new THREE.Shape(RED_SEA.map(([a, b]) => P(a, b))), 24);
-    g.rotateX(-Math.PI / 2);
-    const pos = g.attributes.position, xs: number[] = [];
-    for (let i = 0; i < pos.count; i++) xs.push(pos.getX(i));
-    const lo = Math.min(...xs), hi = Math.max(...xs), col = new Float32Array(pos.count * 4);
-    const shallow = new THREE.Color('#5ED6D0'), deep = new THREE.Color('#1F7FA8'), c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const k = (xs[i] - lo) / (hi - lo || 1); c.copy(shallow).lerp(deep, Math.min(1, k * 1.3));
-      col.set([c.r, c.g, c.b, 1 - THREE.MathUtils.smoothstep(k, 0.75, 1) * 0.85], i * 4);
-    }
-    g.setAttribute('color', new THREE.BufferAttribute(col, 4)); return g;
+  const { geo, mid, ang, len, tex } = useMemo(() => {
+    const d = SEA_B.clone().sub(SEA_A), len = d.length(), ang = Math.atan2(d.y, d.x), mid = SEA_A.clone().add(SEA_B).multiplyScalar(0.5);
+    const hw = SEA_W / 2, hl = len / 2, r = SEA_R, sh = new THREE.Shape();
+    sh.moveTo(-hl + r, -hw); sh.lineTo(hl - r, -hw); sh.quadraticCurveTo(hl, -hw, hl, -hw + r); sh.lineTo(hl, hw - r); sh.quadraticCurveTo(hl, hw, hl - r, hw);
+    sh.lineTo(-hl + r, hw); sh.quadraticCurveTo(-hl, hw, -hl, hw - r); sh.lineTo(-hl, -hw + r); sh.quadraticCurveTo(-hl, -hw, -hl + r, -hw);
+    const g = new THREE.ExtrudeGeometry(sh, { depth: LAND_TOP - 0.2, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.22, bevelSegments: 3, curveSegments: 10 });
+    // the top is painted by a texture laid over the channel (the extruded cap has no inner points to colour):
+    // a soft sand rim, then warm turquoise deepening towards the middle
+    const cv = document.createElement('canvas'), W = 512, H = Math.round(512 * hw / hl); cv.width = W; cv.height = H;
+    const x = cv.getContext('2d')!, rr = (x0: number, y0: number, w: number, h: number, r: number) => { x.beginPath(); x.roundRect(x0, y0, w, h, r); };
+    x.fillStyle = '#E2C08C'; x.fillRect(0, 0, W, H);
+    const inset = H * 0.11, grad = x.createLinearGradient(0, inset, 0, H - inset);
+    grad.addColorStop(0, '#86E0D6'); grad.addColorStop(0.5, '#2696AE'); grad.addColorStop(1, '#86E0D6');
+    rr(inset, inset, W - 2 * inset, H - 2 * inset, SEA_R / (2 * hw) * H); x.fillStyle = grad; x.fill();
+    for (let i = 0; i < 18; i++) { x.strokeStyle = 'rgba(255,255,255,.18)'; x.lineWidth = 2; const yy = inset + Math.random() * (H - 2 * inset), xx = inset + Math.random() * (W - 2 * inset - 60); x.beginPath(); x.moveTo(xx, yy); x.quadraticCurveTo(xx + 30, yy - 5, xx + 60, yy); x.stroke(); }
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    tex.repeat.set(1 / (2 * hl), 1 / (2 * hw)); tex.offset.set(0.5, 0.5);
+    return { geo: g, mid, ang, len, tex };
   }, []);
-  return <mesh geometry={geo} position-y={0.12}><meshLambertMaterial vertexColors transparent color="#ffffff" emissive="#0E5A73" emissiveIntensity={0.12} /></mesh>;
+  const ref = useRef<THREE.MeshLambertMaterial>(null!);
+  useFrame(s => { ref.current.emissiveIntensity = 0.1 + Math.sin(s.clock.elapsedTime * 1.1) * 0.04; });
+  const shadow = useMemo(() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d')!;
+    const g = x.createRadialGradient(64, 64, 8, 64, 64, 64); g.addColorStop(0, 'rgba(120,80,40,0.34)'); g.addColorStop(1, 'rgba(120,80,40,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+  }, []);
+  return (
+    <group position={[mid.x, 0, -mid.y]} rotation-y={ang}>
+      <group rotation-x={-Math.PI / 2}><mesh geometry={geo}><meshLambertMaterial ref={ref} map={tex} emissive="#0E6A7A" emissiveIntensity={0.1} /></mesh></group>
+      <mesh rotation-x={-Math.PI / 2} position-y={-0.6} scale={[len * 1.25, SEA_W * 2.2, 1]}><planeGeometry /><meshBasicMaterial map={shadow} transparent depthWrite={false} /></mesh>
+    </group>
+  );
 }
 
 /** soft shadow under the floating map (a radial texture, no box) */

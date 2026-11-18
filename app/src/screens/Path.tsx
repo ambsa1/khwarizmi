@@ -55,8 +55,9 @@ export function Path() {
   useEffect(() => {
     if (celebrate || GREETED.has(world)) return;
     GREETED.add(world);
-    setLine(`أهلًا بيك في ${placeName(world)}!`); setAction('wave');
-    const t = setTimeout(() => setLine(null), 2600);
+    // the welcome slides in at the top of the scene (like the celebration banner), never over the buildings
+    setToast(`أهلًا بيك في ${placeName(world)}!`); setAction('wave');
+    const t = setTimeout(() => setToast(null), 2800);
     return () => clearTimeout(t);
   }, [world]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {

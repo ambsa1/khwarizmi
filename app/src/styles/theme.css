@@ -142,3 +142,13 @@ input[type=range].vol { width: 100%; accent-color: var(--c-gold); height: 36px; 
 .certificate b { font-size: 22px; }
 .stamp-title { display: flex; flex-direction: column; gap: 2px; }
 .stamp-place { font-size: 18px; font-weight: 700; color: var(--c-inkSoft); }
+
+/* phones: the world title capsule stays clear of the menu button */
+@media (max-width: 480px) {
+  .topbar { gap: 6px; }
+  .topbar-title { max-width: 46vw; font-size: 18px; }
+  .path .topbar .world-pill { gap: 8px; padding: 0 12px; min-height: 44px; }
+  .path .topbar .world-pill-name { font-size: 18px; white-space: nowrap; }
+  .path .topbar .world-pill-bar { width: 44px; }
+  .player-pill { padding: 3px 4px 3px 10px; gap: 6px; max-width: 34vw; }
+}

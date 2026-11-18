@@ -81,7 +81,7 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
   const M = {
     ground: useMat(u, { green: w.tint ? 'soft' : true }), plain: useMat(u), river: useMat(u, { offset: 1 }), roads: useMat(u, { offset: 2 }),
     curb: useMat(u, { offset: 3 }), street: useMat(u, { offset: 4 }), rock: useMat(u),
-    tree: useMat(u, { grow: true, sway: 0.03 }), palm: useMat(u, { grow: true, sway: 0.025 }), grass: useMat(u, { grow: true, sway: 0.12, double: true }),
+    tree: useMat(u, { grow: true, sway: 0.03 }), palm: useMat(u, { grow: true, sway: 0.05 }), grass: useMat(u, { grow: true, sway: 0.12, double: true }),
     build: useMat(u, { build: true }), shrub: useMat(u, { grow: true, sway: 0.05 }), side: useMat(u, { offset: 2 }), alley: useMat(u, { offset: 3, appear: true }),
     rock0: useMat(u, { detail: details[0]?.t, detailBox: details[0]?.box }), rock1: useMat(u, { detail: details[1]?.t, detailBox: details[1]?.box }),
   };
