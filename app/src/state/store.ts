@@ -15,7 +15,7 @@ export type Profile = {
   avatar: string;        // guest avatar id, or family member id
 };
 
-export type Screen = 'entry' | 'guest' | 'path' | 'map' | 'passport' | 'parents' | 'perf';
+export type Screen = 'entry' | 'guest' | 'path' | 'map' | 'passport' | 'parents' | 'perf' | 'lesson';
 
 type State = {
   screen: Screen;
@@ -28,6 +28,11 @@ type State = {
   tierOverride: 'auto' | Tier;
   measuredTier: Tier | null;          // result of the 2-second test on first run
   world: Record<string, string>;      // profileId -> world chosen on the map
+  lesson: { world: string; skill: string } | null;   // the lesson being played (not persisted)
+  celebrate: boolean;                 // a lesson just finished: the street shows its new house being built
+  openLesson: (world: string, skill: string) => void;
+  finishLesson: () => void;
+  celebrated: () => void;
   go: (s: Screen) => void;
   setCurrent: (id: string | null) => void;
   addGuest: (p: Omit<Profile, 'id' | 'kind'>) => string;
@@ -60,6 +65,11 @@ export const useApp = create<State>()(persist((set, get) => ({
   tierOverride: 'auto',
   measuredTier: null,
   world: {},
+  lesson: null,
+  celebrate: false,
+  openLesson: (world, skill) => set({ lesson: { world, skill }, screen: 'lesson' }),
+  finishLesson: () => set({ lesson: null, celebrate: true, screen: 'path' }),
+  celebrated: () => set({ celebrate: false }),
   go: screen => set({ screen }),
   setCurrent: current => set({ current }),
   addGuest: p => {

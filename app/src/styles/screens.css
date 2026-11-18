@@ -177,3 +177,33 @@
 .perf-panel td { text-align: end; font-weight: 700; padding: 3px 0 3px 8px; word-break: break-word; }
 .perf-panel td:last-child { width: 18px; color: var(--c-glow); }
 .perf-panel .btn { min-height: 44px; font-size: 18px; padding: 0 14px; }
+
+/* ---------- Lesson (starter player) ---------- */
+.lesson { gap: 12px; }
+.lesson-top { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 16px; padding: calc(8px + var(--safe-t)) var(--gutter) 0; }
+.lesson-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; }
+.lesson-steps li { flex: 1; height: 12px; border-radius: 999px; background: var(--c-sandLine); }
+.lesson-steps li.done { background: var(--c-gold); }
+.lesson-steps li.now { background: var(--c-nile); }
+.lesson-stage { flex: 1; min-height: 0; position: relative; }
+.lesson-card { margin: 0 var(--gutter); padding: 20px 24px; text-align: center; }
+.lesson-text { margin: 0; font-size: 24px; line-height: 36px; font-weight: 700; }
+.lesson-note { margin: 8px 0 0; font-size: 18px; line-height: 26px; }
+.lesson-actions { padding: 0 var(--gutter) calc(16px + var(--safe-b)); }
+@media (orientation: landscape) {
+  .lesson { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-rows: auto 1fr auto; }
+  .lesson-top { grid-column: 1 / -1; }
+  .lesson-stage { grid-row: 2 / 4; }
+  .lesson-card { align-self: center; }
+  .lesson-actions { padding-top: 0; }
+}
+
+/* world download inside the world window (the window's own content, not an overlay on a scene) */
+.world-gate { position: absolute; inset: auto 16px 16px 16px; padding: 16px 20px; border-radius: 20px; background: rgba(255, 251, 243, .94);
+  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; box-shadow: 0 4px 0 var(--c-sandLine); }
+.world-gate p { margin: 0; font-size: 20px; line-height: 28px; font-weight: 700; }
+.gate-bar { width: 100%; max-width: 320px; height: 14px; border-radius: 999px; background: var(--c-sandLine); overflow: hidden; }
+.gate-bar i { display: block; height: 100%; background: var(--c-gold); transition: width 200ms; }
+
+/* ---------- Error screen ---------- */
+.oops { align-items: center; justify-content: center; gap: 16px; padding: 24px var(--gutter); text-align: center; }

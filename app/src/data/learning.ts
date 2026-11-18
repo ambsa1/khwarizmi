@@ -12,11 +12,10 @@
 //
 //   v2 (the version published before the rebuild) kept progress per old coding level under 'khwarizmi.v1'. On first run
 //   the raw text is archived untouched, every solved level is translated into the new skills through
-//   content/legacy/coding-75.json, and each old player is linked to a family child only when the family id matches;
+//   content/legacy/coding-75.json (the 'legacy' content pack), and each old player is linked to a family child only when the family id matches;
 //   the others wait in the parents' corner to be linked by hand.
 import { create } from 'zustand';
-import legacyMap from '../../../content/legacy/coding-75.json';
-import { WORLDS, worldSkills } from '../lib/content';
+import { legacyMap, WORLDS, worldSkills } from '../lib/content';
 import * as db from './idb';
 
 export const SCHEMA = 1;
@@ -92,16 +91,16 @@ export const stampsOf = (l: Learner | undefined) => WORLDS.filter(w => { const s
 const LEGACY_KEY = 'khwarizmi.v1';
 type V2Player = { id: string; fid?: string; name?: string; age?: number; gender?: string; progress?: Record<string, number | { stars?: number }> };
 /** Translate one v2 player: a new skill is mastered when every old level teaching it was solved, learning if some were. */
-export function translateV2(p: V2Player): LegacyPlayer {
+export function translateV2(p: V2Player, map: { levels: { legacyId: string; skills: string[] }[] }): LegacyPlayer {
   const solved = new Set(Object.entries(p.progress ?? {}).filter(([, v]) => (typeof v === 'number' ? v : v?.stars ?? 0) > 0).map(([k]) => k));
   const per = new Map<string, { n: number; ok: number }>();
-  for (const lv of legacyMap.levels) for (const sk of lv.skills) {
+  for (const lv of map.levels) for (const sk of lv.skills) {
     const e = per.get(sk) ?? { n: 0, ok: 0 }; e.n++; if (solved.has(lv.legacyId)) e.ok++; per.set(sk, e);
   }
   const skills: Record<string, SkillStatus> = {};
   for (const [sk, e] of per) if (e.ok > 0) skills[sk] = e.ok === e.n ? 'mastered' : 'learning';
   return { legacyId: p.id, fid: p.fid, name: String(p.name ?? '').slice(0, 16), age: Number(p.age) || 7, gender: p.gender === 'g' ? 'f' : 'm',
-    skills, levels: legacyMap.levels.filter(lv => solved.has(lv.legacyId)).length };
+    skills, levels: map.levels.filter(lv => solved.has(lv.legacyId)).length };
 }
 
 // ---------- the store ----------
@@ -146,7 +145,8 @@ export const useLearning = create<LearningState>()((set, get) => ({
         if (txt) {
           await db.put('legacy', `${LEGACY_KEY}@${Date.now()}`, txt);
           const raw = JSON.parse(txt) as { players?: V2Player[] };
-          legacy = (Array.isArray(raw.players) ? raw.players : []).filter(p => p && typeof p.id === 'string').map(translateV2);
+          const map = await legacyMap();
+          legacy = (Array.isArray(raw.players) ? raw.players : []).filter(p => p && typeof p.id === 'string').map(p => translateV2(p, map));
           await db.put('meta', 'legacyPlayers', legacy);
         }
       } catch { /* unreadable old data stays archived as raw text */ }

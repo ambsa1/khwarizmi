@@ -1,7 +1,7 @@
 {
   "name": "khawarizmi-app",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5180",
@@ -15,7 +15,10 @@
     "check": "node tools/check.mjs",
     "video": "node tools/video.mjs",
     "world": "..\\ingest\\.venv\\Scripts\\python.exe tools/world/build_kassala.py",
-    "town": "node tools/town-shots.mjs"
+    "town": "node tools/town-shots.mjs",
+    "packs": "node tools/content-packs.mjs",
+    "prebuild": "node tools/content-packs.mjs",
+    "release": "node tools/release.mjs"
   },
   "dependencies": {
     "@react-three/drei": "9.115.0",

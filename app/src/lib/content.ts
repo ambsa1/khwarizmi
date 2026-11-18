@@ -1,31 +1,71 @@
-// Reads the curriculum data straight from ../content (validated by `npm run validate`).
-import worldsDoc from '../../../content/worlds/worlds.json';
-import coding from '../../../content/skills/coding.json';
-import techai from '../../../content/skills/techai.json';
-import english from '../../../content/skills/english.json';
-import brain from '../../../content/skills/brain.json';
-import explorer from '../../../content/skills/explorer.json';
+// Content reader. The curriculum is NOT compiled into the app: it arrives as packs built by tools/content-packs.mjs
+// (public/content). The core pack (worlds, skill trees, templates) is loaded once at start-up, before any screen shows,
+// so the getters below stay synchronous; a world's lessons are loaded when that world needs them.
+// Packs are cached by the service worker, so after the first visit everything works offline.
 
-export type Skill = { id: string; title: { ar: string; en?: string }; zone: string; ages: { min: number; max?: number } };
-export type World = (typeof worldsDoc.worlds)[number];
+type WorldsDoc = typeof import('../../../content/worlds/worlds.json');
+export type World = WorldsDoc['worlds'][number];
+export type Skill = { id: string; title: { ar: string; en?: string }; zone: string; ages: { min: number; max?: number }; templates?: string[] };
+export type Template = { id: string; family: string; domains: string[]; minAge: number; title: { ar: string; en?: string } };
+export type Text = { ar: string; en?: string };
+export type Lesson = {
+  id: string; title?: Text; status: 'draft' | 'approved'; skills: string[]; reviews?: string[];
+  keyCards: { text: Text; visual: string; voice?: string }[];
+  workedExamples?: { question: Text; steps: Text[]; answer: Text }[];
+  activities: { template: string; params?: Record<string, unknown>; rounds?: number; mode?: string }[];
+  quiz: { type: string; q: Text }[];
+};
+type Core = { worlds: World[]; trees: Record<string, { world: string; skills: Skill[] }>; templates: Template[] };
+export type Manifest = { version: string; built: string; packs: { file: string; bytes: number; hash: string }[] };
 
-export const WORLDS = worldsDoc.worlds;
+const BASE = `${import.meta.env.BASE_URL}content/`;
+/** Filled in place by loadContent(), so modules that imported it keep a live reference. */
+export const WORLDS: World[] = [];
+const TREES: Record<string, Skill[]> = {};
+const TEMPLATES = new Map<string, Template>();
+export let CONTENT: Manifest | null = null;
+
+async function json<T>(file: string): Promise<T> {
+  const r = await fetch(BASE + file);
+  if (!r.ok) throw new Error(`content ${file}: ${r.status}`);
+  return r.json() as Promise<T>;
+}
+
+/** Start-up: the manifest and the core pack. Throws if the content cannot be read (the error screen explains). */
+export async function loadContent() {
+  if (WORLDS.length) return;
+  const [manifest, core] = await Promise.all([json<Manifest>('manifest.json').catch(() => null), json<Core>('core.json')]);
+  CONTENT = manifest;
+  WORLDS.push(...core.worlds);
+  for (const t of Object.values(core.trees)) TREES[t.world] = t.skills;
+  for (const t of core.templates) TEMPLATES.set(t.id, t);
+}
+
 export const worldById = (id: string) => WORLDS.find(w => w.id === id)!;
-
-const TREES: Record<string, { skills: Skill[] }> = { kassala: coding, mogran: techai, meroe: english, suakin: brain, saqiya: explorer };
+export const templateById = (id: string) => TEMPLATES.get(id);
 
 /** Skills of a world in path order: zone order first, then the order inside the tree file. */
 export function worldSkills(worldId: string): Skill[] {
-  const w = worldById(worldId);
+  const w = WORLDS.find(x => x.id === worldId);
   const tree = TREES[worldId];
-  if (!tree) return [];
+  if (!w || !tree || worldId === 'marra') return [];
   const zoneOrder = new Map(w.zones.map(z => [z.id, z.order]));
-  return tree.skills.slice().sort((a, b) => (zoneOrder.get(a.zone)! - zoneOrder.get(b.zone)!));
+  return tree.slice().sort((a, b) => (zoneOrder.get(a.zone)! - zoneOrder.get(b.zone)!));
 }
+export const skillCount = (worldId: string) => worldSkills(worldId).length;
 
-export function skillCount(worldId: string) {
-  return worldId === 'marra' ? 0 : worldSkills(worldId).length;
+// ---------- lessons (per world, on demand) ----------
+const lessonPacks = new Map<string, Promise<Lesson[]>>();
+export function worldLessons(worldId: string): Promise<Lesson[]> {
+  if (!lessonPacks.has(worldId)) lessonPacks.set(worldId, json<{ lessons: Lesson[] }>(`world-${worldId}.json`).then(p => p.lessons).catch(() => []));
+  return lessonPacks.get(worldId)!;
 }
+/** The lesson that teaches a skill, if one has been written yet. */
+export async function lessonFor(worldId: string, skillId: string): Promise<Lesson | undefined> {
+  return (await worldLessons(worldId)).find(l => l.skills.includes(skillId));
+}
+/** Old v2 level -> new skill map, only needed when importing data from the previous version. */
+export const legacyMap = () => json<{ levels: { legacyId: string; skills: string[] }[] }>('legacy.json');
 
 /** Short world names for chips, cards and the top bar. */
 export const SHORT_NAME: Record<string, string> = { kassala: 'كسلا', mogran: 'المقرن', meroe: 'مروي', suakin: 'سواكن', marra: 'جبل مرّة', saqiya: 'الساقية' };

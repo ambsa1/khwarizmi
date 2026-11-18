@@ -73,9 +73,15 @@ await page.waitForTimeout(2500);
 small = await smallText(); ok('path: no text under 18px', small.length === 0, small.join(', '));
 const before = await page.locator('.today-bar li.done').count();
 await page.locator('.btn.go').click();
+await page.waitForSelector('.lesson', { timeout: 8000 });
+small = await smallText(); ok('lesson: no text under 18px', small.length === 0, small.join(', '));
+await page.waitForSelector('.lesson-steps li', { timeout: 8000 });
+const stepsSeen = await page.locator('.lesson-steps li').count();
+for (let k = 0; k < stepsSeen; k++) { await page.locator('.lesson .btn.go').click(); await page.waitForTimeout(700); }   // the lesson button ignores double taps within 0.5 s
+await page.waitForSelector('.path', { timeout: 8000 });
 await page.waitForTimeout(1600);
 const after = await page.locator('.today-bar li.done').count();
-ok('golden button lights a lamp (today bar)', before === 0 && after === 1, `${before} -> ${after}`);
+ok('a real lesson plays through and builds its house', before === 0 && after === 1 && stepsSeen === 6, `${stepsSeen} steps, lamps ${before} -> ${after}`);
 
 /** Every UI block on the journey screen: inside the viewport, no two overlapping, none on the world view. */
 const overlaps = () => page.evaluate(() => {
@@ -92,7 +98,7 @@ const overlaps = () => page.evaluate(() => {
   // nothing positioned on top of the world view except Siraj's bubble and the confetti
   const win = document.querySelector('.path-window');
   for (const el of win ? win.querySelectorAll(':scope > *') : []) {
-    if (el.matches('canvas, div:has(> canvas), .window-line, .confetti, [aria-hidden="true"]') || el.querySelector('canvas')) continue;
+    if (el.matches('canvas, div:has(> canvas), .window-line, .confetti, [aria-hidden="true"], [role="img"]') || el.querySelector('canvas')) continue;
     const r = el.getBoundingClientRect(); if (r.width && r.height) bad.push(`extra element on the world view: ${el.className}`);
   }
   return bad;
@@ -204,6 +210,56 @@ ok('open world travels to its path', title.includes('سواكن') || title.inclu
 await page.getByRole('button', { name: 'جوازي' }).first().click();
 await page.waitForSelector('.stamps');
 small = await smallText(); ok('passport: no text under 18px', small.length === 0, small.join(', '));
+
+// 5b. a downloaded world works with no internet; a deleted one explains that it needs internet once
+{
+  const cx = await browser.newContext({ viewport: { width: 360, height: 800 }, locale: 'ar', serviceWorkers: 'allow' });
+  const pg = await cx.newPage();
+  await pg.goto(base, { waitUntil: 'load' }); await pg.evaluate(() => navigator.serviceWorker.ready);
+  await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.entry');
+  await pg.getByRole('button', { name: 'ضيف جديد' }).click();
+  await pg.getByRole('button', { name: 'بنت' }).click(); await pg.locator('.age-ball').nth(5).click();
+  await pg.locator('.terrace').nth(2).click(); await pg.locator('.avatar-pick').first().click();
+  await pg.waitForSelector('.path-window canvas', { timeout: 60000 }).catch(() => {});
+  const online3d = await pg.locator('.path-window canvas').count();
+  await cx.setOffline(true);
+  await openPath(pg); await pg.waitForTimeout(3500);
+  const offline3d = await pg.locator('.path-window canvas').count();
+  const fpsOff = await pg.evaluate(() => window.__stats?.fps ?? 0);
+  ok('a downloaded world opens with no internet', online3d === 1 && offline3d === 1 && fpsOff > 0, `3D online ${online3d}, offline ${offline3d}, fps ${fpsOff}`);
+  await cx.setOffline(false);
+  await openParents(pg);
+  await pg.locator('.device').getByRole('button', { name: 'احذف من الجهاز' }).click(); await pg.waitForTimeout(800);
+  await cx.setOffline(true);
+  await openPath(pg); await pg.waitForTimeout(1500);
+  const gate = await pg.locator('.world-gate').innerText().catch(() => '');
+  ok('a deleted world says it needs internet once', gate.includes('إنترنت'), gate);
+  await cx.close();
+}
+
+// 5c. performance budgets (the release stops if any is exceeded)
+{
+  const { gzipSync } = await import('node:zlib');
+  const { readdirSync } = await import('node:fs');
+  const dist = join(HERE, '..', 'dist', 'assets');
+  const js = existsSync(dist) ? readdirSync(dist).filter(f => f.endsWith('.js')).reduce((a, f) => a + gzipSync(readFileSync(join(dist, f))).length, 0) : 0;
+  ok('app code under 600 KB compressed', js > 0 && js <= 600 * 1024, `${Math.round(js / 1024)} KB`);
+  const idx = JSON.parse(readFileSync(join(HERE, '..', 'public', 'worlds', 'index.json'), 'utf8'));
+  const big = Object.entries(idx).filter(([, w]) => w.bytes > 6 * 1048576);
+  ok('every world under 6 MB', big.length === 0, Object.entries(idx).map(([id, w]) => `${id} ${(w.bytes / 1048576).toFixed(2)} MB`).join(', '));
+  const cx = await browser.newContext({ viewport: { width: 393, height: 873 }, locale: 'ar' });
+  await cx.addInitScript(() => localStorage.setItem('khawarizmi.v2', JSON.stringify({ state: { tierOverride: 'low' }, version: 0 })));
+  const pg = await cx.newPage();
+  const worst = { calls: 0, tris: 0 };
+  for (const m of [0, 24, 37]) {
+    await pg.goto(`${base}?view=world&w=kassala&m=${m}`, { waitUntil: 'load' }); await pg.waitForTimeout(6000);
+    const st = await pg.evaluate(() => window.__stats);
+    worst.calls = Math.max(worst.calls, st.calls); worst.tris = Math.max(worst.tris, st.tris);
+  }
+  ok('low tier: at most 80 draw calls', worst.calls > 0 && worst.calls <= 80, `${worst.calls}`);
+  ok('low tier: at most 150,000 triangles', worst.tris > 0 && worst.tris <= 150000, `${worst.tris}`);
+  await cx.close();
+}
 
 // 5. family mode (local only)
 const codeFile = join(PRIVATE, 'family-code.txt');

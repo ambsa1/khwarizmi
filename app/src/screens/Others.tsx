@@ -6,6 +6,9 @@ import { fmt, useNum } from '../lib/num';
 import { gpuName, guessTier, hasWebGL2, SETTINGS } from '../lib/tier';
 import { T, type WorldId } from '../lib/tokens';
 import { masteredIn, useLearning } from '../data/learning';
+import { lowSpace, mb, usePacks, worldBytes } from '../data/packs';
+import { CONTENT } from '../lib/content';
+import { clearErrors, readErrors, type ErrorEntry } from '../ui/ErrorBoundary';
 import { useApp, useProfile } from '../state/store';
 import { KassalaTown, TOWN_FAR, TOWN_FOG } from '../three/town/KassalaTown';
 import { Stage, stats, useTier } from '../three/Stage';
@@ -101,6 +104,7 @@ export function Parents() {
           </div>
         </section>
         <LearnerData />
+        <DeviceSection />
       </div>
     </div>
   );
@@ -200,6 +204,46 @@ function LearnerData() {
         </div>
       )}
       {msg && <p className="t-small" role="status">{msg}</p>}
+    </section>
+  );
+}
+
+/** Parents' corner: the 3D worlds on this device (download / delete), storage, the app version and its update,
+ *  and the local error log. */
+function DeviceSection() {
+  const P = usePacks();
+  const [sizes, setSizes] = useState<Record<string, number>>({});
+  const [errors, setErrors] = useState<ErrorEntry[]>([]);
+  useEffect(() => {
+    void P.refreshStorage(); void readErrors().then(setErrors);
+    Promise.all(WORLDS.map(async w => [w.id, await worldBytes(w.id)] as const)).then(list => {
+      const with3d = list.filter(([, b]) => b > 0);
+      setSizes(Object.fromEntries(with3d));
+      for (const [id] of with3d) void P.check(id);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <section className="card pc device">
+      <h2 className="t-h2">الجهاز والإصدار</h2>
+      {Object.entries(sizes).map(([id, bytes]) => {
+        const st = P.worlds[id]?.state;
+        return (
+          <div key={id} className="row" style={{ flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' }}>
+            <span className="t-small"><b>{SHORT_NAME[id]}</b> · <span className="ltr">{mb(bytes)} MB</span> · {st === 'ready' ? 'محفوظ في الجهاز' : st === 'downloading' ? `ينزل… ${Math.round((P.worlds[id]!.got / bytes) * 100)}%` : 'غير منزّل'}</span>
+            {st === 'ready'
+              ? <button className="btn paper" onClick={() => void P.remove(id)}>احذف من الجهاز</button>
+              : <button className="btn paper" disabled={st === 'downloading'} onClick={() => void P.download(id)}>نزّل</button>}
+          </div>
+        );
+      })}
+      {P.storage && <p className="t-small soft">المساحة المستخدمة: <span className="ltr">{mb(P.storage.used)} MB</span>{lowSpace(P.storage) && <b> · مساحة الجهاز قربت تخلص، احذف عالمًا مكتملًا.</b>}</p>}
+      <p className="t-small soft">الإصدار <span className="ltr">{__APP_VERSION__}</span> ({__BUILD_DATE__}) · المحتوى <span className="ltr">{CONTENT?.version ?? '-'}</span></p>
+      {P.update && <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}><span className="t-small">نسخة جديدة جاهزة. تقدّم الأطفال لن يتأثر.</span><button className="btn" onClick={P.update}>حدّث الآن</button></div>}
+      <details>
+        <summary className="t-small">سجل الأخطاء في هذا الجهاز ({errors.length})</summary>
+        {errors.slice(0, 5).map((e, i) => <p key={i} className="t-small soft ltr" style={{ margin: '4px 0' }}>{new Date(e.t).toLocaleString('en-GB')} · {e.where} · {e.msg}</p>)}
+        {errors.length > 0 && <button className="btn paper" onClick={() => void clearErrors().then(() => setErrors([]))}>امسح السجل</button>}
+      </details>
     </section>
   );
 }

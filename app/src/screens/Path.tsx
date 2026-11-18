@@ -4,8 +4,8 @@
 //   action band - one golden button (with the next skill inside it) and today's three steps as one progress bar
 // Navigation is the bottom bar on phones, a side rail on wide screens. The passport lives only in the navigation.
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { SHORT_NAME, skillCount, worldById, worldSkills } from '../lib/content';
+import { useEffect, useState } from 'react';
+import { lessonFor, SHORT_NAME, skillCount, worldById, worldSkills } from '../lib/content';
 // (Phase 3: the golden button completes the next real skill in the learner database; lessons arrive in phase 6.)
 import { useNum } from '../lib/num';
 import type { WorldId } from '../lib/tokens';
@@ -23,6 +23,9 @@ export function Path() {
   const p = useProfile();
   const go = useApp(s => s.go), chosen = useApp(s => s.world);
   const learners = useLearning(s => s.learners), complete = useLearning(s => s.complete);
+  const openLesson = useApp(s => s.openLesson), celebrate = useApp(s => s.celebrate), celebrated = useApp(s => s.celebrated);
+  // back from a finished lesson: show the street one house short, then build it in front of the child
+  const [holdBack, setHoldBack] = useState(celebrate ? 1 : 0);
   const num = useNum();
   const guard = useGuard(900);
   const [action, setAction] = useState<SirajAction>('wave');
@@ -37,10 +40,21 @@ export function Path() {
   const lit = litToday(me);
   const next = nextSkillIn(me, world);
   const done = mastered >= total;
+  useEffect(() => {
+    if (!celebrate) return;
+    const t1 = setTimeout(() => {
+      setHoldBack(0); setAction('celebrate'); setParty(n => n + 1);
+      setLine(say(p!, 'عفارم عليك! بنيت بيت جديد!', 'عفارم عليكِ! بنيتي بيت جديد!'));
+      celebrated();
+    }, 900);
+    const t2 = setTimeout(() => { setAction('idle'); setLine(null); }, 3300);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Phase 2 has no lessons yet: the button plays the "house built, lamp lit" moment so the feel can be judged.
-  const play = () => {
+  const play = async () => {
     if (done) { go('map'); return; }
+    if (next && (await lessonFor(world, next.id))) { openLesson(world, next.id); return; }
     setAction('hop');
     setTimeout(() => {
       if (next) complete(p.id, next.id);
@@ -70,7 +84,7 @@ export function Path() {
         </header>
         <div className="path-body">
           <section className="path-window" aria-label={`عالم ${name}`}>
-            <WorldWindow world={world} mastered={mastered} total={total} action={action} label={name}
+            <WorldWindow world={world} mastered={Math.max(0, mastered - holdBack)} total={total} action={action} label={name}
               onSirajTap={() => { setAction('wave'); setLine(say(p, 'يلا يا بطل!', 'يلا يا بطلة!')); setTimeout(() => setLine(null), 1600); }} />
             {line && <div className="window-line"><Bubble>{line}</Bubble></div>}
             <Confetti run={party} />

@@ -4,6 +4,10 @@ import './styles/global.css';
 import './styles/screens.css';
 import { applyTokens } from './lib/tokens';
 import { App } from './App';
+import { registerApp } from './data/packs';
+import { ErrorBoundary, installErrorLog } from './ui/ErrorBoundary';
 
 applyTokens();
-createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
+installErrorLog();
+createRoot(document.getElementById('root')!).render(<StrictMode><ErrorBoundary><App /></ErrorBoundary></StrictMode>);
+void registerApp();

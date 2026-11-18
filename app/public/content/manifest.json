@@ -1,0 +1,46 @@
+{
+ "version": "699b0c30cc",
+ "built": "2026-11-18T13:47:28.530Z",
+ "packs": [
+  {
+   "file": "core.json",
+   "bytes": 55906,
+   "hash": "663460ece6f7"
+  },
+  {
+   "file": "world-kassala.json",
+   "bytes": 868,
+   "hash": "197ac9b2bbc2"
+  },
+  {
+   "file": "world-mogran.json",
+   "bytes": 31,
+   "hash": "e1ba7872420a"
+  },
+  {
+   "file": "world-meroe.json",
+   "bytes": 30,
+   "hash": "4a08b0c3719a"
+  },
+  {
+   "file": "world-suakin.json",
+   "bytes": 31,
+   "hash": "698bc4b2205a"
+  },
+  {
+   "file": "world-marra.json",
+   "bytes": 30,
+   "hash": "5e8f3b16ba58"
+  },
+  {
+   "file": "world-saqiya.json",
+   "bytes": 31,
+   "hash": "6bc5b0ab7695"
+  },
+  {
+   "file": "legacy.json",
+   "bytes": 14191,
+   "hash": "82cbadb5fd65"
+  }
+ ]
+}

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { guessTier, SETTINGS, type Tier } from '../lib/tier';
 import { useApp } from '../state/store';
+import { logError } from '../ui/ErrorBoundary';
 
 export const stats = { fps: 0, ms: 0, calls: 0, tris: 0, dpr: 1, tier: 'high' as Tier, gpu: '' };
 (window as unknown as { __stats: typeof stats }).__stats = stats;
@@ -68,9 +69,11 @@ export function Stage({ children, camera = { position: [0, 2, 6], fov: 40 }, cla
   const tier = useTier();
   const s = SETTINGS[tier];
   const [dpr, setDpr] = useState(Math.min(s.dpr[1], window.devicePixelRatio || 1));
+  const [canvasKey, setCanvasKey] = useState(0);
   stats.tier = tier;
   return (
     <Canvas
+      key={canvasKey}
       className={className}
       aria-label={label}
       role="img"
@@ -79,6 +82,9 @@ export function Stage({ children, camera = { position: [0, 2, 6], fov: 40 }, cla
       gl={{ antialias: s.antialias, alpha: !!transparent, powerPreference: 'high-performance', stencil: false, preserveDrawingBuffer: false }}
       camera={{ position: camera.position, fov: camera.fov ?? 40, near: camera.far ? 0.5 : 0.1, far: camera.far ?? 400 }}
       onCreated={({ gl, scene }) => {
+        const el = gl.domElement; let timer = 0;
+        el.addEventListener('webglcontextlost', e => { e.preventDefault(); void logError('WebGL context lost', '3d'); timer = window.setTimeout(() => setCanvasKey(k => k + 1), 2500); }, { once: true });
+        el.addEventListener('webglcontextrestored', () => { clearTimeout(timer); setCanvasKey(k => k + 1); }, { once: true });
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
         gl.outputColorSpace = THREE.SRGBColorSpace;

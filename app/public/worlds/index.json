@@ -1,0 +1,31 @@
+{
+ "kassala": {
+  "files": [
+   {
+    "path": "worlds/kassala/field.bin",
+    "bytes": 294464
+   },
+   {
+    "path": "worlds/kassala/granite_mokram.png",
+    "bytes": 448109
+   },
+   {
+    "path": "worlds/kassala/granite_taka.png",
+    "bytes": 619096
+   },
+   {
+    "path": "worlds/kassala/massif.bin",
+    "bytes": 1495932
+   },
+   {
+    "path": "worlds/kassala/terrain.bin",
+    "bytes": 26572
+   },
+   {
+    "path": "worlds/kassala/world.json",
+    "bytes": 426955
+   }
+  ],
+  "bytes": 3311128
+ }
+}
