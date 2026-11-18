@@ -98,6 +98,7 @@ export const stampsOf = (l: Learner | undefined) => WORLDS.filter(w => { const s
 
 // ---------- v2 import ----------
 const LEGACY_KEY = 'khwarizmi.v1';
+let loading: Promise<void> | null = null;
 type V2Player = { id: string; fid?: string; name?: string; age?: number; gender?: string; progress?: Record<string, number | { stars?: number }> };
 /** Translate one v2 player: a new skill is mastered when every old level teaching it was solved, learning if some were. */
 export function translateV2(p: V2Player, map: { levels: { legacyId: string; skills: string[] }[] }): LegacyPlayer {
@@ -144,7 +145,8 @@ async function save(l: Learner) {
 
 export const useLearning = create<LearningState>()((set, get) => ({
   ready: false, durable: false, persisted: null, learners: {}, legacy: [],
-  load: async () => {
+  // one load shared by every caller (the boot retry can start a second one before the first has finished)
+  load: () => (loading ??= (async () => {
     const durable = await db.durable();
     const learners: Record<string, Learner> = {};
     for (const [id, raw] of await db.all<unknown>('learners')) {
@@ -158,7 +160,7 @@ export const useLearning = create<LearningState>()((set, get) => ({
       try {
         const txt = localStorage.getItem(LEGACY_KEY);
         if (txt) {
-          await db.put('legacy', `${LEGACY_KEY}@${Date.now()}`, txt);
+          await db.put('legacy', `${LEGACY_KEY}@import`, txt);   // a fixed key: a repeated import cannot archive twice
           const raw = JSON.parse(txt) as { players?: V2Player[] };
           const map = await legacyMap();
           legacy = (Array.isArray(raw.players) ? raw.players : []).filter(p => p && typeof p.id === 'string').map(p => translateV2(p, map));
@@ -170,7 +172,7 @@ export const useLearning = create<LearningState>()((set, get) => ({
     let persisted: boolean | null = null;
     try { persisted = navigator.storage?.persist ? await navigator.storage.persist() : null; } catch { persisted = null; }
     set({ ready: true, durable, persisted, learners, legacy });
-  },
+  })().catch(e => { loading = null; throw e; })),
   complete: (pid, skillId) => {
     const l = completeSkill(get().learners[pid] ?? blankLearner(pid), skillId);
     set({ learners: { ...get().learners, [pid]: l } }); void save(l);
