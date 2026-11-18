@@ -33,7 +33,7 @@ try {
     if (!existsSync(join(DIST, f))) continue;
     if (sh(`git hash-object --no-filters "${join(DIST, f)}"`, W) !== blob) throw new Error(`published file differs from the build: ${f}`);
   }
-  if (!sh('git status --porcelain', W)) { console.log('nothing new to publish'); process.exit(0); }
+  if (!sh('git status --porcelain', W)) throw Object.assign(new Error('nothing new to publish'), { quiet: true });
   sh(`git commit -q -m "نشر خوارزمي من ${source}"`, W);
   const commit = sh('git rev-parse --short HEAD', W);
   sh('git push -q origin HEAD:main', W);
@@ -44,6 +44,9 @@ try {
     if (s.startsWith('errored')) throw new Error('GitHub Pages build failed');
     execSync('node -e "setTimeout(()=>{},5000)"');
   }
+} catch (e) {
+  console.log(e.message);
+  if (!e.quiet) process.exitCode = 1;
 } finally {
   try { sh(`git worktree remove --force "${W}"`); } catch { /* already gone */ }
 }
