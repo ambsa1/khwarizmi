@@ -103,6 +103,12 @@ export function translateV2(p: V2Player, map: { levels: { legacyId: string; skil
     skills, levels: map.levels.filter(lv => solved.has(lv.legacyId)).length };
 }
 
+/** Same name, ignoring diacritics, letter-shape variants (أ إ آ ا، ة ه، ى ي), spaces and case. */
+export const sameName = (a: string, b: string) => {
+  const n = (s: string) => s.normalize('NFKC').replace(/[\u064B-\u0652\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase();
+  return !!a && !!b && n(a) === n(b);
+};
+
 // ---------- the store ----------
 type Backup = { app: 'khawarizmi'; kind: 'backup'; schema: number; created: number; learners: Learner[] };
 type LearningState = {
@@ -115,7 +121,7 @@ type LearningState = {
   complete: (pid: string, skillId: string) => void;
   review: (pid: string, skillId: string, ok: boolean) => void;
   linkLegacy: (legacyId: string, pid: string) => void;
-  linkFamily: (memberIds: string[]) => void;
+  linkFamily: (members: { id: string; name: string }[]) => void;
   exportBackup: () => Backup;
   importBackup: (json: unknown) => { ok: boolean; count: number };
   forget: (pid: string) => void;
@@ -170,9 +176,16 @@ export const useLearning = create<LearningState>()((set, get) => ({
     const legacy = get().legacy.map(x => (x.legacyId === legacyId ? { ...x, linkedTo: pid } : x));
     set({ learners: { ...get().learners, [pid]: l }, legacy }); void save(l); void db.put('meta', 'legacyPlayers', legacy);
   },
-  /** When the family is unlocked: link old players whose family id matches a child exactly. */
-  linkFamily: memberIds => {
-    for (const lp of get().legacy) if (!lp.linkedTo && lp.fid && memberIds.includes(lp.fid)) get().linkLegacy(lp.legacyId, lp.fid);
+  /** When the family is unlocked: link an old player to a child only when it is unambiguous: the same family id, or
+   *  exactly one child with exactly the same name (Arabic spelling variants unified). Anything else waits for a parent. */
+  linkFamily: members => {
+    for (const lp of get().legacy) {
+      if (lp.linkedTo) continue;
+      const byId = lp.fid ? members.filter(m => m.id === lp.fid) : [];
+      const byName = lp.name ? members.filter(m => sameName(m.name, lp.name)) : [];
+      const pick = byId.length === 1 ? byId[0] : byName.length === 1 ? byName[0] : null;
+      if (pick && get().legacy.filter(x => !x.linkedTo && sameName(x.name, pick.name)).length <= 1) get().linkLegacy(lp.legacyId, pick.id);
+    }
   },
   exportBackup: () => ({ app: 'khawarizmi', kind: 'backup', schema: SCHEMA, created: Date.now(), learners: Object.values(get().learners) }),
   importBackup: json => {

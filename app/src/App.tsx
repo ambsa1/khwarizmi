@@ -51,7 +51,7 @@ export function App() {
   if (bootError) throw bootError;   // -> the calm error screen (ErrorBoundary), and the parents' log
   // old v2 players whose family id matches a child are linked as soon as the family is open
   const learningReady = useLearning(s => s.ready);
-  useEffect(() => { if (family && learningReady) useLearning.getState().linkFamily(family.members.map(m => m.id)); }, [family, learningReady]);
+  useEffect(() => { if (family && learningReady) useLearning.getState().linkFamily(family.members.map(m => ({ id: m.id, name: m.name }))); }, [family, learningReady]);
   // Re-open the sealed family data with the key saved on this device (the code itself is never stored).
   useEffect(() => {
     if (!familyKey || family) return;
