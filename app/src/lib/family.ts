@@ -32,6 +32,24 @@ export async function unlockWithCode(code: string) {
   } catch { return null; }
 }
 
+export type KeyWrap = { v: 1; salt: string; iter: number; data: string };
+const WRAP_ITER = 200000;
+async function pinKey(pin: string, salt: Uint8Array, usage: KeyUsage[]) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(norm(pin)), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: WRAP_ITER }, base, { name: 'AES-GCM', length: 256 }, false, usage);
+}
+/** Locks the family key with the parents' personal code (the only form in which it is kept on the device). */
+export async function wrapFamilyKey(keyB64: string, pin: string): Promise<KeyWrap> {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await pinKey(pin, salt, ['encrypt']), fromB64(keyB64)));
+  const out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12);
+  return { v: 1, salt: toB64(salt), iter: WRAP_ITER, data: toB64(out) };
+}
+/** Personal code -> family key, or null when the code is wrong. */
+export async function unwrapFamilyKey(w: KeyWrap, pin: string): Promise<string | null> {
+  try { return toB64(await open(await pinKey(pin, fromB64(w.salt), ['decrypt']), fromB64(w.data))); } catch { return null; }
+}
+
 /** Saved key -> manifest (fast, no PBKDF2). */
 export async function unlockWithKey(keyB64: string) {
   const env = await envelope();

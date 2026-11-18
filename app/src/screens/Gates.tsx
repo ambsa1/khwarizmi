@@ -9,7 +9,7 @@ import { Sound } from '../audio/SoundManager';
 import { checkDevCode, devFetch, devSignIn, explainError, summarize, type CloudError, type ProgressRow } from '../cloud/cloud';
 import { CLOUD, cloudOn } from '../cloud/config';
 import { useLearning } from '../data/learning';
-import { unlockWithCode } from '../lib/family';
+import { unlockWithCode, unlockWithKey, unwrapFamilyKey, wrapFamilyKey, type FamilyManifest } from '../lib/family';
 import { useNum } from '../lib/num';
 import { subjectName, WORLDS } from '../lib/content';
 import { useApp } from '../state/store';
@@ -31,31 +31,54 @@ function GateShell({ title, children, onBack }: { title: string; children: React
 
 export function FamilyPage() {
   const s = useApp();
-  const [code, setCode] = useState(''), [msg, setMsg] = useState<string | null>(null), [busy, setBusy] = useState(false);
-  const unlock = async () => {
+  // stage: 'word' (first time on this device, or forgotten code) -> 'create' -> unlocked; or 'pin' when a personal code exists
+  const [stage, setStage] = useState<'word' | 'create' | 'pin'>(s.familyWrap ? 'pin' : 'word');
+  const [code, setCode] = useState(''), [code2, setCode2] = useState(''), [msg, setMsg] = useState<string | null>(null), [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<{ keyB64: string; manifest: FamilyManifest } | null>(null);
+  const done = (keyB64: string, manifest: FamilyManifest) => { s.setFamilyKey(keyB64); s.setFamily(manifest); Sound.play('star'); s.go('entry'); };
+  const submit = async () => {
     setBusy(true); setMsg(null);
-    const r = await unlockWithCode(code);
-    setBusy(false);
-    if (!r) { setMsg('الكود ما اتطابق. جرّب تاني.'); Sound.play('close'); return; }
-    s.setFamilyKey(r.keyB64); s.setFamily(r.manifest); setCode(''); Sound.play('star'); s.go('entry');
+    try {
+      if (stage === 'word') {
+        const r = await unlockWithCode(code);
+        if (!r) { setMsg('كلمة التفعيل ما اتطابقت. جرّب تاني.'); Sound.play('close'); return; }
+        setPending(r); setStage('create'); setCode('');
+      } else if (stage === 'create') {
+        if (code.trim().length < 4) { setMsg('الكود الشخصي لازم يكون ٤ حروف أو أرقام على الأقل.'); return; }
+        if (code !== code2) { setMsg('الكودين ما متطابقين. اكتبوه تاني.'); return; }
+        s.setFamilyWrap(await wrapFamilyKey(pending!.keyB64, code)); done(pending!.keyB64, pending!.manifest);
+      } else {
+        const key = await unwrapFamilyKey(s.familyWrap!, code);
+        const m = key ? await unlockWithKey(key) : null;
+        if (!key || !m) { setMsg('الكود الشخصي ما اتطابق. جرّب تاني.'); Sound.play('close'); return; }
+        done(key, m);
+      }
+    } finally { setBusy(false); }
   };
   const lock = () => { s.setFamilyKey(null); s.setFamily(null); if (s.current?.startsWith('m')) s.setCurrent(null); s.go('entry'); };
+  const label = stage === 'word' ? 'كلمة تفعيل الأسرة' : stage === 'create' ? 'اعملوا كودكم الشخصي (للأب أو الأم)' : 'الكود الشخصي';
   return (
     <GateShell title="وضع الأسرة" onBack={() => s.go('entry')}>
       <section className="card gate-card family-gate">
         {s.family ? (
           <>
-            <p>وضع الأسرة مفتوح في الجهاز دا.</p>
+            <p>وضع الأسرة مفتوح الآن.</p>
             <div className="row" style={{ flexWrap: 'wrap' }}>
               <button className="btn" onClick={() => s.go('entry')}>اختار اللاعب</button>
               <button className="btn paper" onClick={lock}>اقفل وضع الأسرة</button>
             </div>
           </>
         ) : (
-          <form className="col" style={{ gap: 14 }} onSubmit={e => { e.preventDefault(); if (code.trim()) void unlock(); }}>
-            <label htmlFor="fam-code" className="t-h2">اكتب كود الأسرة</label>
-            <input id="fam-code" className="code" type="password" autoComplete="off" autoFocus dir="rtl" aria-label="كود الأسرة" value={code} onChange={e => setCode(e.target.value)} />
-            <button className="btn big wide" disabled={busy || !code.trim()}>{busy ? '...' : 'افتح'}</button>
+          <form className="col" style={{ gap: 14 }} onSubmit={e => { e.preventDefault(); if (code.trim()) void submit(); }}>
+            <label htmlFor="fam-code" className="t-h2">{label}</label>
+            <input id="fam-code" key={stage} className="code" type="password" autoComplete="off" autoFocus dir="rtl" aria-label={label} value={code} onChange={e => setCode(e.target.value)} />
+            {stage === 'create' && <>
+              <label htmlFor="fam-code2" className="t-body">أكّدوا الكود</label>
+              <input id="fam-code2" className="code" type="password" autoComplete="off" dir="rtl" aria-label="تأكيد الكود الشخصي" value={code2} onChange={e => setCode2(e.target.value)} />
+              <p className="t-small soft">الكود دا محفوظ في الجهاز دا بس، وبيُطلب كل مرة يتفتح فيها وضع الأسرة.</p>
+            </>}
+            <button className="btn big wide" disabled={busy || !code.trim() || (stage === 'create' && !code2.trim())}>{busy ? '...' : stage === 'create' ? 'احفظ وادخل' : 'افتح'}</button>
+            {stage === 'pin' && <button type="button" className="btn ghost" onClick={() => { setStage('word'); setCode(''); setMsg(null); }}>نسيت الكود الشخصي؟</button>}
             {msg && <p role="status">{msg}</p>}
           </form>
         )}

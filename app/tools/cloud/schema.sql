@@ -33,3 +33,9 @@ drop policy if exists "developer reads errors" on public.errors;
 create policy "developer reads errors" on public.errors for select to authenticated using (true);
 drop policy if exists "developer reads progress" on public.progress;
 create policy "developer reads progress" on public.progress for select to authenticated using (true);
+
+-- table privileges (newer projects do not grant them automatically; the policies above still decide which rows)
+grant usage on schema public to anon, authenticated;
+grant insert on public.errors, public.progress to anon, authenticated;
+grant select on public.errors, public.progress to authenticated;
+revoke select, update, delete on public.errors, public.progress from anon;

@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { Tier } from '../lib/tier';
-import type { FamilyManifest } from '../lib/family';
+import type { FamilyManifest, KeyWrap } from '../lib/family';
 
 export type Profile = {
   id: string;            // 'm1'..'m4' for family members, 'g-<time>' for guests
@@ -21,7 +21,9 @@ type State = {
   screen: Screen;
   profiles: Profile[];
   current: string | null;
-  familyKey: string | null;         // derived AES key (base64), never the code
+  familyKey: string | null;         // derived AES key (base64) for THIS session only, never the code
+  /** the family key locked with the parents' personal code (the only form kept on the device) */
+  familyWrap: KeyWrap | null;
   family: FamilyManifest | null;    // decrypted at runtime only, never persisted
   numerals: 'hindi' | 'latin';
   motion: 'auto' | 'reduced';
@@ -40,6 +42,7 @@ type State = {
   addGuest: (p: Omit<Profile, 'id' | 'kind'>) => string;
   setFamilyKey: (k: string | null) => void;
   setFamily: (f: FamilyManifest | null) => void;
+  setFamilyWrap: (w: KeyWrap | null) => void;
   setNumerals: (n: 'hindi' | 'latin') => void;
   setPlayLimit: (m: number) => void;
   setMotion: (m: 'auto' | 'reduced') => void;
@@ -61,7 +64,8 @@ export const useApp = create<State>()(persist((set, get) => ({
   screen: 'entry',
   profiles: [],
   current: null,
-  familyKey: null,
+  familyKey: (() => { try { return sessionStorage.getItem('khawarizmi.fk'); } catch { return null; } })(),
+  familyWrap: null,
   family: null,
   numerals: 'hindi',
   motion: 'auto',
@@ -81,7 +85,8 @@ export const useApp = create<State>()(persist((set, get) => ({
     set({ profiles: [...get().profiles.filter(x => x.kind === 'guest').slice(-5), { ...p, id, kind: 'guest' }], current: id });
     return id;
   },
-  setFamilyKey: familyKey => set({ familyKey }),
+  setFamilyKey: familyKey => { try { if (familyKey) sessionStorage.setItem('khawarizmi.fk', familyKey); else sessionStorage.removeItem('khawarizmi.fk'); } catch { /* private mode */ } set({ familyKey }); },
+  setFamilyWrap: familyWrap => set({ familyWrap }),
   setFamily: family => set({ family }),
   setNumerals: numerals => set({ numerals }),
   setPlayLimit: playLimit => set({ playLimit }),
@@ -93,7 +98,9 @@ export const useApp = create<State>()(persist((set, get) => ({
 }), {
   name: 'khawarizmi.v2',
   storage: safeStorage,
-  partialize: s => ({ profiles: s.profiles, current: s.current, familyKey: s.familyKey, numerals: s.numerals, motion: s.motion, tierOverride: s.tierOverride, playLimit: s.playLimit, measuredTier: s.measuredTier, world: s.world }),
+  // an open family key saved by older versions is ignored (and dropped on the next save): the key is kept only locked
+  merge: (saved, cur) => { const { familyKey: _old, ...rest } = (saved ?? {}) as Partial<State>; void _old; return { ...cur, ...rest }; },
+  partialize: s => ({ profiles: s.profiles, current: s.current, familyWrap: s.familyWrap, numerals: s.numerals, motion: s.motion, tierOverride: s.tierOverride, playLimit: s.playLimit, measuredTier: s.measuredTier, world: s.world }),
 }));
 
 /** Current player: a family member (from the decrypted manifest) or a saved guest. */

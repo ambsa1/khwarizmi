@@ -41,7 +41,8 @@ export function Entry() {
   const [picked, setPicked] = useState<string | null>(null);
   const players: (Profile & { ring?: string; stamps: number })[] = [
     ...(family?.members ?? []).map(m => ({ id: m.id, kind: 'family' as const, name: m.name, gender: m.gender, age: m.age, grade: null, avatar: m.id, ring: m.ring, stamps: stampsOf(learners[m.id]) })),
-    ...guests.map(g => ({ ...g, stamps: stampsOf(learners[g.id]) })),
+    // family mode is reserved for the four children: no guests and no way to add a player
+    ...(family ? [] : guests.map(g => ({ ...g, stamps: stampsOf(learners[g.id]) }))),
   ];
   const pick = (id: string) => {
     if (picked) return;
@@ -80,11 +81,13 @@ export function Entry() {
               )}
             </motion.button>
           ))}
+          {!family && (
           <motion.button className="who-card card lift who-new" onClick={guard(() => go('guest'))}
-            initial={{ opacity: 0, y: 24, scale: 0.92 }} animate={{ opacity: picked ? 0.4 : 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 24, delay: 0.05 * players.length }}>
-            <span className="who-plus" style={{ width: portrait, height: portrait }}><IconPlus size={Math.round(portrait * 0.4)} /></span>
-            <span className="who-name">ضيف جديد</span>
-          </motion.button>
+              initial={{ opacity: 0, y: 24, scale: 0.92 }} animate={{ opacity: picked ? 0.4 : 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 24, delay: 0.05 * players.length }}>
+              <span className="who-plus" style={{ width: portrait, height: portrait }}><IconPlus size={Math.round(portrait * 0.4)} /></span>
+              <span className="who-name">ضيف جديد</span>
+            </motion.button>
+          )}
         </div>
       </div>
     </div>

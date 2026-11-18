@@ -303,9 +303,20 @@ if (existsSync(codeFile)) {
   await page.getByRole('button', { name: 'افتح' }).click();
   await page.waitForTimeout(2500);
   ok('wrong code is refused', await page.locator('.family-gate [role=status]').innerText().then(t => t.includes('ما اتطابق')).catch(() => false));
-  await page.locator('input.code').fill(readFileSync(codeFile, 'utf8').trim());
+  // first time on this device: the activation word (typed without hamza, to check the normalising), then the
+  // parents create and confirm their personal code
+  const word = readFileSync(codeFile, 'utf8').trim().replace(/[أإآ]/g, 'ا');
+  await page.locator('#fam-code').fill(word);
   await page.getByRole('button', { name: 'افتح' }).click();
+  await page.waitForSelector('#fam-code2', { timeout: 15000 });
+  await page.locator('#fam-code').fill('2468'); await page.locator('#fam-code2').fill('1357');
+  await page.getByRole('button', { name: 'احفظ وادخل' }).click(); await page.waitForTimeout(600);
+  const mismatch = await page.locator('.family-gate [role=status]').innerText().catch(() => '');
+  await page.locator('#fam-code2').fill('2468');
+  await page.getByRole('button', { name: 'احفظ وادخل' }).click();
   await page.waitForSelector('.who-card:not(.who-new)', { timeout: 15000 });
+  ok('activation word (with or without hamza) -> the parents create + confirm a personal code', mismatch.includes('متطابقين'), mismatch);
+  ok('family mode shows only the four children (no guests, no new-player card)', await page.locator('.who-new').count() === 0 && await page.locator('.who-card').count() === 4);
   await page.waitForTimeout(2500);
   const cards = await page.locator('.who-card:not(.who-new)').count();
   const imgs = await page.locator('.who-card:not(.who-new) img').evaluateAll(els => els.filter(e => e.complete && e.naturalWidth > 0).length);
@@ -320,11 +331,20 @@ if (existsSync(codeFile)) {
   await page.waitForSelector('.path', { timeout: 5000 });
   await page.waitForTimeout(2500);
   await page.screenshot({ path: join(PRIVATE, 'shots', 'family-path-360x800.png') });
-  await page.reload({ waitUntil: 'load' });
-  await page.waitForSelector('.who-card', { timeout: 8000 }).catch(() => {});
-  ok('family stays open after reload (saved key, not the code)', await page.locator('.who-card:not(.who-new)').count() === 4);
-  const stored = await page.evaluate(() => localStorage.getItem('khawarizmi.v2') || '');
-  ok('the code itself is never stored', !stored.includes(readFileSync(codeFile, 'utf8').trim()));
+  // opening the app again (a new window): family mode is closed until the personal code is entered
+  const again = await page.context().newPage();
+  await again.goto(base, { waitUntil: 'load' }); await again.waitForSelector('.entry'); await again.waitForTimeout(1500);
+  const closed = await again.locator('.who-card:not(.who-new)').count() === 0;
+  const sj2 = await again.locator('.entry-siraj').boundingBox();
+  await again.mouse.move(sj2.x + sj2.width / 2, sj2.y + sj2.height / 2); await again.mouse.down(); await again.waitForTimeout(4400); await again.mouse.up();
+  await again.waitForSelector('#fam-code');
+  const asksPin = (await again.locator('label[for=fam-code]').innerText()).includes('الشخصي');
+  await again.locator('#fam-code').fill('2468'); await again.getByRole('button', { name: 'افتح' }).click();
+  const back = await again.waitForSelector('.who-card:not(.who-new)', { timeout: 15000 }).then(() => true).catch(() => false);
+  ok('reopened app: family closed, asks the personal code directly, then shows the four', closed && asksPin && back && await again.locator('.who-card').count() === 4);
+  const stored = await again.evaluate(() => JSON.stringify(localStorage));
+  ok('neither the activation word, the personal code nor the open key is stored', !stored.includes(word) && !stored.includes('2468') && !stored.includes('familyKey'));
+  await again.close();
 } else ok('family mode', true, 'skipped: no private code on this machine');
 
 ok('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));

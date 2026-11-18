@@ -21,7 +21,8 @@ export function deviceLabel(ua = navigator.userAgent) {
   return [os, br, kind].filter(Boolean).join(' · ');
 }
 
-const headers = (token?: string) => ({ apikey: CLOUD.anonKey, Authorization: `Bearer ${token ?? CLOUD.anonKey}`, 'Content-Type': 'application/json' });
+// publishable keys go in the apikey header only; Authorization carries the developer's session token when signed in
+const headers = (token?: string): Record<string, string> => ({ apikey: CLOUD.anonKey, 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) });
 
 export function reportError(message: string, place: string) {
   writeQ([...readQ(), { at: new Date().toISOString(), device: deviceLabel(), version: __APP_VERSION__, place, message: message.slice(0, 500), ua: navigator.userAgent.slice(0, 200) }]);
@@ -89,9 +90,18 @@ export async function checkDevCode(code: string) {
   } catch { return false; }
 }
 /** signs in to the cloud as the developer (the developer code is the account password) */
+async function devEmail(code: string) {
+  try {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code.normalize('NFC').trim()), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt: b64(CLOUD.devEmailSealed.salt), iterations: 250000 }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const all = b64(CLOUD.devEmailSealed.data);
+    return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: all.subarray(0, 12) }, key, all.subarray(12)));
+  } catch { return null; }
+}
 export async function devSignIn(code: string): Promise<string | null> {
-  if (!cloudOn() || !CLOUD.devEmail) return null;
-  const r = await fetch(`${CLOUD.url}/auth/v1/token?grant_type=password`, { method: 'POST', headers: headers(), body: JSON.stringify({ email: CLOUD.devEmail, password: code.trim() }) });
+  const email = cloudOn() ? await devEmail(code) : null;
+  if (!email) return null;
+  const r = await fetch(`${CLOUD.url}/auth/v1/token?grant_type=password`, { method: 'POST', headers: headers(), body: JSON.stringify({ email, password: code.trim() }) });
   return r.ok ? (await r.json()).access_token : null;
 }
 export type ProgressRow = { member: string; device: string; updated_at: string; summary: ReturnType<typeof summarize> };
