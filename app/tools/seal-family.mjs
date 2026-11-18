@@ -27,6 +27,7 @@ const GROUP = 'self ph u can use it in any place.jpeg';
 const RING = { 1: '#2F7FD8', 2: '#D9558F', 3: '#1F9D61', 4: '#E8892B' };
 
 const norm = s => String(s).normalize('NFC').trim()
+  .replace(/[ً-ٰـ]/g, '').replace(/[آأإٱ]/g, 'ا')
   .replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660).replace(/[۰-۹]/g, d => d.charCodeAt(0) - 0x6f0).replace(/\s+/g, '');
 const b64 = u8 => Buffer.from(u8).toString('base64');
 

@@ -19,6 +19,7 @@ import { Parents, Passport, Perf } from './screens/Others';
 import { Path } from './screens/Path';
 import { Lesson } from './screens/Lesson';
 import { SirajPreview, WorldTour } from './screens/Preview';
+import { DevPage, FamilyPage } from './screens/Gates';
 import { PlayTime } from './ui/PlayTime';
 
 const q = new URLSearchParams(location.search);
@@ -71,7 +72,7 @@ export function App() {
   const needsPlayer = screen === 'path' || screen === 'map' || screen === 'passport' || screen === 'lesson';
   const shown: Screen = needsPlayer && !current ? 'entry' : screen;
   const body = {
-    entry: <Entry />, guest: <Guest />, path: <Path />, map: <MapScreen />, passport: <Passport />, parents: <Parents />, perf: <Perf />, lesson: <Lesson />,
+    entry: <Entry />, guest: <Guest />, path: <Path />, map: <MapScreen />, passport: <Passport />, parents: <Parents />, perf: <Perf />, lesson: <Lesson />, family: <FamilyPage />, dev: <DevPage />,
   }[shown];
   return (
     <MotionConfig reducedMotion={reduced ? 'always' : 'never'}>

@@ -152,3 +152,26 @@ input[type=range].vol { width: 100%; accent-color: var(--c-gold); height: 36px; 
   .path .topbar .world-pill-bar { width: 44px; }
   .player-pill { padding: 3px 4px 3px 10px; gap: 6px; max-width: 34vw; }
 }
+
+/* map cards: two columns on phones, words never broken mid-letter */
+@media (orientation: portrait) { .world-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.world-card b { word-break: keep-all; overflow-wrap: normal; hyphens: none; }
+/* the map's floating line stays small at the top */
+.map .window-line { top: 8px; bottom: auto; inset-inline: 0; display: flex; justify-content: center; pointer-events: none; }
+.map .window-line .card { font-size: 18px; padding: 6px 16px; border-radius: 999px; background: var(--glass-strong); }
+/* gates and the developer panel */
+.gate-body { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6vh var(--gutter) 0; }
+.gate-card { width: min(480px, 100%); padding: 22px; display: grid; gap: 12px; }
+.gate .code { width: 100%; min-height: 60px; border-radius: var(--r-btn); border: 1px solid rgba(107, 90, 72, .25); padding: 0 16px; font-size: 22px; background: rgba(255, 255, 255, .92); }
+.dev-tabs { margin: 0 var(--gutter) 8px; align-self: center; }
+.dev-body { padding: 0 var(--gutter) 24px; display: grid; gap: 12px; align-content: start; max-width: 860px; width: 100%; margin: 0 auto; }
+.dev-kid, .dev-err { padding: 16px; display: grid; gap: 6px; }
+.dev-worlds { display: flex; flex-wrap: wrap; gap: 6px; }
+.dev-err code { white-space: pre-wrap; word-break: break-word; background: rgba(0, 0, 0, .04); padding: 6px 10px; border-radius: 10px; }
+.motivate { background: rgba(255, 236, 190, .45); border-radius: var(--r-btn); padding: 10px 14px; }
+.version { user-select: none; -webkit-user-select: none; touch-action: none; }
+/* entering a world: a light glass loader instead of the old waiting screen */
+.world-gate { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 10px; background: var(--g-sand); }
+.world-gate > * { background: var(--glass-strong); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: var(--glass-border); box-shadow: var(--glass-shadow); border-radius: 999px; padding: 8px 18px; margin: 0; }
+.world-gate .gate-bar { width: 180px; height: 12px; padding: 0; overflow: hidden; display: block; }
+.world-gate .gate-bar i { display: block; height: 100%; background: linear-gradient(90deg, #F5C451, #E8892B); border-radius: 999px; transition: width 300ms; }

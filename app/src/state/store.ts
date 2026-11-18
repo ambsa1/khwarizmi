@@ -15,7 +15,7 @@ export type Profile = {
   avatar: string;        // guest avatar id, or family member id
 };
 
-export type Screen = 'entry' | 'guest' | 'path' | 'map' | 'passport' | 'parents' | 'perf' | 'lesson';
+export type Screen = 'entry' | 'guest' | 'path' | 'map' | 'passport' | 'parents' | 'perf' | 'lesson' | 'family' | 'dev';
 
 type State = {
   screen: Screen;

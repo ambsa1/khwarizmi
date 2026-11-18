@@ -9,13 +9,13 @@ import { useApp, useProfile } from '../state/store';
 import { Stage } from '../three/Stage';
 import { SudanMapScene, type MapSpot } from '../three/SudanMap';
 import { Bubble, TabBar, say, useGuard } from '../ui/kit';
-import { IconBag, IconChip, IconCode, IconLens, IconLetters, IconLock, IconPuzzle } from '../ui/Icons';
+import { IconChip, IconCode, IconLeaf, IconLens, IconLetters, IconLock, IconPuzzle } from '../ui/Icons';
 import { currentWorld } from './Path';
 
 export { SHORT_NAME };
 
 /** each world's subject icon and colour (map cards, passport) */
-export const SUBJECT_ICON: Record<WorldId, (p: { size?: number }) => JSX.Element> = { kassala: IconCode, mogran: IconChip, meroe: IconLetters, suakin: IconPuzzle, marra: IconBag, saqiya: IconLens };
+export const SUBJECT_ICON: Record<WorldId, (p: { size?: number }) => JSX.Element> = { kassala: IconCode, mogran: IconChip, meroe: IconLetters, suakin: IconPuzzle, marra: IconLeaf, saqiya: IconLens };
 export const SUBJECT_COLOR: Record<WorldId, string> = { kassala: '#E08A2E', mogran: '#2F7FD8', meroe: '#C2416E', suakin: '#1FA3A3', marra: '#3E9A4A', saqiya: '#8A5AC8' };
 
 export function MapScreen() {

@@ -64,3 +64,4 @@ export const IconLetters = (p: P) => (<svg {...base(p)}><path d="M4 24l6-16 6 16
 export const IconPuzzle = (p: P) => (<svg {...base(p)}><path d="M6 10h6a3 3 0 1 1 6 0h6v6a3 3 0 1 0 0 6v4H18a3 3 0 1 0-6 0H6v-6a3 3 0 1 1 0-6z" /></svg>);
 export const IconBag = (p: P) => (<svg {...base(p)}><path d="M8 12c0-4 4-6 8-6s8 2 8 6v14H8z" /><path d="M12 6V4h8v2M8 17h16M14 17v4h4v-4" /></svg>);
 export const IconLens = (p: P) => (<svg {...base(p)}><circle cx="14" cy="14" r="8" /><path d="M20 20l7 7" /><path d="M10.5 12a4 4 0 0 1 4-3" /></svg>);
+export const IconLeaf = (p: P) => (<svg {...base(p)}><path d="M7 25C7 13 15 6 27 5c0 12-7 20-19 20z" /><path d="M7 25c5-6 10-10 16-14" /></svg>);

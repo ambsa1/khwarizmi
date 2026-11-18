@@ -228,12 +228,13 @@ small = await smallText(); ok('passport: no text under 18px', small.length === 0
   const fpsOff = await pg.evaluate(() => window.__stats?.fps ?? 0);
   ok('a downloaded world opens with no internet', online3d === 1 && offline3d === 1 && fpsOff > 0, `3D online ${online3d}, offline ${offline3d}, fps ${fpsOff}`);
   await cx.setOffline(false);
-  await openParents(pg);
-  await pg.locator('.device').getByRole('button', { name: 'احذف من الجهاز' }).click(); await pg.waitForTimeout(800);
+  // the world's files gone from the device (the parents' corner no longer offers a delete button)
+  await pg.evaluate(async () => { const c = await caches.open('worlds'); for (const k of await c.keys()) if (k.url.includes('/worlds/kassala/')) await c.delete(k); });
+  await pg.waitForTimeout(500);
   await cx.setOffline(true);
   await openPath(pg); await pg.waitForTimeout(1500);
   const gate = await pg.locator('.world-gate').innerText().catch(() => '');
-  ok('a deleted world says it needs internet once', gate.includes('إنترنت'), gate);
+  ok('a world missing from the device says it needs internet once', gate.includes('إنترنت'), gate);
   await cx.close();
 }
 
@@ -267,6 +268,24 @@ small = await smallText(); ok('passport: no text under 18px', small.length === 0
   await cx.close();
 }
 
+// 4b. developer gate (local only): hold the version number 4 s in menu > about; wrong code refused, right code opens the panel
+const devFile = join(PRIVATE, 'dev-code.txt');
+if (existsSync(devFile)) {
+  await page.goto(base, { waitUntil: 'load' }); await page.waitForSelector('.entry');
+  await page.getByRole('button', { name: 'القائمة' }).first().click();
+  await page.getByRole('button', { name: 'عن تطبيق خوارزمي' }).click();
+  await page.waitForTimeout(900);   // let the sheet finish sliding in
+  await page.locator('.version').scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+  const v = await page.locator('.version').boundingBox();
+  await page.mouse.move(v.x + v.width / 2, v.y + v.height / 2); await page.mouse.down(); await page.waitForTimeout(4400); await page.mouse.up();
+  await page.waitForSelector('.gate #dev-code');
+  await page.locator('#dev-code').fill('wrong-code'); await page.getByRole('button', { name: 'ادخل' }).click(); await page.waitForTimeout(2500);
+  const refused = await page.locator('.gate [role=status]').innerText().catch(() => '');
+  await page.locator('#dev-code').fill(readFileSync(devFile, 'utf8').trim()); await page.getByRole('button', { name: 'ادخل' }).click();
+  const opened = await page.waitForSelector('.dev .dev-tabs', { timeout: 15000 }).then(() => true).catch(() => false);
+  ok('developer gate: hidden gesture, wrong code refused, right code opens the panel', refused.includes('ما اتطابق') && opened, refused);
+}
+
 // 5. family mode (local only)
 const codeFile = join(PRIVATE, 'family-code.txt');
 if (existsSync(codeFile)) {
@@ -274,19 +293,19 @@ if (existsSync(codeFile)) {
   await page.reload({ waitUntil: 'load' });
   await page.waitForSelector('.entry');
   ok('family hidden before the code', await page.locator('.who-card:not(.who-new)').count() === 0);
-  // the secret gesture: hold Siraj for three seconds
+  // the secret gesture: hold Siraj for four seconds -> the full-screen family page
   const sj = await page.locator('.entry-siraj').boundingBox();
-  await page.mouse.move(sj.x + sj.width / 2, sj.y + sj.height / 2); await page.mouse.down(); await page.waitForTimeout(3300); await page.mouse.up();
-  await page.waitForSelector('.family-gate');
-  ok('family code opens from the secret gesture on Siraj (not the lock)', true);
+  await page.mouse.move(sj.x + sj.width / 2, sj.y + sj.height / 2); await page.mouse.down(); await page.waitForTimeout(4400); await page.mouse.up();
+  await page.waitForSelector('.gate .family-gate');
+  const fieldTop = await page.locator('.gate .code').boundingBox();
+  ok('family page opens by holding Siraj 4 s; the code field sits in the top half', fieldTop && fieldTop.y < page.viewportSize().height / 2, `field at ${Math.round(fieldTop?.y ?? -1)}px`);
   await page.locator('input.code').fill('wrong-code');
   await page.getByRole('button', { name: 'افتح' }).click();
   await page.waitForTimeout(2500);
   ok('wrong code is refused', await page.locator('.family-gate [role=status]').innerText().then(t => t.includes('ما اتطابق')).catch(() => false));
   await page.locator('input.code').fill(readFileSync(codeFile, 'utf8').trim());
   await page.getByRole('button', { name: 'افتح' }).click();
-  await page.waitForTimeout(3000);
-  await page.waitForSelector('.who-card');
+  await page.waitForSelector('.who-card:not(.who-new)', { timeout: 15000 });
   await page.waitForTimeout(2500);
   const cards = await page.locator('.who-card:not(.who-new)').count();
   const imgs = await page.locator('.who-card:not(.who-new) img').evaluateAll(els => els.filter(e => e.complete && e.naturalWidth > 0).length);

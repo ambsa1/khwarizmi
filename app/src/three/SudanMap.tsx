@@ -1,5 +1,5 @@
-// Sudan as a small hand-made table model: the land, the Nile (White, Blue and the great bend north) and the
-// Red Sea coast. No political border lines are drawn. The six landmarks sit at their real places, each with
+// Sudan as a small hand-made table model: the real land outline, the Nile (White, Blue and the great bend north) and
+// the real Red Sea. No political border lines are drawn. The six landmarks sit at their real places, each with
 // a ring that fills with the child's progress. Tapping a landmark chooses that world.
 import { Html } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -16,14 +16,10 @@ const LAND_TOP = 0.5;
 // Label offsets where real places sit close together (Meroe, Suakin and Kassala are all in the east).
 const LABEL_AT: Partial<Record<WorldId, [number, number, number]>> = { meroe: [0.2, 0, -1.75], suakin: [0.3, 0, -1.7] };
 
-// Simplified, softened outline of the land (longitude, latitude).
-const OUTLINE: [number, number][] = [
-  [24.0, 20.0], [25.0, 20.0], [25.0, 22.0], [31.3, 22.0], [36.9, 22.0], [37.15, 21.0], [37.3, 20.2], [37.22, 19.6], [37.35, 19.1],
-  [37.6, 18.7], [38.1, 18.3], [38.6, 18.0], [37.9, 17.4], [37.0, 16.9], [36.5, 15.2], [36.45, 14.3], [36.1, 12.7], [35.3, 11.9],
-  [34.9, 10.9], [34.3, 10.5], [33.95, 9.6], [33.2, 10.3], [32.9, 11.8], [32.2, 12.1], [31.5, 11.4], [30.4, 10.1], [29.4, 9.7],
-  [27.9, 9.6], [26.6, 10.1], [25.3, 10.3], [24.5, 9.4], [23.6, 9.0], [23.0, 9.9], [22.5, 11.0], [22.8, 12.4], [22.1, 13.2],
-  [22.2, 13.9], [22.7, 14.6], [22.9, 15.6], [23.6, 15.9], [24.0, 17.2], [24.0, 19.5],
-];
+// The real outline of Sudan and the real Red Sea (Natural Earth, public domain; simplified to ~140 and ~90 points).
+import MAPDATA from './sudan-map.json';
+const OUTLINE = MAPDATA.sudan as [number, number][];
+const RED_SEA = MAPDATA.redSea as [number, number][];
 const NILES: [number, number][][] = [
   [[32.75, 12.0], [32.66, 13.17], [32.3, 13.99], [32.4, 14.9], [32.53, 15.6]],                               // White Nile
   [[34.9, 10.95], [34.38, 11.8], [33.9, 12.8], [33.6, 13.55], [33.52, 14.4], [33.1, 15.1], [32.53, 15.6]],       // Blue Nile
@@ -65,43 +61,30 @@ function Rivers() {
   return <group>{tubes.map((g, i) => <mesh key={i} geometry={g}><meshLambertMaterial color={i === 1 ? '#2F6FC0' : '#4FA3D1'} emissive="#1F5FAD" emissiveIntensity={0.15} /></mesh>)}</group>;
 }
 
-/** The Red Sea as a floating water channel with rounded corners, parallel to the east coast (between Sudan and the
- *  Arabian shore): the same thickness as the land, warm turquoise deepening to the middle, a soft sand rim, its own
- *  floating shadow and a slow shimmer. */
-const SEA_A = P(37.95, 22.7), SEA_B = P(40.35, 16.45), SEA_W = 1.9, SEA_R = 0.62;
+/** The Red Sea along the real coast: a flat sheet of water at sea level (no frame, no raised rim), natural blue that
+ *  deepens away from the shores and fades softly where it runs off the map to the north and south. */
 function Sea() {
-  const { geo, mid, ang, len, tex } = useMemo(() => {
-    const d = SEA_B.clone().sub(SEA_A), len = d.length(), ang = Math.atan2(d.y, d.x), mid = SEA_A.clone().add(SEA_B).multiplyScalar(0.5);
-    const hw = SEA_W / 2, hl = len / 2, r = SEA_R, sh = new THREE.Shape();
-    sh.moveTo(-hl + r, -hw); sh.lineTo(hl - r, -hw); sh.quadraticCurveTo(hl, -hw, hl, -hw + r); sh.lineTo(hl, hw - r); sh.quadraticCurveTo(hl, hw, hl - r, hw);
-    sh.lineTo(-hl + r, hw); sh.quadraticCurveTo(-hl, hw, -hl, hw - r); sh.lineTo(-hl, -hw + r); sh.quadraticCurveTo(-hl, -hw, -hl + r, -hw);
-    const g = new THREE.ExtrudeGeometry(sh, { depth: LAND_TOP - 0.2, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.22, bevelSegments: 3, curveSegments: 10 });
-    // the top is painted by a texture laid over the channel (the extruded cap has no inner points to colour):
-    // a soft sand rim, then warm turquoise deepening towards the middle
-    const cv = document.createElement('canvas'), W = 512, H = Math.round(512 * hw / hl); cv.width = W; cv.height = H;
-    const x = cv.getContext('2d')!, rr = (x0: number, y0: number, w: number, h: number, r: number) => { x.beginPath(); x.roundRect(x0, y0, w, h, r); };
-    x.fillStyle = '#E2C08C'; x.fillRect(0, 0, W, H);
-    const inset = H * 0.11, grad = x.createLinearGradient(0, inset, 0, H - inset);
-    grad.addColorStop(0, '#86E0D6'); grad.addColorStop(0.5, '#2696AE'); grad.addColorStop(1, '#86E0D6');
-    rr(inset, inset, W - 2 * inset, H - 2 * inset, SEA_R / (2 * hw) * H); x.fillStyle = grad; x.fill();
-    for (let i = 0; i < 18; i++) { x.strokeStyle = 'rgba(255,255,255,.18)'; x.lineWidth = 2; const yy = inset + Math.random() * (H - 2 * inset), xx = inset + Math.random() * (W - 2 * inset - 60); x.beginPath(); x.moveTo(xx, yy); x.quadraticCurveTo(xx + 30, yy - 5, xx + 60, yy); x.stroke(); }
-    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-    tex.repeat.set(1 / (2 * hl), 1 / (2 * hw)); tex.offset.set(0.5, 0.5);
-    return { geo: g, mid, ang, len, tex };
+  const { geo, tex } = useMemo(() => {
+    const g = new THREE.ShapeGeometry(new THREE.Shape(RED_SEA.map(([a, b]) => P(a, b))), 8);
+    g.rotateX(-Math.PI / 2);
+    const lon0 = Math.min(...RED_SEA.map(p => p[0])), lon1 = Math.max(...RED_SEA.map(p => p[0]));
+    const lat0 = Math.min(...RED_SEA.map(p => p[1])), lat1 = Math.max(...RED_SEA.map(p => p[1]));
+    const W = 512, H = Math.round(W * (lat1 - lat0) / (lon1 - lon0)), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const x = cv.getContext('2d')!, X = (lon: number) => (lon - lon0) / (lon1 - lon0) * W, Y = (lat: number) => (lat1 - lat) / (lat1 - lat0) * H;
+    const path = () => { x.beginPath(); RED_SEA.forEach(([a, b], i) => (i ? x.lineTo(X(a), Y(b)) : x.moveTo(X(a), Y(b)))); x.closePath(); };
+    x.fillStyle = '#2C86B4'; path(); x.fill();
+    x.save(); path(); x.clip(); x.filter = 'blur(14px)'; x.strokeStyle = '#8FD9DF'; x.lineWidth = 46; path(); x.stroke(); x.restore();
+    // soft ends where the sea leaves the map (north of Egypt's border, south past Eritrea)
+    x.globalCompositeOperation = 'destination-in';
+    const fade = x.createLinearGradient(0, Y(25.2), 0, Y(13.6));
+    fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(0.18, 'rgba(0,0,0,1)'); fade.addColorStop(0.82, 'rgba(0,0,0,1)'); fade.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = fade; x.fillRect(0, 0, W, H);
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+    // ShapeGeometry uvs are the shape coordinates (lon - C.lon, lat - C.lat): map them onto the canvas
+    t.repeat.set(1 / (lon1 - lon0), 1 / (lat1 - lat0)); t.offset.set(-(lon0 - C.lon) / (lon1 - lon0), -(lat0 - C.lat) / (lat1 - lat0));
+    return { geo: g, tex: t };
   }, []);
-  const ref = useRef<THREE.MeshLambertMaterial>(null!);
-  useFrame(s => { ref.current.emissiveIntensity = 0.1 + Math.sin(s.clock.elapsedTime * 1.1) * 0.04; });
-  const shadow = useMemo(() => {
-    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d')!;
-    const g = x.createRadialGradient(64, 64, 8, 64, 64, 64); g.addColorStop(0, 'rgba(120,80,40,0.34)'); g.addColorStop(1, 'rgba(120,80,40,0)');
-    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
-  }, []);
-  return (
-    <group position={[mid.x, 0, -mid.y]} rotation-y={ang}>
-      <group rotation-x={-Math.PI / 2}><mesh geometry={geo}><meshLambertMaterial ref={ref} map={tex} emissive="#0E6A7A" emissiveIntensity={0.1} /></mesh></group>
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.6} scale={[len * 1.25, SEA_W * 2.2, 1]}><planeGeometry /><meshBasicMaterial map={shadow} transparent depthWrite={false} /></mesh>
-    </group>
-  );
+  return <mesh geometry={geo} position-y={LAND_TOP - 0.3}><meshLambertMaterial map={tex} transparent depthWrite={false} /></mesh>;
 }
 
 /** soft shadow under the floating map (a radial texture, no box) */

@@ -11,7 +11,7 @@ import { WorldTown, TOWN_FAR, TOWN_FOG } from './town/KassalaTown';
 import type { SirajAction } from './Siraj';
 import { Stage, useTier } from './Stage';
 
-type Props = { world: WorldId; mastered: number; total: number; action?: SirajAction; interactive?: boolean; label?: string; onSirajTap?: () => void };
+type Props = { world: WorldId; mastered: number; total: number; partial?: number; action?: SirajAction; interactive?: boolean; label?: string; onSirajTap?: () => void };
 
 function Picture({ world, label, children }: { world: WorldId; label?: string; children?: React.ReactNode }) {
   const c = T.worlds[world];
@@ -33,30 +33,28 @@ function useWorldReady(world: WorldId) {
   return { st, online, retry: () => void download(world) };
 }
 
-export function WorldWindow({ world, mastered, total, action = 'idle', interactive = true, label, onSirajTap }: Props) {
+export function WorldWindow({ world, mastered, total, partial = 0, action = 'idle', interactive = true, label, onSirajTap }: Props) {
   const tier = useTier();
   const webgl = useMemo(hasWebGL2, []);
   const { st, online, retry } = useWorldReady(world);
   if (!webgl) return <Picture world={world} label={label} />;
-  if (!st || st.state === 'unknown') return <Picture world={world} label={label} />;
+  // entering a world: a light glass loader on the sand (no separate waiting screen)
+  if (!st || st.state === 'unknown') return <div className="world-gate" role="img" aria-label={label} />;
   if (st.state !== 'ready') {
     const pct = st.bytes ? Math.round(st.got / st.bytes * 100) : 0;
     return (
-      <Picture world={world} label={label}>
-        {st.state === 'downloading' && <>
-          <p>سراج بيجهّز العالم…</p>
-          <span className="gate-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${pct}%` }} /></span>
-        </>}
+      <div className="world-gate" role="img" aria-label={label}>
+        {st.state === 'downloading' && <span className="gate-bar" role="progressbar" aria-label="تحميل العالم" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${pct}%` }} /></span>}
         {st.state !== 'downloading' && (online
           ? <><p>ما قدرنا ننزّل العالم.</p><button className="btn paper" onClick={retry}>جرّب تاني</button></>
           : <p>العالم دا محتاج إنترنت أول مرة بس.</p>)}
-      </Picture>
+      </div>
     );
   }
   if (st.bytes > 0) {
     return (
       <Stage fog={TOWN_FOG} camera={{ position: [-300, 60, -60], fov: 50, far: TOWN_FAR }} label={label}>
-        <WorldTown world={world} mastered={mastered} density={SETTINGS[tier].density} interactive={interactive} sirajAction={action} onSirajTap={onSirajTap} />
+        <WorldTown world={world} mastered={mastered} partial={partial} density={SETTINGS[tier].density} interactive={interactive} sirajAction={action} onSirajTap={onSirajTap} />
       </Stage>
     );
   }

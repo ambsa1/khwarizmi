@@ -1,6 +1,6 @@
 // "Who's playing?" Family mode shows the children (only after the family code has unlocked the sealed data); guest
-// profiles saved on this device appear too. The family code is asked for by a secret gesture on Siraj (hold him for
-// three seconds, or tap him five times quickly). The lock (2-second press) opens the parents' corner: guest controls
+// profiles saved on this device appear too. The family code page opens with a secret gesture: hold Siraj for four
+// seconds. The lock (2-second press) opens the parents' corner: guest controls
 // and the daily play-time limit. The menu sits opposite it.
 import { motion } from 'framer-motion';
 import { useRef, useState } from 'react';
@@ -14,7 +14,6 @@ import { Stage } from '../three/Stage';
 import { Courtyard } from '../ui/Courtyard';
 import { IconLock, IconPlus, IconStar } from '../ui/Icons';
 import { AppMenu } from '../ui/TopBar';
-import { FamilyGate } from '../ui/FamilyGate';
 import { Avatar, Bubble, LongPress, useGuard } from '../ui/kit';
 
 function Aim() {
@@ -50,11 +49,9 @@ export function Entry() {
     setTimeout(() => { setCurrent(id); go('path'); }, 650);
   };
   const action: SirajAction = picked ? 'cheer' : 'wave';
-  // the secret gesture on Siraj: hold three seconds, or five quick taps
-  const [gate, setGate] = useState(false);
-  const taps = useRef<number[]>([]), hold = useRef(0);
-  const tap = () => { const t = performance.now(); taps.current = [...taps.current.filter(x => t - x < 1800), t]; if (taps.current.length >= 5) { taps.current = []; setGate(true); } };
-  const down = () => { clearTimeout(hold.current); hold.current = window.setTimeout(() => setGate(true), 3000); };
+  // the secret gesture: hold Siraj for four seconds -> the family page
+  const hold = useRef(0);
+  const down = () => { clearTimeout(hold.current); hold.current = window.setTimeout(() => go('family'), 4000); };
   const up = () => clearTimeout(hold.current);
   const portrait = window.innerWidth >= 700 || window.innerHeight >= 860 ? 132 : window.innerHeight >= 740 ? 112 : 96;
   const label = (p: Profile) => (p.kind === 'family' ? p.name : p.gender === 'f' ? 'ضيفة' : 'ضيف');
@@ -66,7 +63,7 @@ export function Entry() {
       </div>
       <div className="entry-menu"><AppMenu /></div>
       <div className="entry-hero">
-        <div className="entry-siraj" onClick={tap} onPointerDown={down} onPointerUp={up} onPointerLeave={up} onPointerCancel={up}
+        <div className="entry-siraj" onPointerDown={down} onPointerUp={up} onPointerLeave={up} onPointerCancel={up}
           onContextMenu={e => e.preventDefault()} data-secret="family"><SirajLive action={action} /></div>
         <Bubble>مين الجاي يلعب؟</Bubble>
       </div>
@@ -90,7 +87,6 @@ export function Entry() {
           </motion.button>
         </div>
       </div>
-      {gate && <FamilyGate onClose={() => setGate(false)} />}
     </div>
   );
 }

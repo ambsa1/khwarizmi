@@ -7,11 +7,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Sound } from '../audio/SoundManager';
 import { TopBar } from '../ui/TopBar';
 import { useEffect, useState } from 'react';
-import { lessonFor, placeName, stationCount, subjectName, worldById, worldSkills } from '../lib/content';
+import { lessonFor, placeName, stationCount, subjectName, worldById, worldSkills, worldStations } from '../lib/content';
 // (Phase 3: the golden button completes the next real skill in the learner database; lessons arrive in phase 6.)
 import { useNum } from '../lib/num';
 import type { WorldId } from '../lib/tokens';
-import { litToday, masteredIn, nextSkillIn, useLearning } from '../data/learning';
+import { isMastered, litToday, masteredIn, nextSkillIn, useLearning } from '../data/learning';
 import { useApp, useProfile } from '../state/store';
 import type { SirajAction } from '../three/Siraj';
 import { WorldWindow } from '../three/WorldWindow';
@@ -50,6 +50,8 @@ export function Path() {
   const mastered = Math.min(total, masteredIn(me, world));
   const lit = litToday(me);
   const next = nextSkillIn(me, world);
+  const curStation = worldStations(world)[mastered];
+  const partial = curStation && curStation.skills.length > 1 ? curStation.skills.filter(k => isMastered(me?.skills[k.id])).length / curStation.skills.length : 0;
   const done = mastered >= total;
   // Siraj greets the place once per visit (the map and the top bar only name the subject)
   useEffect(() => {
@@ -97,7 +99,7 @@ export function Path() {
           </div>} />
         <div className="path-body">
           <section className="path-window" aria-label={`عالم ${name}`}>
-            <WorldWindow world={world} mastered={Math.max(0, mastered - holdBack)} total={total} action={action} label={name}
+            <WorldWindow world={world} mastered={Math.max(0, mastered - holdBack)} total={total} partial={partial} action={action} label={name}
               onSirajTap={() => { setAction('wave'); setLine(say(p, 'يلا يا بطل!', 'يلا يا بطلة!')); setTimeout(() => setLine(null), 1600); }} />
             {line && <div className="window-line"><Bubble>{line}</Bubble></div>}
             <AnimatePresence>{toast && (

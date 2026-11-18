@@ -9,6 +9,7 @@ type Envelope = { v: number; iter: number; salt: string; data: string };
 const fromB64 = (s: string) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const toB64 = (u: Uint8Array) => { let s = ''; u.forEach(b => (s += String.fromCharCode(b))); return btoa(s); };
 const norm = (s: string) => s.normalize('NFC').trim()
+  .replace(/[ً-ٰـ]/g, '').replace(/[آأإٱ]/g, 'ا')
   .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x660)).replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x6f0)).replace(/\s+/g, '');
 
 async function envelope(): Promise<Envelope | null> {

@@ -1,8 +1,9 @@
 // If anything breaks, a child never sees a white page: Siraj calmly offers to start again. Every error (render errors,
-// uncaught exceptions, failed promises) is written to a small local log that parents can read in their corner.
-// Nothing is ever sent anywhere.
+// uncaught exceptions, failed promises) is written to a small local log; when the cloud is set up it is also queued for
+// the developer panel (message, place, device type, version - no child data).
 import { Component, type ReactNode } from 'react';
 import * as db from '../data/idb';
+import { reportError } from '../cloud/cloud';
 
 export type ErrorEntry = { t: number; msg: string; where: string };
 const MAX = 20;
@@ -12,6 +13,7 @@ export async function logError(msg: unknown, where: string) {
     const text = (msg instanceof Error ? `${msg.name}: ${msg.message}` : String(msg)).slice(0, 240);
     const list = (await db.get<ErrorEntry[]>('meta', 'errors')) ?? [];
     await db.put('meta', 'errors', [{ t: Date.now(), msg: text, where }, ...list].slice(0, MAX));
+    reportError(text, where);
   } catch { /* logging must never throw */ }
 }
 export const readErrors = async () => (await db.get<ErrorEntry[]>('meta', 'errors')) ?? [];

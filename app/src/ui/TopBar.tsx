@@ -3,7 +3,8 @@
 //   centre: the screen or world title
 //   end (left in RTL): the menu (bottom sheet on phones, popover on wide screens): about, guide, sound, privacy
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Sound, useSoundSettings } from '../audio/SoundManager';
 import { useApp, useProfile } from '../state/store';
 import { Avatar } from './kit';
@@ -39,6 +40,14 @@ function SoundPage() {
   );
 }
 
+/** the version line; holding it four seconds opens the developer gate */
+function Version() {
+  const go = useApp(s => s.go), t = useRef(0);
+  const down = () => { clearTimeout(t.current); t.current = window.setTimeout(() => go('dev'), 4000); };
+  const up = () => clearTimeout(t.current);
+  return <p className="soft version" onPointerDown={down} onPointerUp={up} onPointerLeave={up} onPointerCancel={up} onContextMenu={e => e.preventDefault()}>الإصدار <span className="ltr">{__APP_VERSION__}</span></p>;
+}
+
 function PageBody({ page }: { page: Page }) {
   if (page === 'sound') return <SoundPage />;
   if (page === 'about') return (
@@ -46,7 +55,9 @@ function PageBody({ page }: { page: Page }) {
       <p>خوارزمي تطبيق تعليمي للأطفال من ٣ لحدّ ١٢ سنة. سراج، صاحب رأس الفانوس، بيرافق الطفل في رحلة عبر ستة عوالم سودانية حقيقية.</p>
       <p>كل عالم فيه محطات، وكل محطة فيها دروس صغيرة. لما الطفل يكمّل دروس المحطة، تتبني وتحيا الأرض حولها.</p>
       <p>التطبيق بيشتغل بدون إنترنت بعد أول تحميل.</p>
-      <p className="soft">الإصدار <span className="ltr">{__APP_VERSION__}</span></p>
+      <p className="motivate">يا بطل ويا بطلة: كل درس بتكمّلوه بيعمّر حتة من بلدنا، وكل محطة بتنوّروها بتقرّبكم من حلمكم. ما تستعجلوا، الغلط جزء من التعلّم، وسراج معاكم خطوة بخطوة.
+        وإنتو يا أهلنا: دقايق قليلة كل يوم مع ولادكم وبناتكم بتصنع فرق كبير. شجّعوهم واحتفلوا معاهم بكل ختم في الجواز.</p>
+      <Version />
     </>
   );
   if (page === 'guide') return (
@@ -77,7 +88,7 @@ export function AppMenu() {
   return (
     <>
       <button className="icon-btn dots-btn" aria-label="القائمة" aria-haspopup="dialog" onClick={() => { setOpen(true); Sound.play('open'); }}><IconDots /></button>
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {open && <>
           <motion.div key="scrim" className="sheet-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} />
           <motion.div key="sheet" role="dialog" aria-modal="true" aria-label={title ?? 'القائمة'} className={'sheet ' + (page ? 'page' : 'pop')}
@@ -96,7 +107,7 @@ export function AppMenu() {
             ))}
           </motion.div>
         </>}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
     </>
   );
 }

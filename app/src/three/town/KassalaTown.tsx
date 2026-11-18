@@ -27,7 +27,7 @@ export const TOWN_FAR = 2600;
 type Props = {
   /** which world (public/worlds/<id>) */
   world?: string;
-  mastered: number; density?: number; interactive?: boolean; sirajAction?: SirajAction; onSirajTap?: () => void;
+  mastered: number; /** how much of the current station's lessons are done (0..1) */ partial?: number; density?: number; interactive?: boolean; sirajAction?: SirajAction; onSirajTap?: () => void;
   /** perf page / review: fly the camera to a fixed distance along the street (0..1) instead of following Siraj */
   focus?: number | null;
 };
@@ -428,7 +428,7 @@ function KitSet({ w, u, mastered, kitId, pop }: { w: World; u: ReviveUniforms; m
 }
 
 /** The celebration at the newest station: golden sparkles burst from it and a little Siraj hovers above for ~3 s. */
-function BuildCelebration({ w, at, t0 }: { w: World; at: number; t0: number }) {
+function BuildCelebration({ w, at, t0, mini: showMini = true }: { w: World; at: number; t0: number; mini?: boolean }) {
   const p = w.plots[at];
   const pts = useMemo(() => {
     const a = new Float32Array(60 * 3), v: THREE.Vector3[] = [];
@@ -447,10 +447,45 @@ function BuildCelebration({ w, at, t0 }: { w: World; at: number; t0: number }) {
   return (
     <group>
       <points geometry={pts.g}><pointsMaterial ref={mat} map={tex} size={2.4} sizeAttenuation transparent depthWrite={false} blending={THREE.AdditiveBlending} color="#FFD36A" toneMapped={false} /></points>
-      <group ref={mini} scale={0.001}><Siraj action="celebrate" glow={1} stamps={0} outfit={outfitFor(w.id)} /></group>
+      {showMini && <group ref={mini} scale={0.001}><Siraj action="celebrate" glow={1} stamps={0} outfit={outfitFor(w.id)} /></group>}
     </group>
   );
 }
+/** Every station marked on the ground, always visible: built = gold, the current one pulses and fills as its lessons
+ *  are done, the ones ahead are faint. */
+function StationMarks({ w, mastered, partial }: { w: World; mastered: number; partial: number }) {
+  // built and upcoming stations: one glowing ring sprite each (a single point per station keeps the phone budget);
+  // the current station: a real ring on the ground that pulses and fills as its lessons are done
+  const ring = useMemo(() => new THREE.RingGeometry(2.6, 3.3, 24).rotateX(-Math.PI / 2), []);
+  const sprite = useMemo(() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d')!;
+    x.strokeStyle = '#fff'; x.lineWidth = 7; x.beginPath(); x.arc(32, 32, 24, 0, Math.PI * 2); x.stroke(); return new THREE.CanvasTexture(c);
+  }, []);
+  const pts = useMemo(() => {
+    const mk = (list: typeof w.plots) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(list.flatMap(p => [p.x, w.ground(p.x, p.z) + 1.2, p.z]), 3)); return g; };
+    return { done: mk(w.plots.slice(0, mastered)), ahead: mk(w.plots.slice(mastered + 1)) };
+  }, [w, mastered]);
+  const mats = useMemo(() => ({
+    cur: new THREE.MeshBasicMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.9, depthWrite: false, toneMapped: false }),
+    fill: new THREE.MeshBasicMaterial({ color: '#F2B53A', transparent: true, opacity: 0.95, depthWrite: false, toneMapped: false }),
+  }), []);
+  const k = w.kitScale ?? 1;
+  const cur = w.plots[mastered];
+  const arc = useMemo(() => new THREE.RingGeometry(2.6, 3.3, 24, 1, Math.PI / 2, -Math.max(0.0001, partial) * Math.PI * 2).rotateX(-Math.PI / 2), [partial]);
+  const pulse = useRef<THREE.Group>(null!);
+  useFrame(({ clock }) => { if (pulse.current) { const s = 1 + Math.sin(clock.elapsedTime * 3) * 0.08; pulse.current.scale.set(k * s, 1, k * s); } });
+  return (
+    <group>
+      <points geometry={pts.done}><pointsMaterial map={sprite} color="#F2B53A" size={4.5 * k} sizeAttenuation transparent depthWrite={false} toneMapped={false} /></points>
+      <points geometry={pts.ahead}><pointsMaterial map={sprite} color="#FFF6E2" size={3.6 * k} sizeAttenuation transparent opacity={0.55} depthWrite={false} /></points>
+      {cur && <group ref={pulse} position={[cur.x, w.ground(cur.x, cur.z) + 0.4, cur.z]}>
+        <mesh geometry={ring} material={mats.cur} />
+        {partial > 0 && <mesh geometry={arc} material={mats.fill} position-y={0.02} />}
+      </group>}
+    </group>
+  );
+}
+
 /** a station springing up: scale 0 -> 1 with an overshoot */
 function PopMesh({ geo, base, mat, t0 }: { geo: THREE.BufferGeometry; base: THREE.Matrix4; mat: THREE.Material; t0: number }) {
   const ref = useRef<THREE.Mesh>(null!), pos = useMemo(() => new THREE.Vector3(), []), q = useMemo(() => new THREE.Quaternion(), []), sc = useMemo(() => new THREE.Vector3(), []);
@@ -461,15 +496,15 @@ function PopMesh({ geo, base, mat, t0 }: { geo: THREE.BufferGeometry; base: THRE
   return <mesh ref={ref} geometry={geo} material={mat} />;
 }
 
-export function KassalaTown({ world = 'kassala', mastered, density = 1, interactive = true, sirajAction = 'idle', onSirajTap, focus = null }: Props) {
+export function KassalaTown({ world = 'kassala', mastered, partial = 0, density = 1, interactive = true, sirajAction = 'idle', onSirajTap, focus = null }: Props) {
   const w = useWorld(world);
   if (!w) return null;
-  return <Town w={w} mastered={Math.min(mastered, w.plots.length)} density={density} interactive={interactive} sirajAction={sirajAction} onSirajTap={onSirajTap} focus={focus} />;
+  return <Town w={w} mastered={Math.min(mastered, w.plots.length)} partial={partial} density={density} interactive={interactive} sirajAction={sirajAction} onSirajTap={onSirajTap} focus={focus} />;
 }
 
 export const WorldTown = KassalaTown;
 
-function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focus }: Required<Omit<Props, 'onSirajTap' | 'world'>> & { w: World; onSirajTap?: () => void }) {
+function Town({ w, mastered, partial, density, interactive, sirajAction, onSirajTap, focus }: Required<Omit<Props, 'onSirajTap' | 'world'>> & { w: World; onSirajTap?: () => void }) {
   const total = w.plots.length, done = mastered >= total;
   const review = useMemo(reviewCam, []);
   const end = w.streetLen[w.streetLen.length - 1];
@@ -515,6 +550,16 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
     lastM.current = mastered;
   }, [mastered, done, focus, w]);
   useEffect(() => { Sound.ambient(w.id); return () => Sound.ambient(null); }, [w.id]);
+  // a lesson done inside the current station (not its last one): sparkles there, so every press shows on the land
+  const [step, setStep] = useState<{ at: number; t0: number } | null>(null);
+  const lastP = useRef(partial);
+  useEffect(() => {
+    if (partial > lastP.current && mastered < w.plots.length) {
+      lastP.current = partial; setStep({ at: mastered, t0: performance.now() }); Sound.play('star');
+      const t = setTimeout(() => setStep(null), 2600); return () => clearTimeout(t);
+    }
+    lastP.current = partial;
+  }, [partial, mastered, w]);
   useEffect(() => {
     if (!first.current) return;
     first.current = false;
@@ -578,6 +623,8 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
       <Generic w={w} u={u} life={life} density={density} />
       {w.stationKit ? <KitStations w={w} u={u} mastered={mastered} pop={pop} /> : <Lessons w={w} u={u} mastered={mastered} pop={pop} />}
       {pop && <BuildCelebration key={pop.t0} w={w} at={pop.at} t0={pop.t0} />}
+      {step && <BuildCelebration key={step.t0} w={w} at={step.at} t0={step.t0} mini={false} />}
+      <StationMarks w={w} mastered={mastered} partial={partial} />
       <Birds w={w} mastered={mastered} />
       {w.id === 'kassala' && <Beacon w={w} lit={done} />}
       <group ref={siraj} onClick={onSirajTap}>
