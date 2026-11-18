@@ -1,0 +1,7 @@
+# binary data: git must never rewrite line endings (the encrypted family files would break)
+*.enc binary
+*.bin binary
+*.webm binary
+*.png binary
+*.jpg binary
+*.woff2 binary
