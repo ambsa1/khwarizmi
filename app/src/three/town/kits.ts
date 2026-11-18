@@ -84,14 +84,24 @@ function coralHouse(): Kit {
 }
 
 // ---------- Meroe: steep Nubian pyramid (~70 degree faces) with its small pylon chapel on the east (front) side ----------
+/** stepped pyramid of `n` courses up to height h (of a full height H with base B), centred at (0, z) */
+export function steppedPyramid(B: number, H: number, n: number, upTo: number, z = 0, colors = ['#A8754E', '#B5835A', '#BF8E63', '#C99A6C']) {
+  const parts: THREE.BufferGeometry[] = [], ch = H / n;
+  for (let i = 0; i < n && (i + 1) * ch <= upTo + 1e-6; i++) {
+    const w = B * (1 - (i + 0.5) / n * 0.86);               // ~70 degree faces, small flat top
+    parts.push(box(w, ch, w, 0, i * ch, z, colors[Math.min(colors.length - 1, Math.floor(i / n * colors.length))]));
+  }
+  return merge(parts);
+}
 function nubianPyramid(): Kit {
-  const stone = '#B5835A', light = '#C99A6C', sand = '#D8B98C';
-  const pyr = (h: number) => paint(put(new THREE.ConeGeometry(2.6 * (h / 7.2), h, 4, 1), 0, h / 2, -1.2, 0, Math.PI / 4, 0), stone);
-  const chapel = [box(2.2, 1.6, 2.0, 0, 0, 2.2, light), box(0.8, 2.4, 0.5, -0.8, 0, 3.4, light), box(0.8, 2.4, 0.5, 0.8, 0, 3.4, light)];
+  const light = '#C99A6C', stone = '#A8754E';
+  const chapel = [box(2.0, 1.5, 1.8, 0, 0, 2.0, light), box(0.75, 2.2, 0.5, -0.75, 0, 3.1, light), box(0.75, 2.2, 0.5, 0.75, 0, 3.1, light), box(0.8, 0.25, 0.6, 0, 1.6, 3.1, stone)];
+  const fallen = [box(0.6, 0.45, 0.6, 1.9, 0, 1.0, stone, 0.4), box(0.5, 0.4, 0.7, -1.7, 0, 1.4, stone, 1.1), box(0.55, 0.35, 0.5, 2.2, 0, -0.4, light, 0.2), box(0.45, 0.35, 0.45, -2.1, 0, -1.8, light, 0.8)];
   return {
-    plot: merge([paint(put(new THREE.SphereGeometry(2.6, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), 0, -0.6, -1.2, 0, 0, 0, [1, 0.45, 1]), sand), box(0.6, 0.5, 0.6, 1.8, 0, 1.2, stone), box(0.5, 0.4, 0.5, -1.5, 0, 1.6, stone)]),
-    scaffold: merge([pyr(3.2), box(2.2, 0.6, 2.0, 0, 0, 2.2, light)]),
-    built: merge([pyr(7.2), ...chapel]),
+    plot: merge([steppedPyramid(3.6, 6.0, 12, 1.0, -1.0), ...fallen]),
+    scaffold: merge([steppedPyramid(3.6, 6.0, 12, 3.0, -1.0), box(2.0, 0.5, 1.8, 0, 0, 2.0, light),
+      ...[-2.1, 2.1].flatMap(x => [box(0.12, 4.2, 0.12, x, 0, 0.8, '#7A5A3C'), box(0.12, 4.2, 0.12, x, 0, -2.8, '#7A5A3C')])]),
+    built: merge([steppedPyramid(3.6, 6.0, 12, 6.0, -1.0), ...chapel]),
     extra: merge([cyl(0.14, 0.2, 1.6, 3.2, 0.8, 2.6, '#6B4A2E', 5), paint(put(new THREE.IcosahedronGeometry(1.4, 0), 3.2, 2.0, 2.6, 0, 0, 0, [1.4, 0.55, 1.4]), '#5E8A3A')]),
   };
 }
@@ -110,7 +120,22 @@ function terraceFarm(): Kit {
   };
 }
 
-export const KITS: Record<string, () => Kit> = { saqiya, mooring, coralHouse, nubianPyramid, terraceFarm };
+// ---------- Meroe: temple of Amun type - a pylon gateway (two battered towers), a row of columns, rams along the approach ----------
+function pylonTemple(): Kit {
+  const stone = '#B98A5E', light = '#CFA477', sand = '#D8B98C';
+  const tower = (x: number, h: number) => paint(put(new THREE.CylinderGeometry(1.0, 1.35, h, 4, 1), x, h / 2, -0.6, 0, Math.PI / 4, 0, [1.25, 1, 0.75]), stone);
+  const ram = (x: number, z: number) => merge([box(0.5, 0.45, 1.0, x, 0.35, z, light), box(0.42, 0.42, 0.42, x, 0.75, z + 0.45, light), box(0.8, 0.35, 1.3, x, 0, z, stone)]);
+  const cols = (h: number) => [-1.5, -0.5, 0.5, 1.5].flatMap(x => [cyl(0.22, 0.26, h, x, h / 2, -2.6, light, 8), cyl(0.22, 0.26, h, x, h / 2, -4.0, light, 8)]);
+  return {
+    plot: merge([box(1.8, 0.5, 1.4, -1.4, 0, -0.6, sand), box(1.6, 0.35, 1.2, 1.5, 0, -0.4, stone), ...[-1.5, 0.5].map(x => cyl(0.24, 0.26, 0.5, x, 0.25, -2.6, light, 8))]),
+    scaffold: merge([tower(-1.5, 1.6), tower(1.5, 1.6), ...cols(0.8)]),
+    built: merge([tower(-1.5, 3.4), tower(1.5, 3.4), box(1.2, 2.2, 0.6, 0, 0, -0.6, light), box(1.4, 0.3, 0.8, 0, 2.2, -0.6, stone), ...cols(2.1),
+      box(4.0, 0.3, 2.2, 0, 2.1, -3.3, stone), ram(-1.4, 2.0), ram(1.4, 2.0), ram(-1.4, 3.6), ram(1.4, 3.6)]),
+    extra: merge([cyl(0.14, 0.2, 1.6, 3.4, 0.8, 1.6, '#6B4A2E', 5), paint(put(new THREE.IcosahedronGeometry(1.4, 0), 3.4, 2.0, 1.6, 0, 0, 0, [1.4, 0.55, 1.4]), '#5E8A3A')]),
+  };
+}
+
+export const KITS: Record<string, () => Kit> = { saqiya, mooring, coralHouse, nubianPyramid, terraceFarm, pylonTemple };
 
 // ---------- background kits (instanced across each world) ----------
 export const BG: Record<string, () => THREE.BufferGeometry> = {
@@ -118,8 +143,8 @@ export const BG: Record<string, () => THREE.BufferGeometry> = {
   tukul: () => merge([cyl(1, 1.05, 1.4, 0, 0.7, 0, '#B08A62', 9), paint(put(new THREE.ConeGeometry(1.35, 1.4, 9), 0, 2.1, 0), '#C9A66B')]),
   /** coral-stone house shell (Suakin), white when restored */
   coralBlock: () => merge([box(1, 1, 1, 0, 0, 0, '#ffffff')]),
-  /** small ruined pyramid (the field of pyramids around the path) */
-  pyramid: () => paint(put(new THREE.ConeGeometry(1, 2.6, 4, 1), 0, 1.3, 0, 0, Math.PI / 4, 0), '#ffffff'),
+  /** a pyramid of the royal cemeteries (stepped courses; many have lost their tops) */
+  pyramid: () => steppedPyramid(1.4, 2.4, 8, 1.8, 0, ['#ffffff']),
   /** acacia: thin trunk, flat wide crown */
   acacia: () => merge([cyl(0.12, 0.18, 1.6, 0, 0.8, 0, '#6B4A2E', 5), paint(put(new THREE.IcosahedronGeometry(1.5, 0), 0, 1.9, 0, 0, 0, 0, [1.4, 0.35, 1.4]), '#5E8A3A')]),
   /** crop field patch (flat, green rows) */

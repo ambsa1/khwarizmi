@@ -15,7 +15,7 @@ for (const [name, width, height, mobile] of SIZES) {
   page.on('pageerror', e => console.log('PAGE ERROR', e.message));
   page.on('console', m => m.type() === 'error' && console.log('CONSOLE', m.text()));
   for (const m of STOPS) {
-    await page.goto(`${base}?view=world&w=kassala&m=${m}`, { waitUntil: 'load' });
+    await page.goto(`${base}?view=world&w=${process.env.W || 'kassala'}&m=${m}`, { waitUntil: 'load' });
     await page.waitForTimeout(+(process.env.WAIT || 4500));
     const s = await page.evaluate(() => window.__stats);
     await page.screenshot({ path: `${out}/${name}-m${String(m).padStart(2, '0')}.jpg`, quality: 85, type: 'jpeg' });

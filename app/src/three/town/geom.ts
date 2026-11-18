@@ -9,7 +9,7 @@ export { PAL as CLAY };
 /** Living colours of Kassala at golden hour. The revival shader turns everything not yet reached into dusty grey. */
 export const PAL = {
   ground: '#D8B98C', groundDark: '#C29B6C', bed: '#EAD6AE', rock: '#A98F82', rockDark: '#5F4C45', rockLight: '#CDB8AA',
-  street: '#F2E4C8', curb: '#9C7652', road: '#E0C9A0', house: '#E2C49C', lesson: '#EDD3AA', plot: '#8C7860',
+  street: '#F2E4C8', curb: '#9C7652', road: '#E0C9A0', side: '#DCC7A2', house: '#E2C49C', lesson: '#EDD3AA', plot: '#8C7860',
   tree: '#3F7A35', palm: '#5E8F3A', trunk: '#7A5A3C', grass: '#86A84A',
   skyTop: '#8DB8DA', skyBottom: '#FFDDA8', fog: '#F3D9B4', glow: '#FFD27A',
 };
@@ -23,7 +23,11 @@ export const WALLS = ['#E2C49C', '#D9B486', '#EBD7B5', '#CFA27A', '#F1E6D2', '#E
 
 const BASE_PAL = { ...PAL };
 /** Each world brings its own living colours; the geometry builders read PAL, so set it before building a world. */
-export function usePalette(over?: Record<string, string>) { Object.assign(PAL, BASE_PAL, over ?? {}); }
+const BASE_WALLS = [...WALLS];
+export function usePalette(over?: Record<string, string>) {
+  Object.assign(PAL, BASE_PAL, over ?? {});
+  WALLS.splice(0, WALLS.length, ...(over?.walls ? over.walls.split(',') : BASE_WALLS));
+}
 const col = (hex: string) => new THREE.Color(hex);
 function paint(g: THREE.BufferGeometry, c: THREE.Color | ((i: number, p: THREE.Vector3) => THREE.Color)) {
   const pos = g.attributes.position, arr = new Float32Array(pos.count * 3), v = new THREE.Vector3();

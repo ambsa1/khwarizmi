@@ -7,6 +7,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { skyMaterial } from '../kit';
 import { outfitFor } from '../outfits';
 import { Siraj, type SirajAction } from '../Siraj';
@@ -66,7 +67,7 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
     const curb = w.route.map(r => ({ w: 6.4, points: r.points }));
     return {
       terrain: terrainGeometry(w), river: riverGeometry(w), massifs: w.patches.map(p => massifGeometry(density >= 1 ? p : p.low, w.tintData ? w.tintAt : undefined)), water: waterGeometry(w),
-      sidewalk: ribbons(w.route.map(r => ({ w: 9.2, points: r.points })), w.ground, 0.24, '#DCC7A2', 1.5), alleys: alleyGeometry(w.alleys, w.plain),
+      sidewalk: ribbons(w.route.map(r => ({ w: 9.2, points: r.points })), w.ground, 0.24, PAL.side, 1.5), alleys: alleyGeometry(w.alleys, w.plain),
       compound: compoundGeometry(), shop: shopGeometry(), awning: awningGeometry(), post: postGeometry(), jar: jarGeometry(),
       shadeTree: shadeTreeGeometry(), shrub: shrubGeometry(), wires: wireGeometry(w.posts, w.ground),
       roads: ribbons(w.roads, w.plain, 0.22, PAL.road),
@@ -76,7 +77,7 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
   }, [w, density]);
   const details = useMemo(() => w.patches.map(p => { const t = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}worlds/${w.id}/${p.detail}`); t.anisotropy = 4; return { t, box: new THREE.Vector4(p.x0, p.z0, p.x1, p.z1) }; }), [w]);
   const M = {
-    ground: useMat(u, { green: true }), plain: useMat(u), river: useMat(u, { offset: 1 }), roads: useMat(u, { offset: 2 }),
+    ground: useMat(u, { green: w.tint ? 'soft' : true }), plain: useMat(u), river: useMat(u, { offset: 1 }), roads: useMat(u, { offset: 2 }),
     curb: useMat(u, { offset: 3 }), street: useMat(u, { offset: 4 }), rock: useMat(u),
     tree: useMat(u, { grow: true, sway: 0.03 }), palm: useMat(u, { grow: true, sway: 0.025 }), grass: useMat(u, { grow: true, sway: 0.12, double: true }),
     build: useMat(u, { build: true }), shrub: useMat(u, { grow: true, sway: 0.05 }), side: useMat(u, { offset: 2 }), alley: useMat(u, { offset: 3, appear: true }),
@@ -328,14 +329,15 @@ function Generic({ w, u, life, density }: { w: World; u: ReviveUniforms; life: T
     return { L, geo, mats: items.map(([x, z, r, s, sy]) => m4(x, w.ground(x, z), z, r ?? 0, s ?? 1, sy ?? s ?? 1, s ?? 1)),
       colors: L.colors ? items.map((_, i) => new THREE.Color(L.colors![i % L.colors!.length])) : undefined };
   }), [w, density]);
+  // one water surface at the real water level; the real ground rises out of it, so the shore follows the land
   const waterGeo = useMemo(() => {
-    const W = w.water; if (!W || !W.cells.length) return null;
-    const h = W.cell / 2, pos: number[] = [];
-    for (const [x, z] of W.cells) {
-      const y = (W.level ?? w.ground(x, z)) + 0.35;
-      pos.push(x - h, y, z - h, x - h, y, z + h, x + h, y, z + h, x - h, y, z - h, x + h, y, z + h, x + h, y, z - h);
-    }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return g;
+    const W = w.water; if (!W) return null;
+    // rivers and sea: one surface at the water level; crater lakes: one surface per lake at its own level
+    const planes = W.planes?.length ? W.planes : [{ ...w.bounds, level: W.level ?? 0 }];
+    return mergeGeometries(planes.map(p => {
+      const g = new THREE.PlaneGeometry(p.x1 - p.x0, p.z1 - p.z0, 1, 1);
+      g.rotateX(-Math.PI / 2); g.translate((p.x0 + p.x1) / 2, p.level + 0.15, (p.z0 + p.z1) / 2); return g;
+    }));
   }, [w]);
   const marks = useMemo(() => (w.landmarkList ?? []).map(m => ({ geo: BG[m.kit]?.() ?? null, mat: m4(m.x, w.ground(m.x, m.z), m.z, m.rot, m.s, m.s, m.s) })), [w]);
   return (
@@ -347,14 +349,20 @@ function Generic({ w, u, life, density }: { w: World; u: ReviveUniforms; life: T
   );
 }
 
-/** Stations of a generic world, drawn with that world's kit in their four looks (plot, scaffold, built, thriving). */
+/** Stations of a generic world, drawn with their kits (a world can change kit along its path) in their four looks
+ *  (plot, scaffold, built, thriving). */
 function KitStations({ w, u, mastered }: { w: World; u: ReviveUniforms; mastered: number }) {
-  const kit = useMemo(() => KITS[w.stationKit!]?.(), [w]);
+  const kits = useMemo(() => [...new Set(w.plots.map(p => p.kit ?? w.stationKit!))], [w]);
+  return <>{kits.map(k => <KitSet key={k} w={w} u={u} mastered={mastered} kitId={k} />)}</>;
+}
+function KitSet({ w, u, mastered, kitId }: { w: World; u: ReviveUniforms; mastered: number; kitId: string }) {
+  const kit = useMemo(() => KITS[kitId]?.(), [kitId]);
   const mat = useMat(u), grow = useMat(u, { grow: true, sway: 0.03 }), spin = useMat(u, { spin: 0.9 });
   const sets = useMemo(() => {
     const o = { plot: [] as THREE.Matrix4[], scaffold: [] as THREE.Matrix4[], built: [] as THREE.Matrix4[], extra: [] as THREE.Matrix4[], spin: [] as THREE.Matrix4[] };
     w.plots.forEach((p, i) => {
-      const base = m4(p.x, w.ground(p.x, p.z), p.z, p.face);
+      if ((p.kit ?? w.stationKit) !== kitId) return;
+      const k = w.kitScale ?? 1, base = m4(p.x, w.ground(p.x, p.z), p.z, p.face, k, k, k);
       if (i < mastered) {
         o.built.push(base); o.extra.push(base);
         if (kit?.spin) o.spin.push(base.clone().multiply(new THREE.Matrix4().makeTranslation(...kit.spin.at)));
@@ -362,7 +370,7 @@ function KitStations({ w, u, mastered }: { w: World; u: ReviveUniforms; mastered
       else o.plot.push(base);
     });
     return o;
-  }, [w, mastered, kit]);
+  }, [w, mastered, kit, kitId]);
   if (!kit) return null;
   return (
     <group>
@@ -400,7 +408,15 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
   const front = mastered > 0 ? w.plotS[mastered - 1] + 12 : -40;
   const gashLessons = w.plots.filter(p => p.zone === w.plots[0].zone).length;
   const fill = Math.min(mastered / gashLessons, 1);
-  const life = useMemo(() => lifeWaterMaterial(u), [u]);
+  const life = useMemo(() => {
+    let tex: THREE.DataTexture | undefined;
+    if (w.tintData) {
+      const n = w.grid.w * w.grid.h, rgba = new Uint8Array(n * 4);
+      for (let i = 0; i < n; i++) { rgba[i * 4] = w.tintData[i * 3]; rgba[i * 4 + 1] = w.tintData[i * 3 + 1]; rgba[i * 4 + 2] = w.tintData[i * 3 + 2]; rgba[i * 4 + 3] = 255; }
+      tex = new THREE.DataTexture(rgba, w.grid.w, w.grid.h, THREE.RGBAFormat); tex.magFilter = tex.minFilter = THREE.LinearFilter; tex.needsUpdate = true;
+    }
+    return lifeWaterMaterial(u, tex);
+  }, [u, w]);
   const first = useRef(true);
   const cel = useRef<Celebrate>({ t: -1, houseS: 0 });
   const lastM = useRef(mastered);
@@ -470,7 +486,7 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
       <Generic w={w} u={u} life={life} density={density} />
       {w.stationKit ? <KitStations w={w} u={u} mastered={mastered} /> : <Lessons w={w} u={u} mastered={mastered} />}
       <Birds w={w} mastered={mastered} />
-      <Beacon w={w} lit={done} />
+      {w.id === 'kassala' && <Beacon w={w} lit={done} />}
       <group ref={siraj} onClick={onSirajTap}>
         <Siraj action={sirajAction} movingRef={moving} glow={total ? mastered / total : 0} stamps={0} scale={1.35} outfit={outfitFor(w.id)} />
       </group>

@@ -33,7 +33,7 @@ float revive(vec2 xz) {
 float rvHash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 `;
 
-export type ReviveOpts = { grow?: boolean; build?: boolean; sway?: number; spin?: number; green?: boolean; appear?: boolean; detail?: THREE.Texture; detailBox?: THREE.Vector4 };
+export type ReviveOpts = { grow?: boolean; build?: boolean; sway?: number; spin?: number; green?: boolean | 'soft'; appear?: boolean; detail?: THREE.Texture; detailBox?: THREE.Vector4 };
 
 /** Adds the revival behaviour to a material (Lambert meshes, instanced meshes and lines). */
 export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o: ReviveOpts = {}): M {
@@ -71,12 +71,12 @@ export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o
         ${o.detail ? `float rvD = texture2D(uDetail, (vRevWorld.xz - uDetailBox.xy) / (uDetailBox.zw - uDetailBox.xy)).r;
           diffuseColor.rgb *= 0.5 + rvD;` : ''}
         ${o.green ? `float rvNear = 1.0 - smoothstep(10.0, 70.0, rvField(vRevWorld.xz).g);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.62, 0.25), rvA * max(rvNear * 0.78, uAll * 0.55));` : ''}
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.62, 0.25), rvA * ${o.green === 'soft' ? 'rvNear * 0.45' : 'max(rvNear * 0.78, uAll * 0.55)'});` : ''}
         float rvL = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
         vec3 rvDust = mix(vec3(rvL) * vec3(0.93, 0.93, 0.92), vec3(0.58, 0.57, 0.55), 0.5);
         diffuseColor.rgb = mix(rvDust, diffuseColor.rgb, rvA);`);
   };
-  mat.customProgramCacheKey = () => `revive-${o.grow ? 1 : 0}${o.build ? 1 : 0}${o.appear ? 1 : 0}${o.green ? 1 : 0}${o.detail ? 1 : 0}-${o.sway ?? 0}-${o.spin ?? 0}`;
+  mat.customProgramCacheKey = () => `revive-${o.grow ? 1 : 0}${o.build ? 1 : 0}${o.appear ? 1 : 0}${o.green === 'soft' ? 2 : o.green ? 1 : 0}${o.detail ? 1 : 0}-${o.sway ?? 0}-${o.spin ?? 0}`;
   return mat;
 }
 
@@ -99,16 +99,19 @@ export function glowMaterial(u: ReviveUniforms, map: THREE.Texture, size: number
 
 /** Water of the other worlds (Nile, sea, crater lakes): still and murky at first, it rises and turns living blue with
  *  ripples as the stations are built (uLife 0..1). */
-export function lifeWaterMaterial(u: ReviveUniforms) {
+export function lifeWaterMaterial(u: ReviveUniforms, tint?: THREE.Texture) {
   return new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6,
-    uniforms: { uLife: { value: 0 }, uTime: u.uTime },
-    vertexShader: `uniform float uLife; varying vec3 vP; void main(){ vec3 p = position; p.y -= (1.0 - uLife) * 0.9; vP = p; gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0); }`,
-    fragmentShader: `uniform float uLife; uniform float uTime; varying vec3 vP;
+    transparent: true, depthWrite: false,
+    uniforms: { uLife: { value: 0 }, uTime: u.uTime, uTint: { value: tint ?? null }, uHasTint: { value: tint ? 1 : 0 }, uBox: u.uBox },
+    vertexShader: `uniform float uLife; varying vec3 vP; void main(){ vec3 p = position; p.y -= (1.0 - uLife) * 0.45; vP = p; gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0); }`,
+    fragmentShader: `uniform float uLife; uniform float uTime; uniform sampler2D uTint; uniform float uHasTint; uniform vec4 uBox; varying vec3 vP;
       void main(){
         float rip = 0.5 + 0.5 * sin(vP.x * 0.35 + uTime * 1.3) * sin(vP.z * 0.28 - uTime * 0.9);
-        vec3 dead = vec3(0.55, 0.52, 0.46), alive = mix(vec3(0.16, 0.48, 0.70), vec3(0.45, 0.78, 0.90), rip * 0.4);
-        gl_FragColor = vec4(mix(dead, alive, uLife), 0.62 + 0.3 * uLife);
+        vec3 real = uHasTint > 0.5 ? texture2D(uTint, (vP.xz - uBox.xy) / (uBox.zw - uBox.xy)).rgb : vec3(0.2, 0.5, 0.7);
+        // living water keeps the real colour of this river (two Niles meet in two colours), clearer and with ripples
+        vec3 alive = mix(real * 1.15, vec3(0.20, 0.52, 0.72), 0.35) + vec3(0.10, 0.12, 0.12) * rip * 0.6;
+        vec3 dead = vec3(0.55, 0.52, 0.46);
+        gl_FragColor = vec4(mix(dead, alive, uLife), 0.70 + 0.25 * uLife);
       }`,
   });
 }

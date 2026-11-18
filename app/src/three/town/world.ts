@@ -3,7 +3,7 @@
 // each plot's place on it, and a lat/lon -> scene conversion for review cameras placed at real photo positions.
 import { useEffect, useState } from 'react';
 
-export type Plot = { n: number; zone: string; skill: string; sx: number; sz: number; x: number; z: number; face: number; y: number };
+export type Plot = { n: number; zone: string; skill: string; kit?: string; sx: number; sz: number; x: number; z: number; face: number; y: number };
 type MeshInfo = { vertsOffset: number; shadeOffset: number; trisOffset: number; vertCount: number; triCount: number };
 export type PatchInfo = { name: string; x0: number; x1: number; z0: number; z1: number; w: number; h: number; offset: number;
   shadeOffset: number; vertsOffset: number; trisOffset: number; vertCount: number; triCount: number; lo: MeshInfo; detail: string };
@@ -42,9 +42,11 @@ export type WorldData = {
   // generic worlds (phase 4): station kit, extra instanced layers, water cells, landmark models
   stationKit?: string;
   layers?: { kit: string; mode: 'static' | 'grow' | 'build'; sway?: number; colors?: string[]; items: number[][] }[];   // items: x z rot scale [scaleY]
-  water?: { cell: number; cells: [number, number][]; kind: 'river' | 'sea' | 'lake'; level?: number };
+  water?: { cell: number; cells: [number, number][]; kind: 'river' | 'sea' | 'lake'; level?: number; planes?: { level: number; x0: number; x1: number; z0: number; z1: number }[] };
   landmarkList?: { kit: string; x: number; z: number; rot: number; s: number }[];
   riverUntil?: number;
+  /** size of the station objects (1 = as modelled) */
+  kitScale?: number;
   /** living colours of this world (overrides of PAL) */
   palette?: Record<string, string>;
   /** ground colour per terrain grid vertex (RGB bytes), taken from the satellite picture of the real place */
