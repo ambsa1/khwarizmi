@@ -47,6 +47,15 @@ export type WorldData = {
   riverUntil?: number;
   /** size of the station objects (1 = as modelled) */
   kitScale?: number;
+  /** a natural path (one narrow ribbon, no kerbs) instead of Kassala's street */
+  path?: { w: number; color: string };
+  fog?: [number, number];
+  /** water channels / streams and footpaths, drawn as ribbons on the ground */
+  lines?: { kind: 'water' | 'foot' | 'terrace'; w: number; points: [number, number][] }[];
+  /** the finish landmark and other landmarks, always in colour: from a station kit, a background kit or a pyramid */
+  marks?: { src: 'kits' | 'bg' | 'pyr'; kit: string; x: number; z: number; rot: number; s: number }[];
+  /** bridges along their real lines (Tuti Bridge has towers and cables) */
+  bridges?: { name: string; towers: boolean; points: [number, number][] }[];
   /** living colours of this world (overrides of PAL) */
   palette?: Record<string, string>;
   /** ground colour per terrain grid vertex (RGB bytes), taken from the satellite picture of the real place */

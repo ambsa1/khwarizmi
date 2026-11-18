@@ -102,7 +102,8 @@ function nubianPyramid(): Kit {
     scaffold: merge([steppedPyramid(3.6, 6.0, 12, 3.0, -1.0), box(2.0, 0.5, 1.8, 0, 0, 2.0, light),
       ...[-2.1, 2.1].flatMap(x => [box(0.12, 4.2, 0.12, x, 0, 0.8, '#7A5A3C'), box(0.12, 4.2, 0.12, x, 0, -2.8, '#7A5A3C')])]),
     built: merge([steppedPyramid(3.6, 6.0, 12, 6.0, -1.0), ...chapel]),
-    extra: merge([cyl(0.14, 0.2, 1.6, 3.2, 0.8, 2.6, '#6B4A2E', 5), paint(put(new THREE.IcosahedronGeometry(1.4, 0), 3.2, 2.0, 2.6, 0, 0, 0, [1.4, 0.55, 1.4]), '#5E8A3A')]),
+    // restored: an offering table and a stela before the chapel (no plants in the royal cemetery's desert)
+    extra: merge([box(0.9, 0.35, 0.7, 0, 0, 4.2, '#B58A60'), box(0.5, 1.1, 0.18, 1.3, 0, 3.8, '#C99A6C', 0.2)]),
   };
 }
 
@@ -138,7 +139,53 @@ function pylonTemple(): Kit {
 export const KITS: Record<string, () => Kit> = { saqiya, mooring, coralHouse, nubianPyramid, terraceFarm, pylonTemple };
 
 // ---------- background kits (instanced across each world) ----------
+/** A bridge along its real line: deck on piers over the water; with towers and cables for a suspension bridge. */
+export function bridgeGeometry(pts: [number, number][], level: number, towers: boolean) {
+  const parts: THREE.BufferGeometry[] = [], deckY = level + 2.4;
+  let L = 0; const acc = [0];
+  for (let i = 1; i < pts.length; i++) { L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); acc.push(L); }
+  const at = (d: number) => { let i = 1; while (i < pts.length - 1 && acc[i] < d) i++; const u = (d - acc[i - 1]) / ((acc[i] - acc[i - 1]) || 1);
+    const a = pts[i - 1], b = pts[i]; return { x: a[0] + (b[0] - a[0]) * u, z: a[1] + (b[1] - a[1]) * u, r: Math.atan2(-(b[1] - a[1]), b[0] - a[0]) }; };
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    parts.push(box(len + 0.3, 0.35, 2.4, (a[0] + b[0]) / 2, deckY, (a[1] + b[1]) / 2, '#A8A49A', Math.atan2(-(b[1] - a[1]), b[0] - a[0])));
+  }
+  for (let d = 4; d < L - 2; d += 7) { const p = at(d); parts.push(box(0.7, deckY - level + 1.2, 1.8, p.x, level - 1.2, p.z, '#C2BAA8', p.r)); }
+  if (towers) {
+    const up = new THREE.Vector3(0, 1, 0);
+    for (const f of [0.3, 0.7]) {
+      const p = at(L * f), nx = Math.sin(p.r), nz = Math.cos(p.r);
+      for (const sd of [-1, 1]) {
+        const tx = p.x + nx * sd * 1.4, tz = p.z + nz * sd * 1.4, top = deckY + 8;
+        parts.push(box(0.6, top - level + 1, 0.6, tx, level - 1, tz, '#E2DCCE', p.r));
+        for (const k of [-1, 1]) for (const dd of [3, 6, 9]) {
+          const q = at(Math.min(Math.max(L * f + k * dd, 0), L)), ex = q.x + nx * sd * 1.2, ez = q.z + nz * sd * 1.2;
+          const from = new THREE.Vector3(tx, top, tz), to = new THREE.Vector3(ex, deckY + 0.2, ez), dir = to.clone().sub(from), len = dir.length();
+          const g = new THREE.BoxGeometry(0.06, len, 0.06);
+          g.applyMatrix4(new THREE.Matrix4().compose(from.clone().add(to).multiplyScalar(0.5), new THREE.Quaternion().setFromUnitVectors(up, dir.normalize()), new THREE.Vector3(1, 1, 1)));
+          parts.push(paint(g, '#5C5A56'));
+        }
+      }
+    }
+  }
+  return merge(parts);
+}
+
 export const BG: Record<string, () => THREE.BufferGeometry> = {
+  /** Suakin coral-stone house: two storeys, parapet, a wooden rawshan (screened bay window) on the upper floor, a door */
+  coralHouse: () => merge([box(3.0, 3.4, 2.8, 0, 0, 0, '#ffffff'), box(3.15, 0.25, 2.95, 0, 3.4, 0, '#f4f0e8'),
+    box(1.4, 1.25, 0.5, 0, 1.95, 1.55, '#6B4A32'), box(1.6, 0.12, 0.62, 0, 3.22, 1.55, '#5A3E2A'), box(1.6, 0.12, 0.62, 0, 1.85, 1.55, '#5A3E2A'),
+    box(0.65, 1.15, 0.08, -0.7, 0, 1.42, '#4E3A2A'), box(0.35, 0.45, 0.06, 0.95, 0.9, 1.42, '#6B4A32')]),
+  /** coral-stone quay on the shore with bollards */
+  quay: () => merge([box(6.0, 0.5, 2.2, 0, -0.1, 0, '#BDB3A0'), ...[-2.2, 0, 2.2].map(x => cyl(0.14, 0.18, 0.5, x, 0.65, 0.8, '#5E5448', 6))]),
+  /** the island mosque's minaret: square base, octagonal shaft, balcony, small cap */
+  minaret: () => merge([box(7.0, 3.4, 6.0, 0, 0, 3.6, '#F2ECE0'), box(3.2, 4.2, 3.2, 0, 0, 0, '#F4F0E6'), cyl(0.8, 0.95, 9, 0, 8.7, 0, '#F6F2EA', 8),
+    cyl(1.25, 1.25, 0.35, 0, 13.3, 0, '#DCD2C0', 8), cyl(0.55, 0.62, 2.4, 0, 14.6, 0, '#F6F2EA', 8), paint(put(new THREE.ConeGeometry(0.66, 1.3, 8), 0, 16.45, 0), '#CDBF9F')]),
+  /** a terrace step on a slope: green field on top, rows of crops, dry-stone wall on the downhill (+z) side */
+  terraceStrip: () => merge([box(6.0, 0.3, 2.2, 0, 0, 0, '#5E8E3A'), ...[-0.6, 0, 0.6].map(z => box(5.6, 0.12, 0.18, 0, 0.3, z, '#47702C')),
+    box(6.0, 0.9, 0.3, 0, -0.6, 1.15, '#7E7464')]),
+  /** a waterfall where a stream drops: white water falling over the step (scaled in height by the drop) */
+  fall: () => merge([box(1.3, 2.0, 0.25, 0, -2.0, 0, '#E6F3F7'), box(1.8, 0.3, 1.2, 0, -2.1, 0.6, '#CFE7EF')]),
   /** round hut with thatched cone roof (Darfur, also northern farms' store huts) */
   tukul: () => merge([cyl(1, 1.05, 1.4, 0, 0.7, 0, '#B08A62', 9), paint(put(new THREE.ConeGeometry(1.35, 1.4, 9), 0, 2.1, 0), '#C9A66B')]),
   /** coral-stone house shell (Suakin), white when restored */

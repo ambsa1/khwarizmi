@@ -16,7 +16,7 @@ import {
   lessonHouseGeometry, massifGeometry, mosqueGeometry, PAL, palmGeometry, plotGeometry, postGeometry, ribbons, riverGeometry,
   scaffoldGeometry, shadeTreeGeometry, shopGeometry, shrubGeometry, terrainGeometry, treeGeometry, usePalette, WALLS, waterGeometry, wireGeometry,
 } from './geom';
-import { BG, KITS } from './kits';
+import { BG, bridgeGeometry, KITS, steppedPyramid } from './kits';
 import { glowMaterial, lifeWaterMaterial, makeReviveUniforms, revivable, waterMaterial, type ReviveOpts, type ReviveUniforms } from './revive';
 import { useWorld, type World } from './world';
 
@@ -63,15 +63,16 @@ function Instanced({ geo, mats, mat, colors }: { geo: THREE.BufferGeometry; mats
 function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: THREE.ShaderMaterial; density: number }) {
   const g = useMemo(() => {
     usePalette(w.palette);
-    const route = w.route.map(r => ({ w: 5.0, points: r.points }));
-    const curb = w.route.map(r => ({ w: 6.4, points: r.points }));
+    const pw = w.path?.w;                                    // generic worlds: one narrow natural path, no kerbs, no pavement
+    const route = w.route.map(r => ({ w: pw ?? 5.0, points: r.points }));
+    const curb = pw ? [] : w.route.map(r => ({ w: 6.4, points: r.points }));
     return {
       terrain: terrainGeometry(w), river: riverGeometry(w), massifs: w.patches.map(p => massifGeometry(density >= 1 ? p : p.low, w.tintData ? w.tintAt : undefined)), water: waterGeometry(w),
-      sidewalk: ribbons(w.route.map(r => ({ w: 9.2, points: r.points })), w.ground, 0.24, PAL.side, 1.5), alleys: alleyGeometry(w.alleys, w.plain),
+      sidewalk: pw ? new THREE.BufferGeometry() : ribbons(w.route.map(r => ({ w: 9.2, points: r.points })), w.ground, 0.24, PAL.side, 1.5), alleys: alleyGeometry(w.alleys, w.plain),
       compound: compoundGeometry(), shop: shopGeometry(), awning: awningGeometry(), post: postGeometry(), jar: jarGeometry(),
       shadeTree: shadeTreeGeometry(), shrub: shrubGeometry(), wires: wireGeometry(w.posts, w.ground),
       roads: ribbons(w.roads, w.plain, 0.22, PAL.road),
-      curb: ribbons(curb, w.ground, 0.3, PAL.curb, 1.5), street: ribbons(route, w.ground, 0.38, PAL.street, 1.5),
+      curb: curb.length ? ribbons(curb, w.ground, 0.3, PAL.curb, 1.5) : new THREE.BufferGeometry(), street: ribbons(route, w.ground, 0.38, PAL.street, 1.5),
       boulder: boulderGeometry(), house: bgHouseGeometry(), tree: treeGeometry(), palm: palmGeometry(), grass: grassGeometry(), mosque: mosqueGeometry(),
     };
   }, [w, density]);
@@ -340,11 +341,41 @@ function Generic({ w, u, life, density }: { w: World; u: ReviveUniforms; life: T
     }));
   }, [w]);
   const marks = useMemo(() => (w.landmarkList ?? []).map(m => ({ geo: BG[m.kit]?.() ?? null, mat: m4(m.x, w.ground(m.x, m.z), m.z, m.rot, m.s, m.s, m.s) })), [w]);
+  // the finish landmark (and landmarks along the way): always in full colour, so the child sees the goal from the start
+  const solid = useMemo(() => new THREE.MeshLambertMaterial({ vertexColors: true }), []);
+  const finish = useMemo(() => {
+    const groups = new Map<string, { geo: THREE.BufferGeometry; mats: THREE.Matrix4[] }>();
+    for (const m of w.marks ?? []) {
+      const key = `${m.src}:${m.kit}`;
+      if (!groups.has(key)) {
+        let geo: THREE.BufferGeometry | null = null;
+        if (m.src === 'pyr') geo = steppedPyramid(3.6, 6.0, 12, 6.0);
+        else if (m.src === 'kits') { const k = KITS[m.kit]?.(); if (k) geo = k.spin ? mergeGeometries([k.built, k.spin.geo.clone().translate(...k.spin.at)]) : k.built; }
+        else geo = BG[m.kit]?.() ?? null;
+        if (!geo) continue;
+        groups.set(key, { geo, mats: [] });
+      }
+      groups.get(key)!.mats.push(m4(m.x, w.ground(m.x, m.z), m.z, m.rot, m.s, m.s, m.s));
+    }
+    const bridges = (w.bridges ?? []).map(b => bridgeGeometry(b.points, w.water?.level ?? 0, b.towers));
+    return { groups: [...groups.values()], bridges };
+  }, [w]);
+  const lineGeo = useMemo(() => {
+    const L = w.lines ?? [], pick = (k: string) => L.filter(l => l.kind === k).map(l => ({ w: l.w, points: l.points }));
+    return { water: pick('water').length ? ribbons(pick('water'), w.ground, 0.34, '#3C8DC0', 1.0) : null, foot: pick('foot').length ? ribbons(pick('foot'), w.ground, 0.26, PAL.street, 1.0) : null,
+      terrace: pick('terrace').length ? ribbons(pick('terrace'), w.ground, 0.22, '#5E9A3A', Infinity) : null };
+  }, [w]);
+  const lineMats = { water: useMat(u, { offset: 3, appear: true }), foot: useMat(u, { offset: 2 }), terrace: useMat(u, { offset: 1, appear: true }) };
   return (
     <group>
       {waterGeo && <mesh geometry={waterGeo} material={life} renderOrder={2} />}
       {layers.map(({ L, geo, mats: ms, colors }, i) => geo && <Instanced key={i} geo={geo} mats={ms} mat={L.mode === 'grow' ? mats.grow : L.mode === 'build' ? mats.build : mats.static} colors={colors} />)}
       {marks.map((m, i) => m.geo && <Instanced key={`m${i}`} geo={m.geo} mats={[m.mat]} mat={mats.static} />)}
+      {lineGeo.water && <mesh geometry={lineGeo.water} material={lineMats.water} />}
+      {lineGeo.foot && <mesh geometry={lineGeo.foot} material={lineMats.foot} />}
+      {lineGeo.terrace && <mesh geometry={lineGeo.terrace} material={lineMats.terrace} />}
+      {finish.groups.map((f, i) => <Instanced key={`f${i}`} geo={f.geo} mats={f.mats} mat={solid} />)}
+      {finish.bridges.map((g, i) => <mesh key={`b${i}`} geometry={g} material={solid} />)}
     </group>
   );
 }
@@ -408,6 +439,13 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
   const front = mastered > 0 ? w.plotS[mastered - 1] + 12 : -40;
   const gashLessons = w.plots.filter(p => p.zone === w.plots[0].zone).length;
   const fill = Math.min(mastered / gashLessons, 1);
+  const { scene } = useThree();
+  useEffect(() => {
+    if (!(scene.fog instanceof THREE.Fog)) return;
+    const f = scene.fog, keep = [f.near, f.far, f.color.getHex()] as const;
+    if (w.fog) { f.near = w.fog[0]; f.far = w.fog[1]; f.color.set(PAL.fog); }
+    return () => { f.near = keep[0]; f.far = keep[1]; f.color.setHex(keep[2]); };
+  }, [scene, w]);
   const life = useMemo(() => {
     let tex: THREE.DataTexture | undefined;
     if (w.tintData) {
@@ -435,7 +473,8 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
     u.uProg.value = THREE.MathUtils.damp(u.uProg.value, front, 0.9, dt);
     u.uAll.value = THREE.MathUtils.damp(u.uAll.value, done ? 1 : 0, 0.55, dt);
     water.uniforms.uFill.value = THREE.MathUtils.damp(water.uniforms.uFill.value, fill * 1.02, 0.7, dt);
-    life.uniforms.uLife.value = THREE.MathUtils.damp(life.uniforms.uLife.value, done ? 1 : Math.min(1, 0.15 + 0.85 * mastered / Math.max(total, 1)), 0.8, dt);
+    // crater lakes are the finish line: in their colour from the start; rivers and sea come alive with the stations
+    life.uniforms.uLife.value = THREE.MathUtils.damp(life.uniforms.uLife.value, done || w.water?.kind === 'lake' ? 1 : Math.min(1, 0.15 + 0.85 * mastered / Math.max(total, 1)), 0.8, dt);
 
     const prev = sCur.current;
     sCur.current = THREE.MathUtils.damp(sCur.current, target, 1.6, dt);

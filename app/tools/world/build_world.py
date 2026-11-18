@@ -25,52 +25,56 @@ UNIT_M = 10.0
 # ---------------------------------------------------------------- per-world configuration
 CFG = {
     'saqiya': dict(
-        area=(19.100, 30.430, 19.200, 30.530), water=('dem', 221.6), relief=None,
+        # a Nubian farming village on the channel west of the island near Dongola: saqiyas on the water, each feeding a
+        # channel with branches that water continuous fields and palm groves; the finish is the great old saqiya
+        water=('dem', 221.6), relief=None, life='saqiya',
         route=[(19.1361, 30.482), (19.1514, 30.4814), (19.1667, 30.4802)], shore=(10, 'land'),
-        kit='saqiya', kitSide='water', kits=[(0, 'saqiya', 'water')], beacon=('station', -1),
-        palette={'waterA': '#7A6E52', 'waterB': '#4E7468', 'green': '#4E7E34', 'built': '#BFA27C', 'rock': '#CDB38C', 'street': '#D8BF96', 'curb': '#B08A62', 'side': '#CBB08A', 'road': '#D2B98F', 'fog': '#F1DDBA', 'ground': '#CDB38C', 'groundDark': '#A88B66',
-                 'walls': '#C9A57C,#D5B48C,#BF9A70,#DCC09A,#C7A07A'},
-        veg=dict(palms=900, trees=300, fields=160), houses=700, compounds=120, boats=10, grass=3000, shrubs=400,
+        kits=[(0, 'saqiya', 'water')], kitScale=1.6, beacon=('end', 4), fog=(260, 950),
+        path={'w': 3.2, 'color': '#C4A57A'},
+        palette={'waterA': '#7A6E52', 'waterB': '#4E7468', 'green': '#4E7E34', 'built': '#BFA27C', 'rock': '#CDB38C', 'street': '#C4A57A', 'fog': '#F1DDBA', 'ground': '#CDB38C', 'groundDark': '#A88B66'},
     ),
     'mogran': dict(
-        area=(15.575, 32.460, 15.665, 32.552), water=('dem', 371.4), relief=None,
-        route=[(15.6084, 32.5159), (15.6102, 32.5075), (15.6142, 32.4991), (15.6229, 32.4943), (15.631, 32.4955), (15.6368, 32.5015)], shore=(9, 'land'), land=(15.6241, 32.5051),
-        kit='mooring', kitSide='water', kits=[(0, 'mooring', 'water')], beacon=('latlon', 15.6125, 32.4985, 6),
-        palette={'waterA': '#8C6A46', 'waterB': '#5C7F62', 'green': '#5E8A3A', 'built': '#B9A07E', 'rock': '#C9AE86', 'street': '#D9C6A2', 'curb': '#9C7652', 'side': '#CDB48E', 'fog': '#EFDDBE', 'ground': '#C9AE86', 'groundDark': '#9C8462'},
-        veg=dict(palms=500, trees=900, fields=140), houses=1100, compounds=160, boats=26, grass=3200, shrubs=600,
+        # Tuti island: down its west shore, past its gardens and moorings, to the corner where the two Niles meet;
+        # Omdurman Bridge stands beyond the meeting point (finish), Tuti Bridge on the south shore
+        water=('dem', 371.4), relief=None, life='mogran',
+        route=[(15.6368, 32.5015), (15.631, 32.4955), (15.6229, 32.4943), (15.6142, 32.4991)], shore=(9, 'land'), land=(15.6241, 32.5051),
+        focus=[(15.6151, 32.4885), (15.6055, 32.5133)],
+        kits=[(0, 'mooring', 'water')], kitScale=1.15, beacon=('latlon', 15.6118, 32.4975, 4), fog=(260, 950),
+        path={'w': 2.8, 'color': '#C9AE86'},
+        palette={'waterA': '#8C6A46', 'waterB': '#5C7F62', 'green': '#5E8A3A', 'built': '#B9A07E', 'rock': '#C9AE86', 'street': '#C9AE86', 'fog': '#EFDDBE', 'ground': '#C2A57E', 'groundDark': '#9C8462'},
     ),
     'suakin': dict(
-        # the old coral-stone island in its harbour: mainland quays on the lagoon (Geyf) -> causeway -> around the island
-        area=(19.088, 37.312, 19.134, 37.362), water=('dem', 0.35), relief=None, tintGain=1.15,
+        # the old coral-stone island: mainland quays on the lagoon -> causeway -> lanes round the island of coral houses
+        # with wooden rawshan windows; the finish is the island's mosque minaret (map position)
+        water=('dem', 0.35), relief=None, life='suakin',
         route=[(19.1046, 37.3288), (19.1050, 37.3305), (19.1053, 37.3322), (19.1052, 37.3340), (19.1055, 37.3352), (19.1066, 37.3343), (19.1078, 37.3337), (19.1088, 37.3334), (19.1094, 37.3338), (19.1100, 37.3346),
                (19.1110, 37.3346), (19.1122, 37.3349), (19.1131, 37.3358), (19.1133, 37.3370), (19.1128, 37.3381), (19.1117, 37.3386),
                (19.1105, 37.3383), (19.1098, 37.3373), (19.1098, 37.3360)],
-        kits=[(0, 'coralHouse', 'land'), (3, 'mooring', 'water'), (7, 'coralHouse', 'land')], kitScale=1.0, houseMask='land', houseHeight=2.2, beacon=('latlon', 19.1116, 37.3366, 4),
-        palette={'waterA': '#2E8A8C', 'waterB': '#1F6E7E', 'green': '#7A8A4E', 'built': '#E2D8C4', 'rock': '#D9CBB0', 'street': '#E8DCC4', 'curb': '#B8A584', 'side': '#DDD0B6', 'fog': '#EADFC8', 'ground': '#D8C8A8', 'groundDark': '#B5A281',
+        kits=[(0, 'coralHouse', 'land'), (3, 'mooring', 'water'), (7, 'coralHouse', 'land')], kitScale=1.0, beacon=('latlon', 19.1122, 37.33736, 10), fog=(220, 850),
+        path={'w': 3.2, 'color': '#E3D8C2'},
+        palette={'waterA': '#2E8A8C', 'waterB': '#1F6E7E', 'green': '#7A8A4E', 'built': '#E2D8C4', 'rock': '#D9CBB0', 'street': '#E3D8C2', 'fog': '#EADFC8', 'ground': '#D8C8A8', 'groundDark': '#B5A281',
                  'walls': '#EDE6D6,#E4DCCB,#F2ECE0,#D9CFBD,#E8DFCC'},
-        veg=dict(palms=60, trees=140, fields=0), houses=600, compounds=90, boats=18, grass=1400, shrubs=500,
     ),
     'meroe': dict(
-        # the royal city and Amun temple by the Nile -> the west cemetery -> across the plain -> the north cemetery on the hills
-        area=(16.905, 33.700, 16.965, 33.770), water=('dem', 352.6), relief=dict(vexag=1.5), meshErr=1.6, tintGain=1.6,
-        route=[(16.9372, 33.7128), (16.9352, 33.7170), (16.9335, 33.7225), (16.9318, 33.7270), (16.9340, 33.7320), (16.9350, 33.7380),
-               (16.9360, 33.7430), (16.9372, 33.7465), (16.9383, 33.7480), (16.9393, 33.7502)],
-        kits=[(0, 'pylonTemple', 'land'), (4, 'nubianPyramid', 'land')], kitScale=1.25, beacon=('latlon', 16.9387, 33.7491, 6),
-        palette={'waterA': '#6E6A52', 'waterB': '#58705E', 'green': '#7A8A42', 'built': '#C9A57C', 'rock': '#9C6E4E', 'street': '#D9B98E', 'curb': '#A97C55', 'side': '#CFAE84', 'fog': '#F0D6B0', 'ground': '#C9965E', 'groundDark': '#8A5E3C',
-                 'walls': '#C9A57C,#BF9A70,#D5B48C'},
-        veg=dict(palms=120, trees=420, fields=40), houses=160, compounds=60, boats=0, grass=1800, shrubs=500,
-        pyramids='osm', acacia=500, boulders=500,
+        # Begarawiya: a sand track through golden dunes and dark sandstone up the ridge to the royal north cemetery,
+        # whose stepped pyramids (map positions) crown the hill-top and stand on the horizon from the start
+        water=('dem', 352.6), relief=dict(vexag=1.5), meshErr=1.6, life='meroe',
+        route=[(16.9238, 33.7318), (16.9256, 33.7340), (16.9272, 33.7352), (16.9288, 33.7368), (16.9300, 33.7385), (16.9318, 33.7405), (16.9338, 33.7428), (16.9352, 33.7450), (16.9366, 33.7466), (16.9378, 33.7479), (16.9386, 33.7488)],
+        focus=[(16.9394, 33.7512)],
+        kits=[(0, 'nubianPyramid', 'land')], kitScale=0.8, beacon=('latlon', 16.9390, 33.7495, 8), fog=(320, 1150),
+        path={'w': 2.4, 'color': '#B88A55'},
+        palette={'waterA': '#6E6A52', 'waterB': '#58705E', 'green': '#B08A50', 'built': '#C9A57C', 'rock': '#7E5236', 'street': '#B88A55', 'fog': '#F3D9A8', 'ground': '#E2B46C', 'groundDark': '#C48E4E'},
     ),
     'marra': dict(
-        # the hamlets Dolum and Tirba on the south-east flank -> up to the rim of the Deriba caldera -> down to its two lakes
-        area=(12.895, 24.235, 12.975, 24.310), water=('lakes', [(12.95076, 24.25773, 0.10, 40), (12.96403, 24.27485, 0.07, 70)]), relief=dict(vexag=1.0), meshErr=5.0, tintGain=1.35,
+        # green volcanic mountain: a narrow footpath from the hamlets Dolum and Tirba up terraced, wooded slopes with
+        # streams and falls, over the rim of the Deriba caldera to its two lakes (the finish, in sight from the start)
+        water=('lakes', [(12.95076, 24.25773, 0.10, 40), (12.96403, 24.27485, 0.07, 70)]), relief=dict(vexag=1.0), meshErr=5.0, life='marra',
         route=[(12.9040, 24.2935), (12.9100, 24.2915), (12.9150, 24.2885), (12.9205, 24.2840), (12.9255, 24.2790), (12.9300, 24.2745),
                (12.9345, 24.2715), (12.9395, 24.2700), (12.9450, 24.2705), (12.9505, 24.2720), (12.9555, 24.2740), (12.9590, 24.2760)],
-        kits=[(0, 'terraceFarm', 'land')], kitScale=1.4, beacon=('lake', 1, 3),
-        palette={'waterA': '#2A5560', 'waterB': '#3E7C9A', 'green': '#5A7A38', 'built': '#A08060', 'rock': '#7A6450', 'street': '#C9A87E', 'curb': '#8C6A4A', 'side': '#B89A72', 'fog': '#E4DCCB', 'ground': '#9C8466', 'groundDark': '#6E5A46',
-                 'walls': '#B08A62,#A07C58'},
-        veg=dict(palms=0, trees=900, fields=60), houses=0, compounds=0, boats=0, grass=3200, shrubs=900,
-        tukuls='osm', acacia=300, boulders=900,
+        focus=[(12.9514, 24.2576), (12.9644, 24.2748)],
+        kits=[(0, 'terraceFarm', 'land')], kitScale=1.3, beacon=('lake', 1, 3), fog=(380, 1500),
+        path={'w': 1.8, 'color': '#8C6A48'},
+        palette={'waterA': '#2A5560', 'waterB': '#3E7C9A', 'green': '#4E7E30', 'built': '#A08060', 'rock': '#6E6A58', 'street': '#8C6A48', 'fog': '#DDE3D2', 'ground': '#6E8E44', 'groundDark': '#4E6A34'},
     ),
 }
 
@@ -83,7 +87,10 @@ OUT = REPO / 'app' / 'public' / 'worlds' / wid
 OUT.mkdir(parents=True, exist_ok=True)
 random.seed(11); rng = np.random.default_rng(11)
 
-S, W, N, E = C['area']
+# the world is the stage of the journey: the path, its finish landmark and a margin for the view - nothing far beyond
+_pts = list(C['route']) + list(C.get('focus', []))
+_m = C.get('margin', 0.009)
+S, W, N, E = min(a for a, b in _pts) - _m, min(b for a, b in _pts) - _m, max(a for a, b in _pts) + _m, max(b for a, b in _pts) + _m
 LAT0, LON0 = (S + N) / 2, (W + E) / 2
 KX = 111320 * math.cos(math.radians(LAT0)); KY = 111320.0
 def X(lon): return (lon - LON0) * KX / UNIT_M
@@ -243,7 +250,7 @@ AXg, AZg = np.meshgrid(ax, az)
 PK, PD = (v.reshape(AH, AW) for v in nearest_k(AXg.ravel(), AZg.ravel()))
 ph = grid_at(Hs, P[:, 0], P[:, 1]); kk = 9
 ph = np.convolve(np.pad(ph, kk, mode='edge'), np.ones(2 * kk + 1) / (2 * kk + 1), mode='valid'); ph = np.maximum(ph, 0.5)
-t = np.clip((PD - 7) / 7, 0, 1); Hs = ph[PK] * (1 - t) + Hs * t
+PW = C['path']['w']; t = np.clip((PD - (PW / 2 + 1.5)) / 4, 0, 1); Hs = ph[PK] * (1 - t) + Hs * t   # a natural path: only its own width is levelled
 
 # ---------------------------------------------------------------- terrain meshes
 # a coarse grid (colour from the satellite, sits just under) + one adaptive mesh of the whole ground (Martini, like the
@@ -360,67 +367,151 @@ def sample(mask, n, dmax=1e9, dmin=3.2, r=1.2, tries=None, extra=lambda x, z: Tr
         x = ax[is_[k]] + rng.uniform(-1, 1); z = az[js[k]] + rng.uniform(-1, 1)
         sd = street_dist(x, z)
         if sd > dmax or sd < dmin or near_station(x, z) or not extra(x, z) or not free(x, z, r): continue
-        if not boat_ok and (is_water(x, z) or ground(x, z) < 0.18): continue
+        if not boat_ok and (is_water(x, z) or ground(x, z) < 0.04): continue
         out.append((x, z)); occupied.append((x, z, r))
         if len(out) >= n: break
     return out
-V = C['veg']
+palms, trees, houses, compounds, boulders, shrubs, grass, layers, lines, marks, bridges = [], [], [], [], [], [], [], [], [], [], []
+slope = np.hypot(*np.gradient(Hs, CELL))
 near_water = wdist < 45
-palms = [[round(x, 2), round(z, 2), round(float(rng.uniform(0.8, 1.25)), 2), round(float(rng.uniform(0, 6.28)), 2)]
-         for x, z in sample(green & near_water, V['palms'], dmax=260, r=1.0)]
-trees = [[round(x, 2), round(z, 2), round(float(rng.uniform(0.7, 1.2)), 2)] for x, z in sample(green & ~near_water, V['trees'], dmax=320, r=1.4)]
-fields = [[round(x, 2), round(z, 2), round(float(rng.uniform(0, 3.14)), 2), round(float(rng.uniform(0.8, 1.3)), 2), 1]
-          for x, z in sample(green, V['fields'], dmax=140, dmin=6, r=3.0)]
-houses = []
-for x, z in sample(roofs if C.get('houseMask') != 'land' else ~water, C['houses'], dmax=420 if C.get('houseMask') != 'land' else 90, dmin=5, r=2.2):
-    a, b = rng.uniform(2.2, 3.6), rng.uniform(2.0, 3.2)
-    houses.append([round(x, 2), round(z, 2), round(float(rng.uniform(-0.3, 0.3)), 2), round(a, 2), round(b, 2), round(float(rng.uniform(0.7, 1.0) * C.get('houseHeight', 1.0)), 2)])
-compounds = []
-for x, z in sample(~water & ~green, C['compounds'], dmax=34, dmin=6, r=2.4):
-    a, b = rng.uniform(2.6, 4.0), rng.uniform(2.4, 3.6)
-    k = int(np.argmin(np.hypot(P[:, 0] - x, P[:, 1] - z))); t = P[min(k + 1, len(P) - 1)] - P[max(k - 1, 0)]
-    compounds.append([round(x, 2), round(z, 2), round(math.atan2(t[0], t[1]), 2), round(a, 2), round(b, 2), round(float(rng.uniform(0.8, 1.1)), 2)])
-open_water = water & (wdist == 0) & (box_blur(water.astype(float), 4) > 0.97)
-boats = [[round(x, 2), round(z, 2), round(float(rng.uniform(0, 6.28)), 2), round(float(rng.uniform(0.9, 1.2)), 2)]
-         for x, z in sample(open_water, C['boats'], dmax=160, dmin=6, r=5, boat_ok=True)]
-grass = [[round(x, 2), round(z, 2), round(float(rng.uniform(0.6, 1.4)), 2)] for x, z in sample(~water, C['grass'], dmax=60, dmin=3.4, r=0.4, tries=C['grass'] * 6)]
-shrubs = [[round(x, 2), round(z, 2), round(float(rng.uniform(0.6, 1.1)), 2), 1 if rng.random() < 0.25 else 0]
-          for x, z in sample(~water, C['shrubs'], dmax=70, dmin=4.5, r=0.9)]
-extra_layers = []
+def item(x, z, r, sc, sy=None): return [round(float(x), 2), round(float(z), 2), round(float(r), 3), round(float(sc), 2)] + ([round(float(sy), 2)] if sy else [])
+def rot_along(dx, dz): return math.atan2(-dz, dx)            # local +x along (dx, dz)
 places = json.load(open(REF / 'osm' / 'places.json', encoding='utf-8'))['elements'] if (REF / 'osm' / 'places.json').exists() else []
 def inside_area(x, z): return x0 + 5 < x < x1 - 5 and z0 + 5 < z < z1 - 5
-if C.get('pyramids') == 'osm':
-    pyr = []
+end = P[-1]; endt = P[-1] - P[-6]; endt = endt / (np.hypot(*endt) or 1)
+life = C['life']
+
+if life == 'saqiya':
+    # every saqiya feeds a channel inland across the path, with branches; fields line the branches, palms the channels
+    fields = []
+    for pl in plots:
+        sx, sz, x, z = pl['sx'], pl['sz'], pl['x'], pl['z']
+        d = np.array([sx - x, sz - z]); d /= np.hypot(*d) or 1; nrm = np.array([-d[1], d[0]])
+        main = [[x, z]]
+        for k in range(1, 40):
+            q = np.array([sx, sz]) + d * (k * 1.5)
+            if is_water(*q) or not inside_area(*q): break
+            main.append(q.tolist())
+        lines.append({'kind': 'water', 'w': 1.1, 'points': [[round(a, 2), round(b, 2)] for a, b in main]})
+        L = len(main) * 1.5
+        for k, (a, b) in enumerate(main[3::4]):
+            if k % 2 == 0:
+                for sd in (-1, 1):
+                    br = [[a, b]] + [[a + nrm[0] * sd * j * 2, b + nrm[1] * sd * j * 2] for j in range(1, 8)]
+                    br = [q for q in br if not is_water(*q)]
+                    if len(br) < 3: continue
+                    lines.append({'kind': 'water', 'w': 0.7, 'points': [[round(u, 2), round(v, 2)] for u, v in br]})
+                    for j in range(1, len(br) - 1, 2):
+                        for off in (-2.4, 2.4):
+                            fx, fz = br[j][0] + d[0] * off, br[j][1] + d[1] * off
+                            if not is_water(fx, fz) and street_dist(fx, fz) > 3: fields.append(item(fx, fz, rot_along(*nrm), rng.uniform(0.95, 1.15)))
+            for sd in (-1, 1):
+                px_, pz_ = a + nrm[0] * sd * 1.6, b + nrm[1] * sd * 1.6
+                if street_dist(px_, pz_) > 9 and k % 3 == 2: palms.append(item(px_, pz_, rng.uniform(0, 6.28), rng.uniform(0.85, 1.1)))
+    for x, z in sample(green & near_water, 140, dmax=45, dmin=11, r=1.8):
+        palms.append(item(x, z, rng.uniform(0, 6.28), rng.uniform(0.8, 1.25)))
+    layers.append({'kit': 'field', 'mode': 'grow', 'colors': ['#5E9A3A', '#6EA845', '#4E8A34', '#7FA848'], 'items': fields})
+    b = plots[-1]; marks.append({'src': 'kits', 'kit': 'saqiya', 'x': round(float(end[0] + endt[0] * 10), 2), 'z': round(float(end[1] + endt[1] * 10), 2), 'rot': b['face'], 's': 2.6})
+
+elif life == 'mogran':
+    fields = [item(x, z, rng.uniform(-0.2, 0.2) + 1.57 * (rng.random() < 0.5), rng.uniform(1.0, 1.3)) for x, z in sample(green & ~water, 170, dmax=70, dmin=6, r=3.0)]
+    trees = [item(x, z, 0, rng.uniform(0.75, 1.2))[:3] for x, z in sample(green & ~water, 420, dmax=80, dmin=4, r=1.5)]
+    trees = [[t_[0], t_[1], t_[3] if len(t_) > 3 else 1.0] for t_ in [item(x, z, 0, rng.uniform(0.75, 1.2)) for x, z in sample(green & ~water, 420, dmax=80, dmin=4, r=1.5)]]
+    for x, z in sample(~water & (wdist < 10), 220, dmax=40, dmin=3.5, r=1.1):
+        palms.append(item(x, z, rng.uniform(0, 6.28), rng.uniform(0.85, 1.25)))
+    open_water = water & (wdist == 0) & (box_blur(water.astype(float), 4) > 0.97)
+    layers.append({'kit': 'field', 'mode': 'grow', 'colors': ['#5E9A3A', '#6EA845', '#4E8A34', '#7FA848'], 'items': fields})
+    layers.append({'kit': 'boat', 'mode': 'grow', 'items': [item(x, z, rng.uniform(0, 6.28), rng.uniform(0.9, 1.2)) for x, z in sample(open_water, 16, dmax=90, dmin=8, r=6, boat_ok=True)]})
+    bj = json.load(open(REF / 'osm' / 'bridges.json', encoding='utf-8'))['elements'] if (REF / 'osm' / 'bridges.json').exists() else []
+    seen_b = set()
+    for e in bj:
+        nm = (e.get('tags', {}).get('name:en') or e.get('tags', {}).get('name', ''))
+        g = e.get('geometry', [])
+        if nm in seen_b or len(g) < 3 or ('Tuti' not in nm and 'Omdurman' not in nm): continue
+        seen_b.add(nm)
+        bridges.append({'name': nm, 'towers': 'Tuti' in nm, 'points': [[round(X(q['lon']), 2), round(Z(q['lat']), 2)] for q in g]})
+
+elif life == 'suakin':
+    isl = (~water) & (PD < 60)
+    for x, z in sample(isl, 300, dmax=55, dmin=4.2, r=2.3):
+        k = int(np.argmin(np.hypot(P[:, 0] - x, P[:, 1] - z))); tt = P[min(k + 1, len(P) - 1)] - P[max(k - 1, 0)]
+        face = math.atan2(P[k, 0] - x, P[k, 1] - z)            # its rawshan side to the lane
+        houses.append(item(x, z, face, rng.uniform(0.85, 1.2), rng.uniform(0.8, 1.35)))
+    wgz, wgx = np.gradient(wdist, CELL)
+    quays = [item(x, z, rot_along(-wgz[int((z - z0) / CELL), int((x - x0) / CELL)], wgx[int((z - z0) / CELL), int((x - x0) / CELL)]), 1.0) for x, z in sample((~water) & (wdist < 6), 40, dmax=45, dmin=3, r=4)]
+    open_water = water & (wdist == 0) & (box_blur(water.astype(float), 3) > 0.95)
+    layers.append({'kit': 'coralHouse', 'mode': 'static', 'colors': ['#F2ECE0', '#EDE6D6', '#E6DECD', '#F4F0E6'], 'items': houses}); houses = []
+    layers.append({'kit': 'quay', 'mode': 'build', 'items': quays})
+    layers.append({'kit': 'boat', 'mode': 'grow', 'items': [item(x, z, rng.uniform(0, 6.28), rng.uniform(1.0, 1.3)) for x, z in sample(open_water, 18, dmax=110, dmin=8, r=6, boat_ok=True)]})
+    mx, mz = X(37.33736), Z(19.1122); marks.append({'src': 'bg', 'kit': 'minaret', 'x': round(mx, 2), 'z': round(mz, 2), 'rot': 0, 's': 1.0})
+
+elif life == 'meroe':
+    for x, z in sample(~water & (slope > 0.04), 420, dmax=110, dmin=3, r=1.0):
+        boulders.append([round(x, 2), round(z, 2), round(float(rng.uniform(0.5, 1.8)), 2)])
     for e in places:
-        t = e.get('tags', {}); c = e.get('center') or e
-        if (t.get('historic') == 'tomb' or t.get('name') == 'Pyramid' or 'Pyramid beg' in t.get('name', '')) and 'lat' in c:
+        t_ = e.get('tags', {}); c = e.get('center') or e
+        if (t_.get('historic') == 'tomb' or t_.get('name') == 'Pyramid' or 'Pyramid beg' in t_.get('name', '')) and 'lat' in c:
             x, z = X(c['lon']), Z(c['lat'])
-            if inside_area(x, z) and near_station(x, z) is False and all(math.hypot(x - a, z - b) > 2.2 for a, b, *_ in pyr):
-                pyr.append([round(x, 2), round(z, 2), round(float(rng.uniform(-0.1, 0.1)), 2), round(float(rng.uniform(0.7, 1.3)), 2)])
-    extra_layers.append({'kit': 'pyramid', 'mode': 'static', 'colors': ['#B5835A', '#A87650', '#BF8D62'], 'items': pyr})
-    print(f'real pyramids/tombs from the map: {len(pyr)}')
-if C.get('tukuls') == 'osm':
-    huts = []
-    seeds = [(X(c['lon']), Z(c['lat'])) for e in places for c in [e.get('center') or e] if e.get('tags', {}).get('place') in ('hamlet', 'village', 'isolated_dwelling') and 'lat' in c]
-    seeds = [(x, z) for x, z in seeds if inside_area(x, z)]
-    # small hamlets beside the path too (the real ones on the flank are where the path starts)
-    seeds += [tuple(P[k]) + np.array([12, 0]) for k in range(0, len(P), max(1, len(P) // 6))]
-    for cx_, cz_ in seeds:
-        for _ in range(9):
-            a_, r_ = rng.uniform(0, 6.28), rng.uniform(3, 14); x, z = cx_ + math.cos(a_) * r_, cz_ + math.sin(a_) * r_
-            if inside_area(x, z) and not is_water(x, z) and street_dist(x, z) > 5 and not near_station(x, z) and free(x, z, 1.8):
-                occupied.append((x, z, 1.8)); huts.append([round(x, 2), round(z, 2), round(float(rng.uniform(0, 6.28)), 2), round(float(rng.uniform(1.0, 1.4)), 2)])
-    extra_layers.append({'kit': 'tukul', 'mode': 'build', 'items': huts})
-    print(f'round huts (tukuls) at {len(seeds)} hamlets: {len(huts)}')
-if C.get('acacia'):
-    ac = [[round(x, 2), round(z, 2), round(float(rng.uniform(0, 6.28)), 2), round(float(rng.uniform(0.8, 1.4)), 2)]
-          for x, z in sample(~water, C['acacia'], dmax=200, dmin=5, r=2.0)]
-    extra_layers.append({'kit': 'acacia', 'mode': 'grow', 'items': ac})
-boulders = []
-if C.get('boulders'):
-    slope = np.hypot(*np.gradient(Hs, CELL))
-    boulders = [[round(x, 2), round(z, 2), round(float(rng.uniform(0.6, 2.2)), 2)] for x, z in sample((slope > 0.12) & ~water, C['boulders'], dmax=240, dmin=5, r=1.2)]
-print(f'palms {len(palms)}, trees {len(trees)}, fields {len(fields)}, houses {len(houses)}, compounds {len(compounds)}, boats {len(boats)}, grass {len(grass)}, shrubs {len(shrubs)}')
+            if inside_area(x, z) and street_dist(x, z) > 5 and all(math.hypot(x - m['x'], z - m['z']) > 4.5 for m in marks):
+                marks.append({'src': 'pyr', 'kit': 'pyramid', 'x': round(x, 2), 'z': round(z, 2), 'rot': round(float(rng.uniform(-0.1, 0.1)), 3), 's': round(float(rng.uniform(1.5, 2.3)), 2)})
+    print(f'north cemetery pyramids from the map: {len(marks)}')
+
+elif life == 'marra':
+    # terraces along the contours of the real slopes near the path, their stone wall on the downhill side
+    gzs, gxs = np.gradient(Hs, CELL)
+    region = (~water) & (PD < 85) & (PD > PW / 2 + 2) & (slope > 0.05) & (slope < 0.85)
+    terr = 0
+    for lev in np.arange(np.floor(Hs[region].min()) if region.any() else 0, Hs[region].max() if region.any() else 0, 0.8):
+        a_ = Hs[:-1, :-1] - lev; b_ = Hs[:-1, 1:] - lev; c_ = Hs[1:, 1:] - lev; d_ = Hs[1:, :-1] - lev
+        cells = region[:-1, :-1] & ((np.sign(a_) != np.sign(b_)) | (np.sign(b_) != np.sign(c_)) | (np.sign(c_) != np.sign(d_)))
+        for j_, i_ in zip(*np.nonzero(cells)):
+            ed = []
+            for (p0, v0), (p1, v1) in [(((0, 0), a_[j_, i_]), ((1, 0), b_[j_, i_])), (((1, 0), b_[j_, i_]), ((1, 1), c_[j_, i_])), (((1, 1), c_[j_, i_]), ((0, 1), d_[j_, i_])), (((0, 1), d_[j_, i_]), ((0, 0), a_[j_, i_]))]:
+                if (v0 < 0) != (v1 < 0):
+                    u_ = v0 / (v0 - v1); ed.append((ax[i_] + (p0[0] + (p1[0] - p0[0]) * u_) * CELL, az[j_] + (p0[1] + (p1[1] - p0[1]) * u_) * CELL))
+            if len(ed) >= 2:
+                lines.append({'kind': 'terrace', 'w': 1.5, 'points': [[round(ed[0][0], 2), round(ed[0][1], 2)], [round(ed[1][0], 2), round(ed[1][1], 2)]]}); terr += 1
+    trees = [[round(x, 2), round(z, 2), round(float(rng.uniform(0.75, 1.25)), 2)] for x, z in sample(~water & (slope < 0.6), 520, dmax=90, dmin=3.5, r=1.6)]
+    shrubs = [[round(x, 2), round(z, 2), round(float(rng.uniform(0.6, 1.0)), 2), 0] for x, z in sample(~water, 260, dmax=60, dmin=3, r=0.9)]
+    # streams: from high ground near the path, down the steepest real slope into the valleys; falls where it drops
+    falls = []
+    hi = (~water) & (PD < 120) & (Hs > np.percentile(Hs[PD < 120], 80))
+    seeds = []
+    for x, z in sample(hi, 40, dmax=120, dmin=6, r=0):
+        if all(math.hypot(x - a, z - b) > 45 for a, b in seeds): seeds.append((x, z))
+        if len(seeds) >= 9: break
+    for sx_, sz_ in seeds:
+        pts_ = [(sx_, sz_)]; x, z = sx_, sz_
+        for _ in range(140):
+            i_, j_ = int((x - x0) / CELL), int((z - z0) / CELL)
+            if not (1 <= i_ < AW - 1 and 1 <= j_ < AH - 1) or water[j_, i_]: break
+            win = Hs[j_ - 1:j_ + 2, i_ - 1:i_ + 2]; dj_, di_ = np.unravel_index(np.argmin(win), win.shape)
+            if dj_ == 1 and di_ == 1: break
+            nx_, nz_ = ax[i_ + di_ - 1], az[j_ + dj_ - 1]
+            if Hs[j_, i_] - Hs[j_ + dj_ - 1, i_ + di_ - 1] > 0.9 and len(falls) < 60: falls.append(item(nx_, nz_, rot_along(nx_ - x, nz_ - z), 1.0, (Hs[j_, i_] - Hs[j_ + dj_ - 1, i_ + di_ - 1]) / 2.0))
+            x, z = nx_, nz_; pts_.append((x, z))
+        if len(pts_) > 12: lines.append({'kind': 'water', 'w': 1.3, 'points': [[round(a, 2), round(b, 2)] for a, b in pts_]})
+    layers.append({'kit': 'fall', 'mode': 'static', 'items': falls})
+    # hamlets of round huts (map positions + beside the path), each joined to the path by a narrow footpath
+    huts = []; hseeds = [(X(c['lon']), Z(c['lat'])) for e in places for c in [e.get('center') or e] if e.get('tags', {}).get('place') in ('hamlet', 'village', 'isolated_dwelling') and 'lat' in c]
+    hseeds = [(x, z) for x, z in hseeds if inside_area(x, z) and street_dist(x, z) < 140]
+    for k in range(4, len(P), max(1, len(P) // 7)):
+        tt = P[min(k + 1, len(P) - 1)] - P[k - 1]; tt = tt / (np.hypot(*tt) or 1)
+        hseeds.append((P[k, 0] - tt[1] * 18 * (1 if k % 2 else -1), P[k, 1] + tt[0] * 18 * (1 if k % 2 else -1)))
+    for cx_, cz_ in hseeds:
+        n0 = len(huts)
+        for _ in range(14):
+            a_, r_ = rng.uniform(0, 6.28), rng.uniform(2, 9); x, z = cx_ + math.cos(a_) * r_, cz_ + math.sin(a_) * r_
+            if inside_area(x, z) and not is_water(x, z) and street_dist(x, z) > 4 and not near_station(x, z) and free(x, z, 1.8):
+                occupied.append((x, z, 1.8)); huts.append(item(x, z, rng.uniform(0, 6.28), rng.uniform(1.0, 1.35)))
+        if len(huts) > n0:
+            k = int(np.argmin(np.hypot(P[:, 0] - cx_, P[:, 1] - cz_)))
+            fp = [[cx_ + (P[k, 0] - cx_) * u, cz_ + (P[k, 1] - cz_) * u] for u in np.linspace(0, 1, 12)]
+            lines.append({'kind': 'foot', 'w': 1.0, 'points': [[round(a, 2), round(b, 2)] for a, b in fp]})
+    layers.append({'kit': 'tukul', 'mode': 'build', 'items': huts})
+    print(f'terrace segments {terr}, streams {sum(1 for l in lines if l["kind"] == "water")}, falls {len(falls)}, huts {len(huts)}')
+
+print(f'palms {len(palms)}, trees {len(trees)}, houses {len(houses)}, boulders {len(boulders)}, lines {len(lines)}, marks {len(marks)}, bridges {len(bridges)}, layers ' + ', '.join(f"{l['kit']} {len(l['items'])}" for l in layers))
 
 # water cells (4 units) for the living water surface
 WC = 4.0; wcells = []
@@ -431,6 +522,7 @@ for z in np.arange(z0 + WC / 2, z1, WC):
 # ---------------------------------------------------------------- beacon (what the finale shot looks at)
 bk = C['beacon']
 if bk[0] == 'station': b = plots[bk[1]]; beacon = {'x': b['x'], 'z': b['z'], 'y': round(ground(b['x'], b['z']) + 3, 2)}
+elif bk[0] == 'end': bx, bz = float(end[0] + endt[0] * 10), float(end[1] + endt[1] * 10); beacon = {'x': round(bx, 2), 'z': round(bz, 2), 'y': round(ground(bx, bz) + bk[1], 2)}
 elif bk[0] == 'lake': L_ = lakes[bk[1]]; beacon = {'x': round(L_['cx'], 2), 'z': round(L_['cz'], 2), 'y': round(L_['level'] + bk[2], 2)}
 else: bx, bz = X(bk[2]), Z(bk[1]); beacon = {'x': round(bx, 2), 'z': round(bz, 2), 'y': round(max(ground(bx, bz), 0) + bk[3], 2)}
 
@@ -459,14 +551,14 @@ world = {
     'river': [], 'riverLine': [], 'route': [{'zone': f'{wid}.path', 'points': street}], 'plots': plots, 'beacon': beacon, 'roads': [],
     'houses': houses, 'trees': trees, 'palms': palms, 'boulders': boulders, 'grass': grass, 'yardTrees': [], 'landmarks': {},
     'compounds': compounds, 'shops': [], 'posts': [[], []], 'jars': [], 'alleys': [], 'shadeTrees': [], 'shrubs': shrubs,
+    'path': C['path'], 'fog': list(C['fog']), 'lines': lines, 'marks': marks, 'bridges': bridges,
     'plotS': [round(v, 2) for v in plotS], 'streetLength': round(float(arc[-1]), 2),
     'field': {'file': 'field.bin', 'w': FW, 'h': FH},
     'stationKit': KITS[0][1], 'palette': C['palette'], 'riverUntil': -999,
     'water': {'cell': WC, 'cells': [], 'kind': 'lake' if lakes else 'river', 'level': 0.0,
               'planes': [{'level': round(L_['level'], 2), 'x0': round(L_['x0'], 1), 'x1': round(L_['x1'], 1), 'z0': round(L_['z0'], 1), 'z1': round(L_['z1'], 1)} for L_ in lakes]},
     'kitScale': C.get('kitScale', 1.6),
-    'layers': [{'kit': 'field', 'mode': 'grow', 'colors': ['#5E9A3A', '#6EA845', '#4E8A34', '#86A84A'], 'items': fields},
-               {'kit': 'boat', 'mode': 'grow', 'items': [[x, z, r, s] for x, z, r, s in boats]}] + extra_layers,
+    'layers': layers,
     'credits': ['Elevation: Copernicus GLO-30 (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the EU and ESA',
                 'Map data: (c) OpenStreetMap contributors, ODbL'],
 }
