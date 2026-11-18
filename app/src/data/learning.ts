@@ -15,7 +15,7 @@
 //   content/legacy/coding-75.json (the 'legacy' content pack), and each old player is linked to a family child only when the family id matches;
 //   the others wait in the parents' corner to be linked by hand.
 import { create } from 'zustand';
-import { legacyMap, WORLDS, worldSkills } from '../lib/content';
+import { legacyMap, WORLDS, worldSkills, worldStations } from '../lib/content';
 import * as db from './idb';
 
 export const SCHEMA = 1;
@@ -79,10 +79,18 @@ export function mergeSkills(l: Learner, skills: Record<string, SkillStatus>, now
 
 // ---------- reading progress ----------
 const done = (s?: SkillState) => !!s && RANK[s.status] >= RANK.mastered;
-/** Houses built in a world: skills mastered, counted along the street in order. */
-export const masteredIn = (l: Learner | undefined, world: string) => (l ? worldSkills(world).filter(s => done(l.skills[s.id])).length : 0);
-/** The next lesson on the street: the first skill (in path order) that is not mastered yet. */
-export const nextSkillIn = (l: Learner | undefined, world: string) => worldSkills(world).find(s => !done(l?.skills[s.id]));
+/** Stations built in a world: counted along the path, a station being built when every skill inside it is mastered
+ *  (a reserved station with no lessons yet is never built). */
+export const masteredIn = (l: Learner | undefined, world: string) => {
+  let n = 0;
+  for (const st of worldStations(world)) { if (st.skills.length && st.skills.every(s => done(l?.skills[s.id]))) n++; else break; }
+  return n;
+};
+/** The next step: inside the first unfinished station, its first unmastered skill (lessons open in order). */
+export const nextSkillIn = (l: Learner | undefined, world: string) => {
+  for (const st of worldStations(world)) { const s = st.skills.find(k => !done(l?.skills[k.id])); if (s) return s; }
+  return undefined;
+};
 export const litToday = (l: Learner | undefined) => l?.days[dayKey()]?.lit ?? 0;
 /** Passport stamps: worlds whose every skill is mastered. */
 export const stampsOf = (l: Learner | undefined) => WORLDS.filter(w => { const sk = worldSkills(w.id); return sk.length > 0 && sk.every(s => done(l?.skills[s.id])); }).length;

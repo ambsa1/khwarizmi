@@ -1,6 +1,6 @@
 // Passport (stamps), the parents' corner (family code, numerals, motion, quality) and the performance page.
 import { useEffect, useMemo, useState } from 'react';
-import { WORLDS, skillCount, worldSkills } from '../lib/content';
+import { stationCount, subjectName, WORLDS, worldSkills } from '../lib/content';
 import { unlockWithCode } from '../lib/family';
 import { fmt, useNum } from '../lib/num';
 import { gpuName, guessTier, hasWebGL2, SETTINGS } from '../lib/tier';
@@ -27,15 +27,15 @@ export function Passport() {
         <header className="map-head"><h1 className="t-h1" style={{ margin: 0 }}>جوازي</h1></header>
         <div className="stamps">
           {WORLDS.map(w => {
-            const total = Math.max(1, skillCount(w.id)), got = masteredIn(learners[p.id], w.id), done = got >= total && skillCount(w.id) > 0;
+            const total = Math.max(1, stationCount(w.id)), got = masteredIn(learners[p.id], w.id), done = got >= total && stationCount(w.id) > 0;
             const c = T.worlds[w.id as WorldId];
             return (
               <div key={w.id} className={'stamp card' + (done ? ' done' : '')}>
                 <span className="stamp-seal" style={{ background: done ? c.primary : 'transparent', borderColor: c.primary === '#F3EDE2' ? c.secondary : c.primary }}>
                   <IconStar size={34} style={{ color: done ? '#FFFFFF' : c.primary === '#F3EDE2' ? c.secondary : c.primary, opacity: done ? 1 : 0.45 }} />
                 </span>
-                <b className="t-h2">{SHORT_NAME[w.id]}</b>
-                <span className="soft num">{skillCount(w.id) ? `${num(Math.min(got, total))} / ${num(total)}` : 'قريبًا'}</span>
+                <b className="t-h2">{subjectName(w.id)}</b>
+                <span className="soft num">{stationCount(w.id) ? `${num(Math.min(got, total))} / ${num(total)}` : 'قريبًا'}</span>
               </div>
             );
           })}

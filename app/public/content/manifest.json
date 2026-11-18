@@ -1,11 +1,11 @@
 {
- "version": "699b0c30cc",
- "built": "2026-11-18T13:59:48.079Z",
+ "version": "81e8d9d90f",
+ "built": "2026-11-18T15:03:21.590Z",
  "packs": [
   {
    "file": "core.json",
-   "bytes": 55906,
-   "hash": "663460ece6f7"
+   "bytes": 59559,
+   "hash": "3e88f49ff2b3"
   },
   {
    "file": "world-kassala.json",

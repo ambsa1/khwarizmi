@@ -36,8 +36,8 @@ await record('phone-journey-393x873.webm', { width: 393, height: 873 }, true, as
   await p.locator('.btn.go').click(); await pause(p, 3000);
   await p.locator('.btn.go').click(); await pause(p, 3000);
   await p.getByRole('button', { name: 'الخريطة' }).click(); await pause(p, 3000);
-  await p.locator('.world-card', { hasText: 'الساقية' }).click(); await pause(p, 2400);
-  await p.locator('.world-card', { hasText: 'كسلا' }).click(); await pause(p, 3000);
+  await p.locator('.world-card', { hasText: 'المستكشف الصغير' }).click(); await pause(p, 2400);
+  await p.locator('.world-card', { hasText: 'البرمجة' }).click(); await pause(p, 3000);
 });
 
 await record('laptop-journey-1366x768.webm', { width: 1366, height: 768 }, false, async p => {

@@ -21,6 +21,9 @@ export const DOOR: Record<string, string> = {
 /** Mud-plaster and lime-wash tones for the town houses. */
 export const WALLS = ['#E2C49C', '#D9B486', '#EBD7B5', '#CFA27A', '#F1E6D2', '#E6BE95', '#D6AE8A'];
 
+const BASE_PAL = { ...PAL };
+/** Each world brings its own living colours; the geometry builders read PAL, so set it before building a world. */
+export function usePalette(over?: Record<string, string>) { Object.assign(PAL, BASE_PAL, over ?? {}); }
 const col = (hex: string) => new THREE.Color(hex);
 function paint(g: THREE.BufferGeometry, c: THREE.Color | ((i: number, p: THREE.Vector3) => THREE.Color)) {
   const pos = g.attributes.position, arr = new Float32Array(pos.count * 3), v = new THREE.Vector3();
@@ -40,6 +43,7 @@ export function terrainGeometry(w: World) {
   const base = col(PAL.ground), dark = col(PAL.groundDark), bed = col(PAL.bed), n = g.attributes.normal;
   paint(g, (i, p) => {
     const slope = 1 - n.getY(i), c = base.clone();
+    if (w.tintData) { c.setRGB(w.tintData[i * 3] / 255, w.tintData[i * 3 + 1] / 255, w.tintData[i * 3 + 2] / 255); return c.lerp(dark, Math.min(slope * 1.4, 0.5)); }
     if (p.y < -0.35) return c.lerp(bed, 0.85);
     return c.lerp(dark, Math.min(slope * 2.2, 0.8));
   });
@@ -48,12 +52,13 @@ export function terrainGeometry(w: World) {
 
 /** A massif: the real rock surface (adaptive mesh from the elevation data). Smooth-shaded like bald granite;
  *  joints, cracks and dark water streaks are carried in the vertex colour. */
-export function massifGeometry(p: RockMesh) {
+export function massifGeometry(p: RockMesh, tintAt?: (x: number, z: number) => [number, number, number] | null, base = 0) {
   const rock = col(PAL.rock), dark = col(PAL.rockDark), light = col(PAL.rockLight), apron = col(PAL.groundDark), c = new THREE.Color();
   const colr = new Float32Array(p.vertCount * 3);
   for (let v = 0; v < p.vertCount; v++) {
-    const y = p.verts[v * 3 + 1], s = p.shade[v] / 255 * 1.15;
-    c.copy(apron).lerp(rock, Math.min(Math.max((y - 0.9) / 3, 0), 1)).lerp(light, Math.min(Math.max((y - 25) / 35, 0), 0.5));
+    const y = p.verts[v * 3 + 1] - base, s = p.shade[v] / 255 * 1.15, t = tintAt?.(p.verts[v * 3], p.verts[v * 3 + 2]);
+    if (t) c.setRGB(t[0], t[1], t[2]).lerp(rock, 0.25);
+    else c.copy(apron).lerp(rock, Math.min(Math.max((y - 0.9) / 3, 0), 1)).lerp(light, Math.min(Math.max((y - 25) / 35, 0), 0.5));
     c.lerp(dark, Math.min(Math.max(1 - s, 0) * 1.6, 0.85)).multiplyScalar(Math.min(s, 1) * 0.25 + 0.75);
     colr[v * 3] = c.r; colr[v * 3 + 1] = c.g; colr[v * 3 + 2] = c.b;
   }
@@ -67,6 +72,7 @@ export function massifGeometry(p: RockMesh) {
 
 /** The Gash riverbed as a flat sand shape laid on the ground. */
 export function riverGeometry(w: World) {
+  if (w.river.length < 3) return new THREE.BufferGeometry();
   const shape = new THREE.Shape(w.river.map(([x, z]) => new THREE.Vector2(x, -z)));
   const g = new THREE.ShapeGeometry(shape, 1);
   g.rotateX(-Math.PI / 2);
@@ -155,6 +161,7 @@ export function grassGeometry() {
 /** The Gash water ribbon along the river's centre line; uv.x runs upstream (0) to downstream (1). */
 export function waterGeometry(w: World) {
   const p = w.riverLine, pos: number[] = [], uv: number[] = [], idx: number[] = [];
+  if (p.length < 2) return new THREE.BufferGeometry();
   let L = 0; const acc = [0];
   for (let i = 1; i < p.length; i++) { L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); acc.push(L); }
   for (let i = 0; i < p.length; i++) {

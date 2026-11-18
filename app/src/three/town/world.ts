@@ -39,9 +39,20 @@ export type WorldData = {
   streetLength: number;
   field: { file: string; w: number; h: number };                // revival field: (s, d) per cell
   landmarks: Record<string, { x: number; y: number; z: number; rot?: number }>;
+  // generic worlds (phase 4): station kit, extra instanced layers, water cells, landmark models
+  stationKit?: string;
+  layers?: { kit: string; mode: 'static' | 'grow' | 'build'; sway?: number; colors?: string[]; items: number[][] }[];   // items: x z rot scale [scaleY]
+  water?: { cell: number; cells: [number, number][]; kind: 'river' | 'sea' | 'lake'; level?: number };
+  landmarkList?: { kit: string; x: number; z: number; rot: number; s: number }[];
+  riverUntil?: number;
+  /** living colours of this world (overrides of PAL) */
+  palette?: Record<string, string>;
+  /** ground colour per terrain grid vertex (RGB bytes), taken from the satellite picture of the real place */
+  tint?: string;
 };
 
 export type World = WorldData & {
+  id: string;
   heights: Float32Array;
   patches: Patch[];
   plain: (x: number, z: number) => number;
@@ -52,6 +63,9 @@ export type World = WorldData & {
   at: (s: number) => { x: number; z: number; tx: number; tz: number };
   plotSRoute: number[];         // distance along the runtime street polyline of each plot's door (Siraj, camera)
   fieldData: Float32Array;
+  tintData?: Uint8Array;
+  /** ground colour from the satellite tint at any point (null when the world has none) */
+  tintAt: (x: number, z: number) => [number, number, number] | null;
 };
 
 function bilinear(arr: ArrayLike<number>, w: number, h: number, fx: number, fz: number) {
@@ -60,7 +74,7 @@ function bilinear(arr: ArrayLike<number>, w: number, h: number, fx: number, fz: 
   return A(i, j) * (1 - u) * (1 - v) + A(i + 1, j) * u * (1 - v) + A(i, j + 1) * (1 - u) * v + A(i + 1, j + 1) * u * v;
 }
 
-function build(d: WorldData, heights: Float32Array, massif: ArrayBuffer, fieldData: Float32Array): World {
+function build(id: string, d: WorldData, heights: Float32Array, massif: ArrayBuffer, fieldData: Float32Array, tintData?: Uint8Array): World {
   const { x0, x1, z0, z1 } = d.bounds, { w, h } = d.grid;
   const patches: Patch[] = d.massif.patches.map(p => ({
     ...p, H: new Float32Array(massif, p.offset, p.w * p.h), verts: new Float32Array(massif, p.vertsOffset, p.vertCount * 3),
@@ -105,7 +119,13 @@ function build(d: WorldData, heights: Float32Array, massif: ArrayBuffer, fieldDa
     }
     return best;
   });
-  return { ...d, heights, patches, plain, ground, toScene, street, streetLen, at, plotSRoute, fieldData };
+  const tintAt = (x: number, z: number): [number, number, number] | null => {
+    if (!tintData) return null;
+    const fx = (x - x0) / (x1 - x0) * (w - 1), fz = (z - z0) / (z1 - z0) * (h - 1);
+    const i = Math.round(Math.min(Math.max(fx, 0), w - 1)), j = Math.round(Math.min(Math.max(fz, 0), h - 1)), k = (j * w + i) * 3;
+    return [tintData[k] / 255, tintData[k + 1] / 255, tintData[k + 2] / 255];
+  };
+  return { ...d, id, heights, patches, plain, ground, toScene, street, streetLen, at, plotSRoute, fieldData, tintData, tintAt };
 }
 
 const cache = new Map<string, Promise<World>>();
@@ -114,12 +134,13 @@ export function loadWorld(id: string): Promise<World> {
     const base = `${import.meta.env.BASE_URL}worlds/${id}/`;
     cache.set(id, (async () => {
       const d: WorldData = await (await fetch(base + 'world.json')).json();
-      const [heights, massif, field] = await Promise.all([
+      const [heights, massif, field, tint] = await Promise.all([
         fetch(base + d.grid.file).then(r => r.arrayBuffer()).then(b => new Float32Array(b)),
         fetch(base + d.massif.file).then(r => r.arrayBuffer()),
         fetch(base + d.field.file).then(r => r.arrayBuffer()).then(b => new Float32Array(b)),
+        d.tint ? fetch(base + d.tint).then(r => r.arrayBuffer()).then(b => new Uint8Array(b)) : Promise.resolve(undefined),
       ]);
-      return build(d, heights, massif, field);
+      return build(id, d, heights, massif, field, tint);
     })());
   }
   return cache.get(id)!;

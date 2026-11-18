@@ -1,6 +1,6 @@
 // Map of Sudan with the five worlds (and Siraj's water wheel for the little ones). Tap a world to travel there.
 import { useEffect, useState } from 'react';
-import { SHORT_NAME, WORLDS, skillCount } from '../lib/content';
+import { SHORT_NAME, stationCount, subjectName, WORLDS } from '../lib/content';
 import { useNum } from '../lib/num';
 import type { WorldId } from '../lib/tokens';
 import { masteredIn, useLearning } from '../data/learning';
@@ -25,22 +25,22 @@ export function MapScreen() {
   if (!p) return null;
   const cur = currentWorld(p.id, p.age, chosen);
   const spots: MapSpot[] = WORLDS.map(w => {
-    const total = Math.max(1, skillCount(w.id));
+    const total = Math.max(1, stationCount(w.id));
     const ages = w.ages as { min: number; max?: number };
     const locked = p.age < ages.min || (ages.max !== undefined && p.age > ages.max + 1);
-    return { id: w.id as WorldId, name: SHORT_NAME[w.id], value: masteredIn(learners[p.id], w.id) / total, locked, current: w.id === cur };
+    return { id: w.id as WorldId, name: subjectName(w.id), value: masteredIn(learners[p.id], w.id) / total, locked, current: w.id === cur };
   });
   const pick = (id: WorldId) => {
     setPicked(id);
     const s = spots.find(x => x.id === id)!;
     const ages = WORLDS.find(x => x.id === id)!.ages as { min: number; max?: number };
     if (s.locked) {
-      setLine(p.age < ages.min ? `${SHORT_NAME[id]} لمّا تكبر شويّة، من ${num(ages.min)} سنين` : say(p, 'إنت كبرت على الساقية!', 'إنتِ كبرتي على الساقية!'));
+      setLine(p.age < ages.min ? `عالم ${subjectName(id)} لمّا تكبر شويّة، من ${num(ages.min)} سنين` : say(p, 'إنت كبرت على الساقية!', 'إنتِ كبرتي على الساقية!'));
       setTimeout(() => setLine(null), 2200);
       return;
     }
     setWorld(p.id, id);
-    setLine(`يلا على ${SHORT_NAME[id]}!`);
+    setLine(`يلا على عالم ${subjectName(id)}!`);
     setTimeout(() => go('path'), 700);
   };
   return (

@@ -24,6 +24,7 @@ for (const f of readdirSync(schemaDir).filter(f => f.endsWith('.schema.json'))) 
 // ---------- أي ملف يُفحص بأي مخطّط ----------
 const RULES = [
   [/^content\/worlds\/worlds\.json$/, 'worlds.schema.json'],
+  [/^content\/worlds\/stations\.json$/, 'stations.schema.json'],
   [/^content\/skills\/[a-z]+\.json$/, 'skill-tree.schema.json'],
   [/^content\/skills\/school\/g[1-6]-[a-z]+\.json$/, 'skill-tree.schema.json'],
   [/^content\/school\/g[1-6]\/[a-z]+\.json$/, 'school-subject.schema.json'],

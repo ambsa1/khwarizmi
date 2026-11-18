@@ -33,7 +33,7 @@ float revive(vec2 xz) {
 float rvHash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 `;
 
-export type ReviveOpts = { grow?: boolean; build?: boolean; sway?: number; green?: boolean; appear?: boolean; detail?: THREE.Texture; detailBox?: THREE.Vector4 };
+export type ReviveOpts = { grow?: boolean; build?: boolean; sway?: number; spin?: number; green?: boolean; appear?: boolean; detail?: THREE.Texture; detailBox?: THREE.Vector4 };
 
 /** Adds the revival behaviour to a material (Lambert meshes, instanced meshes and lines). */
 export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o: ReviveOpts = {}): M {
@@ -53,6 +53,8 @@ export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o
           float rvG = smoothstep(rvK, rvK + 0.45, rvR);` : ''}
         ${o.build ? 'transformed.y *= max(rvG, 0.0005); transformed.xz *= mix(0.9, 1.0, rvG);' : ''}
         ${o.grow ? 'transformed *= max(rvG * rvG * (3.0 - 2.0 * rvG), 0.0005);' : ''}
+        ${o.spin ? `float rvSp = uTime * ${o.spin.toFixed(3)} * smoothstep(0.5, 1.0, revive(rvO.xz)); float rvC = cos(rvSp), rvS = sin(rvSp);
+          transformed.yz = vec2(rvC * transformed.y - rvS * transformed.z, rvS * transformed.y + rvC * transformed.z);` : ''}
         ${o.sway ? `transformed.x += sin(uTime * 1.6 + rvO.x * 0.7 + rvO.z * 0.3) * ${o.sway.toFixed(3)} * max(transformed.y, 0.0);
           transformed.z += cos(uTime * 1.3 + rvO.z * 0.6) * ${(o.sway * 0.6).toFixed(3)} * max(transformed.y, 0.0);` : ''}`)
       .replace('#include <project_vertex>', `#include <project_vertex>
@@ -74,7 +76,7 @@ export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o
         vec3 rvDust = mix(vec3(rvL) * vec3(0.93, 0.93, 0.92), vec3(0.58, 0.57, 0.55), 0.5);
         diffuseColor.rgb = mix(rvDust, diffuseColor.rgb, rvA);`);
   };
-  mat.customProgramCacheKey = () => `revive-${o.grow ? 1 : 0}${o.build ? 1 : 0}${o.appear ? 1 : 0}${o.green ? 1 : 0}${o.detail ? 1 : 0}-${o.sway ?? 0}`;
+  mat.customProgramCacheKey = () => `revive-${o.grow ? 1 : 0}${o.build ? 1 : 0}${o.appear ? 1 : 0}${o.green ? 1 : 0}${o.detail ? 1 : 0}-${o.sway ?? 0}-${o.spin ?? 0}`;
   return mat;
 }
 
@@ -92,6 +94,22 @@ export function glowMaterial(u: ReviveUniforms, map: THREE.Texture, size: number
       }`,
     fragmentShader: `uniform sampler2D uMap; varying float vA;
       void main() { vec4 c = texture2D(uMap, gl_PointCoord); if (vA < 0.01) discard; gl_FragColor = vec4(c.rgb, c.a * vA); }`,
+  });
+}
+
+/** Water of the other worlds (Nile, sea, crater lakes): still and murky at first, it rises and turns living blue with
+ *  ripples as the stations are built (uLife 0..1). */
+export function lifeWaterMaterial(u: ReviveUniforms) {
+  return new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6,
+    uniforms: { uLife: { value: 0 }, uTime: u.uTime },
+    vertexShader: `uniform float uLife; varying vec3 vP; void main(){ vec3 p = position; p.y -= (1.0 - uLife) * 0.9; vP = p; gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0); }`,
+    fragmentShader: `uniform float uLife; uniform float uTime; varying vec3 vP;
+      void main(){
+        float rip = 0.5 + 0.5 * sin(vP.x * 0.35 + uTime * 1.3) * sin(vP.z * 0.28 - uTime * 0.9);
+        vec3 dead = vec3(0.55, 0.52, 0.46), alive = mix(vec3(0.16, 0.48, 0.70), vec3(0.45, 0.78, 0.90), rip * 0.4);
+        gl_FragColor = vec4(mix(dead, alive, uLife), 0.62 + 0.3 * uLife);
+      }`,
   });
 }
 

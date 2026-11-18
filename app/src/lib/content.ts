@@ -15,7 +15,8 @@ export type Lesson = {
   activities: { template: string; params?: Record<string, unknown>; rounds?: number; mode?: string }[];
   quiz: { type: string; q: Text }[];
 };
-type Core = { worlds: World[]; trees: Record<string, { world: string; skills: Skill[] }>; templates: Template[] };
+type StationPlan = { place?: Text; subject?: Text; stations: string[][] };
+type Core = { worlds: World[]; trees: Record<string, { world: string; skills: Skill[] }>; templates: Template[]; stations?: Record<string, StationPlan> };
 export type Manifest = { version: string; built: string; packs: { file: string; bytes: number; hash: string }[] };
 
 const BASE = `${import.meta.env.BASE_URL}content/`;
@@ -23,6 +24,7 @@ const BASE = `${import.meta.env.BASE_URL}content/`;
 export const WORLDS: World[] = [];
 const TREES: Record<string, Skill[]> = {};
 const TEMPLATES = new Map<string, Template>();
+const STATIONS: Record<string, StationPlan> = {};
 export let CONTENT: Manifest | null = null;
 
 async function json<T>(file: string): Promise<T> {
@@ -39,6 +41,7 @@ export async function loadContent() {
   WORLDS.push(...core.worlds);
   for (const t of Object.values(core.trees)) TREES[t.world] = t.skills;
   for (const t of core.templates) TEMPLATES.set(t.id, t);
+  Object.assign(STATIONS, core.stations ?? {});
 }
 
 export const worldById = (id: string) => WORLDS.find(w => w.id === id)!;
@@ -53,6 +56,18 @@ export function worldSkills(worldId: string): Skill[] {
   return tree.slice().sort((a, b) => (zoneOrder.get(a.zone)! - zoneOrder.get(b.zone)!));
 }
 export const skillCount = (worldId: string) => worldSkills(worldId).length;
+
+// ---------- stations (nested progression) ----------
+/** A world's stations in path order. Each holds an ordered series of skills (its lessons open one after another);
+ *  a station is built in the scene when all of them are mastered. Empty stations are reserved for future content. */
+export function worldStations(worldId: string): { index: number; skills: Skill[] }[] {
+  const byId = new Map(worldSkills(worldId).map(s => [s.id, s]));
+  return (STATIONS[worldId]?.stations ?? []).map((ids, index) => ({ index, skills: ids.map(id => byId.get(id)).filter((s): s is Skill => !!s) }));
+}
+export const stationCount = (worldId: string) => STATIONS[worldId]?.stations.length ?? 0;
+/** The subject shown on the map and in the top bar (the place itself is only greeted by Siraj on arrival). */
+export const subjectName = (worldId: string) => STATIONS[worldId]?.subject?.ar ?? worldId;
+export const placeName = (worldId: string) => STATIONS[worldId]?.place?.ar ?? worldId;
 
 // ---------- lessons (per world, on demand) ----------
 const lessonPacks = new Map<string, Promise<Lesson[]>>();

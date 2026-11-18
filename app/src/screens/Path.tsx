@@ -5,7 +5,7 @@
 // Navigation is the bottom bar on phones, a side rail on wide screens. The passport lives only in the navigation.
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { lessonFor, SHORT_NAME, skillCount, worldById, worldSkills } from '../lib/content';
+import { lessonFor, placeName, stationCount, subjectName, worldById, worldSkills } from '../lib/content';
 // (Phase 3: the golden button completes the next real skill in the learner database; lessons arrive in phase 6.)
 import { useNum } from '../lib/num';
 import type { WorldId } from '../lib/tokens';
@@ -15,6 +15,8 @@ import type { SirajAction } from '../three/Siraj';
 import { WorldWindow } from '../three/WorldWindow';
 import { IconCheck, IconGift, IconLamp, IconPlay, IconRefresh } from '../ui/Icons';
 import { Avatar, Bubble, Confetti, TabBar, say, useGuard } from '../ui/kit';
+
+const GREETED = new Set<string>();
 
 export const currentWorld = (pid: string, age: number, chosen: Record<string, string>): WorldId =>
   (chosen[pid] as WorldId) ?? (age <= 6 ? 'saqiya' : 'kassala');
@@ -33,13 +35,21 @@ export function Path() {
   const [line, setLine] = useState<string | null>(null);
   if (!p) return null;
   const world = currentWorld(p.id, p.age, chosen);
-  const name = SHORT_NAME[world] ?? world;
-  const total = Math.max(1, skillCount(world));
+  const name = subjectName(world);
+  const total = Math.max(1, stationCount(world));
   const me = learners[p.id];
   const mastered = Math.min(total, masteredIn(me, world));
   const lit = litToday(me);
   const next = nextSkillIn(me, world);
   const done = mastered >= total;
+  // Siraj greets the place once per visit (the map and the top bar only name the subject)
+  useEffect(() => {
+    if (celebrate || GREETED.has(world)) return;
+    GREETED.add(world);
+    setLine(`أهلًا بيك في ${placeName(world)}!`); setAction('wave');
+    const t = setTimeout(() => setLine(null), 2600);
+    return () => clearTimeout(t);
+  }, [world]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!celebrate) return;
     const t1 = setTimeout(() => {

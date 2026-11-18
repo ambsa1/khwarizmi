@@ -30,7 +30,19 @@ const write = (name, data) => {
   writeFileSync(join(OUT, name), txt);
   packs.push({ file: name, bytes: Buffer.byteLength(txt), hash: createHash('sha256').update(txt).digest('hex').slice(0, 12) });
 };
-write('core.json', { worlds, trees, templates });
+// stations: each world's skills (in path order) spread over its stations; spare stations are reserved (empty for now)
+const stationDoc = read('worlds/stations.json').worlds;
+const stations = {};
+for (const w of worlds) {
+  const n = stationDoc[w.id]?.stations ?? 0;
+  const tree = Object.values(trees).find(t => t.world === w.id);
+  const order = new Map(w.zones.map(z => [z.id, z.order]));
+  const skills = (tree?.skills ?? []).slice().sort((a, b) => order.get(a.zone) - order.get(b.zone)).map(s => s.id);
+  const per = Math.max(1, Math.ceil(skills.length / Math.max(n, 1)));
+  stations[w.id] = { place: stationDoc[w.id]?.place, subject: stationDoc[w.id]?.subject,
+    stations: Array.from({ length: n }, (_, i) => skills.slice(i * per, (i + 1) * per)) };
+}
+write('core.json', { worlds, trees, templates, stations });
 // a world's lessons: lessons teaching any skill of that world's tree
 const skillWorld = new Map(Object.values(trees).flatMap(t => (t.skills ?? []).map(s => [s.id, t.world])));
 for (const w of worlds) {

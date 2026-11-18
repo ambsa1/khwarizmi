@@ -13,15 +13,18 @@ import { Siraj, type SirajAction } from '../Siraj';
 import {
   alleyGeometry, awningGeometry, bgHouseGeometry, boulderGeometry, compoundGeometry, DOOR, doorGeometry, grassGeometry, jarGeometry,
   lessonHouseGeometry, massifGeometry, mosqueGeometry, PAL, palmGeometry, plotGeometry, postGeometry, ribbons, riverGeometry,
-  scaffoldGeometry, shadeTreeGeometry, shopGeometry, shrubGeometry, terrainGeometry, treeGeometry, WALLS, waterGeometry, wireGeometry,
+  scaffoldGeometry, shadeTreeGeometry, shopGeometry, shrubGeometry, terrainGeometry, treeGeometry, usePalette, WALLS, waterGeometry, wireGeometry,
 } from './geom';
-import { glowMaterial, makeReviveUniforms, revivable, waterMaterial, type ReviveOpts, type ReviveUniforms } from './revive';
+import { BG, KITS } from './kits';
+import { glowMaterial, lifeWaterMaterial, makeReviveUniforms, revivable, waterMaterial, type ReviveOpts, type ReviveUniforms } from './revive';
 import { useWorld, type World } from './world';
 
 export const TOWN_FOG: [string, number, number] = [PAL.fog, 280, 1300];
 export const TOWN_FAR = 2600;
 
 type Props = {
+  /** which world (public/worlds/<id>) */
+  world?: string;
   mastered: number; density?: number; interactive?: boolean; sirajAction?: SirajAction; onSirajTap?: () => void;
   /** perf page / review: fly the camera to a fixed distance along the street (0..1) instead of following Siraj */
   focus?: number | null;
@@ -58,10 +61,11 @@ function Instanced({ geo, mats, mat, colors }: { geo: THREE.BufferGeometry; mats
 
 function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: THREE.ShaderMaterial; density: number }) {
   const g = useMemo(() => {
+    usePalette(w.palette);
     const route = w.route.map(r => ({ w: 5.0, points: r.points }));
     const curb = w.route.map(r => ({ w: 6.4, points: r.points }));
     return {
-      terrain: terrainGeometry(w), river: riverGeometry(w), massifs: w.patches.map(p => massifGeometry(density >= 1 ? p : p.low)), water: waterGeometry(w),
+      terrain: terrainGeometry(w), river: riverGeometry(w), massifs: w.patches.map(p => massifGeometry(density >= 1 ? p : p.low, w.tintData ? w.tintAt : undefined)), water: waterGeometry(w),
       sidewalk: ribbons(w.route.map(r => ({ w: 9.2, points: r.points })), w.ground, 0.24, '#DCC7A2', 1.5), alleys: alleyGeometry(w.alleys, w.plain),
       compound: compoundGeometry(), shop: shopGeometry(), awning: awningGeometry(), post: postGeometry(), jar: jarGeometry(),
       shadeTree: shadeTreeGeometry(), shrub: shrubGeometry(), wires: wireGeometry(w.posts, w.ground),
@@ -70,7 +74,7 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
       boulder: boulderGeometry(), house: bgHouseGeometry(), tree: treeGeometry(), palm: palmGeometry(), grass: grassGeometry(), mosque: mosqueGeometry(),
     };
   }, [w, density]);
-  const details = useMemo(() => w.patches.map(p => { const t = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}worlds/kassala/${p.detail}`); t.anisotropy = 4; return { t, box: new THREE.Vector4(p.x0, p.z0, p.x1, p.z1) }; }), [w]);
+  const details = useMemo(() => w.patches.map(p => { const t = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}worlds/${w.id}/${p.detail}`); t.anisotropy = 4; return { t, box: new THREE.Vector4(p.x0, p.z0, p.x1, p.z1) }; }), [w]);
   const M = {
     ground: useMat(u, { green: true }), plain: useMat(u), river: useMat(u, { offset: 1 }), roads: useMat(u, { offset: 2 }),
     curb: useMat(u, { offset: 3 }), street: useMat(u, { offset: 4 }), rock: useMat(u),
@@ -139,7 +143,7 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
       <Instanced geo={g.palm} mats={palms} mat={M.palm} />
       <Instanced geo={g.tree} mats={yard} mat={M.tree} />
       <Instanced geo={g.grass} mats={grass} mat={M.grass} />
-      <mesh geometry={g.mosque} material={M.plain} position={[mq.x, mq.y, mq.z]} rotation={[0, Math.PI / 2, 0]} scale={0.62} />
+      {mq && <mesh geometry={g.mosque} material={M.plain} position={[mq.x, mq.y, mq.z]} rotation={[0, Math.PI / 2, 0]} scale={0.62} />}
     </group>
   );
 }
@@ -313,13 +317,73 @@ function ReviewRig({ w, cam: c }: { w: World; cam: number[] }) {
   return null;
 }
 
-export function KassalaTown({ mastered, density = 1, interactive = true, sirajAction = 'idle', onSirajTap, focus = null }: Props) {
-  const w = useWorld('kassala');
+/** Generic worlds: extra instanced layers (vegetation, buildings, boats), water cells, landmark models. */
+function Generic({ w, u, life, density }: { w: World; u: ReviveUniforms; life: THREE.ShaderMaterial; density: number }) {
+  const mats = {
+    static: useMat(u), grow: useMat(u, { grow: true, sway: 0.03 }), build: useMat(u, { build: true }),
+  };
+  const layers = useMemo(() => (w.layers ?? []).map(L => {
+    const items = L.items.filter((_, i) => density >= 1 || i % 2 === 0);
+    const geo = BG[L.kit]?.() ?? null;
+    return { L, geo, mats: items.map(([x, z, r, s, sy]) => m4(x, w.ground(x, z), z, r ?? 0, s ?? 1, sy ?? s ?? 1, s ?? 1)),
+      colors: L.colors ? items.map((_, i) => new THREE.Color(L.colors![i % L.colors!.length])) : undefined };
+  }), [w, density]);
+  const waterGeo = useMemo(() => {
+    const W = w.water; if (!W || !W.cells.length) return null;
+    const h = W.cell / 2, pos: number[] = [];
+    for (const [x, z] of W.cells) {
+      const y = (W.level ?? w.ground(x, z)) + 0.35;
+      pos.push(x - h, y, z - h, x - h, y, z + h, x + h, y, z + h, x - h, y, z - h, x + h, y, z + h, x + h, y, z - h);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return g;
+  }, [w]);
+  const marks = useMemo(() => (w.landmarkList ?? []).map(m => ({ geo: BG[m.kit]?.() ?? null, mat: m4(m.x, w.ground(m.x, m.z), m.z, m.rot, m.s, m.s, m.s) })), [w]);
+  return (
+    <group>
+      {waterGeo && <mesh geometry={waterGeo} material={life} renderOrder={2} />}
+      {layers.map(({ L, geo, mats: ms, colors }, i) => geo && <Instanced key={i} geo={geo} mats={ms} mat={L.mode === 'grow' ? mats.grow : L.mode === 'build' ? mats.build : mats.static} colors={colors} />)}
+      {marks.map((m, i) => m.geo && <Instanced key={`m${i}`} geo={m.geo} mats={[m.mat]} mat={mats.static} />)}
+    </group>
+  );
+}
+
+/** Stations of a generic world, drawn with that world's kit in their four looks (plot, scaffold, built, thriving). */
+function KitStations({ w, u, mastered }: { w: World; u: ReviveUniforms; mastered: number }) {
+  const kit = useMemo(() => KITS[w.stationKit!]?.(), [w]);
+  const mat = useMat(u), grow = useMat(u, { grow: true, sway: 0.03 }), spin = useMat(u, { spin: 0.9 });
+  const sets = useMemo(() => {
+    const o = { plot: [] as THREE.Matrix4[], scaffold: [] as THREE.Matrix4[], built: [] as THREE.Matrix4[], extra: [] as THREE.Matrix4[], spin: [] as THREE.Matrix4[] };
+    w.plots.forEach((p, i) => {
+      const base = m4(p.x, w.ground(p.x, p.z), p.z, p.face);
+      if (i < mastered) {
+        o.built.push(base); o.extra.push(base);
+        if (kit?.spin) o.spin.push(base.clone().multiply(new THREE.Matrix4().makeTranslation(...kit.spin.at)));
+      } else if (i === mastered) o.scaffold.push(base);
+      else o.plot.push(base);
+    });
+    return o;
+  }, [w, mastered, kit]);
+  if (!kit) return null;
+  return (
+    <group>
+      <Instanced geo={kit.plot} mats={sets.plot} mat={mat} />
+      <Instanced geo={kit.scaffold} mats={sets.scaffold} mat={mat} />
+      <Instanced geo={kit.built} mats={sets.built} mat={mat} />
+      <Instanced geo={kit.extra} mats={sets.extra} mat={grow} />
+      {kit.spin && <Instanced geo={kit.spin.geo} mats={sets.spin} mat={spin} />}
+    </group>
+  );
+}
+
+export function KassalaTown({ world = 'kassala', mastered, density = 1, interactive = true, sirajAction = 'idle', onSirajTap, focus = null }: Props) {
+  const w = useWorld(world);
   if (!w) return null;
   return <Town w={w} mastered={Math.min(mastered, w.plots.length)} density={density} interactive={interactive} sirajAction={sirajAction} onSirajTap={onSirajTap} focus={focus} />;
 }
 
-function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focus }: Required<Omit<Props, 'onSirajTap'>> & { w: World; onSirajTap?: () => void }) {
+export const WorldTown = KassalaTown;
+
+function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focus }: Required<Omit<Props, 'onSirajTap' | 'world'>> & { w: World; onSirajTap?: () => void }) {
   const total = w.plots.length, done = mastered >= total;
   const review = useMemo(reviewCam, []);
   const end = w.streetLen[w.streetLen.length - 1];
@@ -336,6 +400,7 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
   const front = mastered > 0 ? w.plotS[mastered - 1] + 12 : -40;
   const gashLessons = w.plots.filter(p => p.zone === w.plots[0].zone).length;
   const fill = Math.min(mastered / gashLessons, 1);
+  const life = useMemo(() => lifeWaterMaterial(u), [u]);
   const first = useRef(true);
   const cel = useRef<Celebrate>({ t: -1, houseS: 0 });
   const lastM = useRef(mastered);
@@ -354,6 +419,7 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
     u.uProg.value = THREE.MathUtils.damp(u.uProg.value, front, 0.9, dt);
     u.uAll.value = THREE.MathUtils.damp(u.uAll.value, done ? 1 : 0, 0.55, dt);
     water.uniforms.uFill.value = THREE.MathUtils.damp(water.uniforms.uFill.value, fill * 1.02, 0.7, dt);
+    life.uniforms.uLife.value = THREE.MathUtils.damp(life.uniforms.uLife.value, done ? 1 : Math.min(1, 0.15 + 0.85 * mastered / Math.max(total, 1)), 0.8, dt);
 
     const prev = sCur.current;
     sCur.current = THREE.MathUtils.damp(sCur.current, target, 1.6, dt);
@@ -401,13 +467,14 @@ function Town({ w, mastered, density, interactive, sirajAction, onSirajTap, focu
       <hemisphereLight args={['#FFE9C9', '#7A5A3E', 1.15]} />
       <directionalLight position={[-300, 110, 170]} intensity={2.6} color="#FFD8A0" />
       <Static w={w} u={u} water={water} density={density} />
-      <Lessons w={w} u={u} mastered={mastered} />
+      <Generic w={w} u={u} life={life} density={density} />
+      {w.stationKit ? <KitStations w={w} u={u} mastered={mastered} /> : <Lessons w={w} u={u} mastered={mastered} />}
       <Birds w={w} mastered={mastered} />
       <Beacon w={w} lit={done} />
       <group ref={siraj} onClick={onSirajTap}>
-        <Siraj action={sirajAction} movingRef={moving} glow={total ? mastered / total : 0} stamps={0} scale={1.35} outfit={outfitFor('kassala')} />
+        <Siraj action={sirajAction} movingRef={moving} glow={total ? mastered / total : 0} stamps={0} scale={1.35} outfit={outfitFor(w.id)} />
       </group>
-      {review ? <ReviewRig w={w} cam={review} /> : <DroneRig w={w} s={sCam} zoom={zoom} finale={done && focus == null} riverUntil={w.plotSRoute[gashLessons - 1] ?? 0} cel={cel} />}
+      {review ? <ReviewRig w={w} cam={review} /> : <DroneRig w={w} s={sCam} zoom={zoom} finale={done && focus == null} riverUntil={w.riverUntil ?? (w.id === 'kassala' ? w.plotSRoute[gashLessons - 1] ?? 0 : -999)} cel={cel} />}
     </group>
   );
 }

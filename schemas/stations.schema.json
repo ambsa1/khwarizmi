@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/stations.schema.json",
+  "title": "Stations per world (nested progression units)",
+  "type": "object",
+  "required": ["worlds"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "note": { "type": "string" },
+    "worlds": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["stations", "place", "subject"],
+        "additionalProperties": false,
+        "properties": {
+          "stations": { "type": "integer", "minimum": 1, "maximum": 60 },
+          "place": { "$ref": "defs.schema.json#/$defs/text" },
+          "subject": { "$ref": "defs.schema.json#/$defs/text" }
+        }
+      }
+    }
+  }
+}

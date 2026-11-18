@@ -4,11 +4,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePacks } from '../data/packs';
 import { SETTINGS, hasWebGL2 } from '../lib/tier';
-import { worldSkills } from '../lib/content';
 import type { WorldId } from '../lib/tokens';
 import { T } from '../lib/tokens';
 import { DioramaScene } from './Diorama';
-import { KassalaTown, TOWN_FAR, TOWN_FOG } from './town/KassalaTown';
+import { WorldTown, TOWN_FAR, TOWN_FOG } from './town/KassalaTown';
 import type { SirajAction } from './Siraj';
 import { Stage, useTier } from './Stage';
 
@@ -37,7 +36,6 @@ function useWorldReady(world: WorldId) {
 export function WorldWindow({ world, mastered, total, action = 'idle', interactive = true, label, onSirajTap }: Props) {
   const tier = useTier();
   const webgl = useMemo(hasWebGL2, []);
-  const zones = useMemo(() => worldSkills(world).map(s => s.zone), [world]);
   const { st, online, retry } = useWorldReady(world);
   if (!webgl) return <Picture world={world} label={label} />;
   if (!st || st.state === 'unknown') return <Picture world={world} label={label} />;
@@ -55,10 +53,10 @@ export function WorldWindow({ world, mastered, total, action = 'idle', interacti
       </Picture>
     );
   }
-  if (world === 'kassala') {
+  if (st.bytes > 0) {
     return (
       <Stage fog={TOWN_FOG} camera={{ position: [-300, 60, -60], fov: 50, far: TOWN_FAR }} label={label}>
-        <KassalaTown mastered={Math.min(mastered, zones.length)} density={SETTINGS[tier].density} interactive={interactive} sirajAction={action} onSirajTap={onSirajTap} />
+        <WorldTown world={world} mastered={mastered} density={SETTINGS[tier].density} interactive={interactive} sirajAction={action} onSirajTap={onSirajTap} />
       </Stage>
     );
   }

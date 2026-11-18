@@ -1,0 +1,12 @@
+{
+  "$schema": "../../schemas/stations.schema.json",
+  "note": "Stations per world. A station is one unit on the world's path: it holds an ordered series of lessons that open one after another; when all are done, the station is built in the 3D scene and Siraj moves on. The curriculum is spread over the stations in path order; stations left over are reserved for challenges and future content.",
+  "worlds": {
+    "kassala": { "stations": 37, "place": { "ar": "كسلا" }, "subject": { "ar": "البرمجة" } },
+    "mogran": { "stations": 19, "place": { "ar": "المقرن" }, "subject": { "ar": "التقنية والذكاء" } },
+    "meroe": { "stations": 26, "place": { "ar": "مروي" }, "subject": { "ar": "الإنجليزية" } },
+    "suakin": { "stations": 17, "place": { "ar": "سواكن" }, "subject": { "ar": "ألعاب الذكاء" } },
+    "marra": { "stations": 30, "place": { "ar": "جبل مرّة" }, "subject": { "ar": "المدرسة" } },
+    "saqiya": { "stations": 11, "place": { "ar": "الساقية" }, "subject": { "ar": "المستكشف الصغير" } }
+  }
+}
