@@ -28,8 +28,7 @@ try {
   writeFileSync(join(W, '.nojekyll'), '');
   sh('git add -A', W);
   // every staged file must be byte-identical to the build (guards against line-ending conversion of encrypted files)
-  const staged = new Map(sh('git ls-files -s', W).split('
-').map(l => { const [meta, path] = l.split('	'); return [path, meta.split(' ')[1]]; }));
+  const staged = new Map(sh('git ls-files -s', W).split('\n').map(l => { const [meta, path] = l.split('\t'); return [path, meta.split(' ')[1]]; }));
   for (const [f, blob] of staged) {
     if (!existsSync(join(DIST, f))) continue;
     if (sh(`git hash-object --no-filters "${join(DIST, f)}"`, W) !== blob) throw new Error(`published file differs from the build: ${f}`);
