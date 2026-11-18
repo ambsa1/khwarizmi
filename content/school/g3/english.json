@@ -1,0 +1,18 @@
+{
+  "$schema": "../../../schemas/school-subject.schema.json",
+  "grade": 3,
+  "subject": "english",
+  "title": {
+    "ar": "اللغة الإنجليزية المدرسية، الصف الثالث",
+    "en": "School English, Grade 3"
+  },
+  "status": "awaiting-source",
+  "sources": [
+    "smile.g3.pupil",
+    "smile.g3.teacher"
+  ],
+  "units": [],
+  "notes": {
+    "ar": "المصدر الرسمي سلسلة سمايل. الملفات مسجّلة وتنتظر التنزيل في مجلد الكتب."
+  }
+}

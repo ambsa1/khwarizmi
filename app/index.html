@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ar" dir="rtl" translate="no">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="google" content="notranslate" />
+    <title>خوارزمي</title>
+    <meta name="description" content="رحلة سراج عبر السودان: برمجة وتقنية وإنجليزية وألغاز ومدرسة، بدون إنترنت" />
+    <meta name="theme-color" content="#F4E3C1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="خوارزمي" />
+    <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <style>
+      /* Shown instantly before the app script runs: same sand colour, no white flash. */
+      html, body { margin: 0; height: 100%; background: #F4E3C1; }
+      .boot { height: 100%; display: grid; place-items: center; }
+      .boot i { width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle, #FFE08A, #FFB627 60%, transparent 62%);
+        animation: boot 1.2s ease-in-out infinite alternate; }
+      @keyframes boot { from { transform: scale(.85); opacity: .6; } to { transform: scale(1.05); opacity: 1; } }
+    </style>
+  </head>
+  <body>
+    <div id="root"><div class="boot"><i></i></div></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

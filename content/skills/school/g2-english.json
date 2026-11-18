@@ -1,0 +1,14 @@
+{
+  "$schema": "../../../schemas/skill-tree.schema.json",
+  "domain": "school",
+  "pillar": "school",
+  "world": "marra",
+  "grade": 2,
+  "subject": "english",
+  "title": {
+    "ar": "اللغة الإنجليزية المدرسية، الصف الثاني",
+    "en": "School English, Grade 2"
+  },
+  "status": "awaiting-source",
+  "skills": []
+}

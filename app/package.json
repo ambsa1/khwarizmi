@@ -1,0 +1,42 @@
+{
+  "name": "khawarizmi-app",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5180",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5181",
+    "family": "node tools/seal-family.mjs",
+    "shots": "node tools/shots.mjs",
+    "fonts": "..\\ingest\\.venv\\Scripts\\python tools/subset-fonts.py",
+    "icons": "node tools/icons.mjs",
+    "fallback": "node tools/fallback.mjs",
+    "check": "node tools/check.mjs",
+    "video": "node tools/video.mjs",
+    "world": "..\\ingest\\.venv\\Scripts\\python.exe tools/world/build_kassala.py",
+    "town": "node tools/town-shots.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "9.115.0",
+    "@react-three/fiber": "8.17.10",
+    "framer-motion": "11.11.17",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "three": "0.169.0",
+    "zustand": "4.5.5"
+  },
+  "devDependencies": {
+    "@fontsource/andika": "5.1.0",
+    "@fontsource/lalezar": "5.1.0",
+    "@fontsource/noto-naskh-arabic": "5.1.0",
+    "@fontsource/rubik": "5.1.0",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@types/three": "0.169.0",
+    "@vitejs/plugin-react": "4.3.4",
+    "typescript": "5.6.3",
+    "vite": "5.4.11",
+    "vite-plugin-pwa": "0.21.1"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "../../../schemas/school-subject.schema.json",
+  "grade": 2,
+  "subject": "arabic",
+  "title": {
+    "ar": "اللغة العربية، الصف الثاني",
+    "en": "Arabic, Grade 2"
+  },
+  "status": "awaiting-source",
+  "sources": [],
+  "units": []
+}

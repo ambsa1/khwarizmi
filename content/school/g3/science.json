@@ -1,0 +1,12 @@
+{
+  "$schema": "../../../schemas/school-subject.schema.json",
+  "grade": 3,
+  "subject": "science",
+  "title": {
+    "ar": "العلوم، الصف الثالث",
+    "en": "Science, Grade 3"
+  },
+  "status": "awaiting-source",
+  "sources": [],
+  "units": []
+}

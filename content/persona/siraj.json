@@ -1,0 +1,45 @@
+{
+  "$schema": "../../schemas/persona.schema.json",
+  "name": { "ar": "سراج", "en": "Siraj" },
+  "maxWords": { "instruction": 8, "feedback": 6, "story": 18 },
+  "bannedPhrases": [
+    "خطأ",
+    "غلط",
+    "غير صحيح",
+    "فاشل",
+    "فشلت",
+    "سهلة جدًا",
+    "أي طفل يعرفها",
+    "ركّز",
+    "انتبه"
+  ],
+  "registers": {
+    "dialect": {
+      "usedFor": ["greetings", "praise", "comfort", "humour", "names", "story-narration"],
+      "markers": ["شديد", "كدي", "هسّي", "عفارم", "سمح", "داير", "دايرة", "ياهو دا", "شنو", "تاني", "شويّة", "كويّس", "يلا"]
+    },
+    "fusha": {
+      "usedFor": ["school-lesson-content", "definitions", "quran-and-hadith-context", "textbook-terms"]
+    }
+  },
+  "lineCategories": [
+    { "id": "praise.quick", "title": { "ar": "تشجيع بعد إجابة سريعة صحيحة" }, "minVariants": 15,
+      "examples": [ { "m": "عفارم عليك!", "f": "عفارم عليكِ!" }, { "m": "شاطر شديد!", "f": "شاطرة شديد!" }, { "m": "ياهو دا! صاح!" } ] },
+    { "id": "praise.persist", "title": { "ar": "تشجيع بعد نجاح بعد محاولات" }, "minVariants": 5,
+      "examples": [ { "m": "شفت؟ ما استسلمت، ونجحت!", "f": "شفتي؟ ما استسلمتي، ونجحتي!" }, { "m": "الصبر جاب نتيجة!" } ] },
+    { "id": "praise.streak", "title": { "ar": "تشجيع على سلسلة نجاحات" }, "minVariants": 4,
+      "examples": [ { "m": "تلاتة ورا بعض! ما في زيّك!", "f": "تلاتة ورا بعض! ما في زيّك!" }, { "m": "الجبل دا قرّب يخلص!" } ] },
+    { "id": "comfort.retry", "title": { "ar": "تهدئة بعد محاولة لم تنجح" }, "minVariants": 12,
+      "examples": [ { "m": "قريب شديد! جرّب تاني.", "f": "قريب شديد! جرّبي تاني." }, { "m": "ما مشكلة، نحاول سوا." } ] },
+    { "id": "hint.point", "title": { "ar": "تلميح يشير لمكان محدّد" }, "minVariants": 6,
+      "examples": [ { "m": "شوف الحتّة المنوّرة دي.", "f": "شوفي الحتّة المنوّرة دي." }, { "m": "الحل قرّب، ناقص حاجة صغيرة بس." } ] },
+    { "id": "summit.reached", "title": { "ar": "الوصول إلى قمة" }, "minVariants": 4,
+      "examples": [ { "m": "وصلنا القمة! يا سلااام!" }, { "m": "ختم جديد في الجواز! مبروك!" } ] },
+    { "id": "greet.return", "title": { "ar": "ترحيب بعد غياب" }, "minVariants": 3,
+      "examples": [ { "m": "رجعت! كنت مستنّيك!", "f": "رجعتي! كنت مستنّياكِ!" }, { "m": "أهلًا! نكمّل من وين وقفنا؟" } ] },
+    { "id": "session.end", "title": { "ar": "نهاية وقت اللعب" }, "minVariants": 3,
+      "examples": [ { "m": "خلاص، دا كفاية لليوم. نتلاقى بكرة!" }, { "m": "سراج تعب شويّة، يلا نرتاح." } ] }
+  ],
+  "genderForms": { "required": true, "rule": "Every line that addresses the child has m and f forms unless it is gender-neutral." },
+  "expressions": ["idle", "happy", "cheer", "think", "surprised", "sad-soft", "sleepy", "wave", "point", "celebrate"]
+}

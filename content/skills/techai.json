@@ -1,0 +1,389 @@
+{
+  "$schema": "../../schemas/skill-tree.schema.json",
+  "domain": "techai",
+  "pillar": "future",
+  "world": "mogran",
+  "title": {
+    "ar": "عالم التقنية والذكاء الاصطناعي",
+    "en": "Technology & AI World"
+  },
+  "status": "draft",
+  "skills": [
+    {
+      "id": "techai.tech.what-is",
+      "zone": "mogran.blue",
+      "ages": {
+        "min": 7
+      },
+      "title": {
+        "ar": "ما هي التقنية؟",
+        "en": "What is technology?"
+      },
+      "goal": {
+        "ar": "يعرف أن التقنية أدوات صنعها الإنسان لحلّ مشكلة"
+      },
+      "experience": {
+        "ar": "يرتّب أدوات على خط زمني: الساقية، والراديو، والهاتف، والكمبيوتر، ويرى المشكلة التي حلّتها كل أداة"
+      },
+      "templates": [
+        "timeline-sort"
+      ]
+    },
+    {
+      "id": "techai.computer.parts",
+      "zone": "mogran.blue",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.tech.what-is"
+      ],
+      "title": {
+        "ar": "الكمبيوتر من الداخل",
+        "en": "Inside a computer"
+      },
+      "goal": {
+        "ar": "يسمّي الأجزاء الرئيسية ويعرف وظيفة كل جزء"
+      },
+      "experience": {
+        "ar": "يفكّك جهازًا ثلاثي الأبعاد ويركّبه، ويرى ما يحدث إذا نزع المعالج أو الذاكرة"
+      },
+      "templates": [
+        "device-teardown-3d"
+      ]
+    },
+    {
+      "id": "techai.computer.ipo",
+      "zone": "mogran.blue",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.computer.parts"
+      ],
+      "title": {
+        "ar": "مدخلات، معالجة، مخرجات",
+        "en": "Input, process, output"
+      },
+      "experience": {
+        "ar": "آلة عصير على الضفة: فاكهة تدخل، الآلة تعصر، عصير يخرج. ثم نفس الفكرة في الكمبيوتر"
+      },
+      "templates": [
+        "machine-sim"
+      ]
+    },
+    {
+      "id": "techai.computer.input-skills",
+      "zone": "mogran.blue",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.computer.parts"
+      ],
+      "title": {
+        "ar": "الفأرة ولوحة المفاتيح واللمس",
+        "en": "Mouse, keyboard and touch"
+      },
+      "goal": {
+        "ar": "يتحكّم بالأجهزة بثقة، ويكتب بأصابع صحيحة"
+      },
+      "templates": [
+        "typing-trainer"
+      ]
+    },
+    {
+      "id": "techai.data.binary",
+      "zone": "mogran.white",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "techai.computer.ipo"
+      ],
+      "title": {
+        "ar": "الأصفار والآحاد",
+        "en": "Zeros and ones"
+      },
+      "experience": {
+        "ar": "مصابيح على الضفة تُضاء وتُطفأ لتكتب أرقامًا وحروفًا"
+      },
+      "templates": [
+        "binary-lamps"
+      ]
+    },
+    {
+      "id": "techai.data.pixels",
+      "zone": "mogran.white",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "techai.data.binary"
+      ],
+      "title": {
+        "ar": "الصورة نقاط صغيرة",
+        "en": "Images are pixels"
+      },
+      "templates": [
+        "pixel-painter"
+      ]
+    },
+    {
+      "id": "techai.algorithms.everyday",
+      "zone": "mogran.white",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.tech.what-is"
+      ],
+      "title": {
+        "ar": "الخوارزمية خطوات مرتّبة",
+        "en": "Algorithms in daily life"
+      },
+      "experience": {
+        "ar": "ترتيب خطوات صنع الشاي أو عواسة الكسرة، ورؤية ما يحدث لو تغيّر الترتيب"
+      },
+      "templates": [
+        "sort-steps"
+      ]
+    },
+    {
+      "id": "techai.network.internet",
+      "zone": "mogran.bridges",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.computer.ipo"
+      ],
+      "title": {
+        "ar": "كيف تسافر الرسالة؟",
+        "en": "How messages travel"
+      },
+      "experience": {
+        "ar": "رسالة تُقسَّم إلى طرود صغيرة تعبر الجسور بين المحطات ثم تتجمّع"
+      },
+      "templates": [
+        "packet-sim"
+      ]
+    },
+    {
+      "id": "techai.network.safety",
+      "zone": "mogran.bridges",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.network.internet"
+      ],
+      "title": {
+        "ar": "الأمان على الإنترنت",
+        "en": "Staying safe online"
+      },
+      "goal": {
+        "ar": "يتعامل مع مواقف غير واضحة: غريب يسأل، رابط مريب، رسالة مزعجة"
+      },
+      "experience": {
+        "ar": "محاكاة دردشة بمواقف رمادية، والطفل يقرّر ويرى النتيجة"
+      },
+      "templates": [
+        "chat-sim"
+      ]
+    },
+    {
+      "id": "techai.ai.what-is",
+      "zone": "mogran.tuti",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "techai.algorithms.everyday"
+      ],
+      "title": {
+        "ar": "ما هو الذكاء الاصطناعي؟",
+        "en": "What is AI?"
+      },
+      "goal": {
+        "ar": "يفرّق بين برنامج يتبع أوامر ثابتة وبرنامج يتعلّم من الأمثلة"
+      },
+      "templates": [
+        "ai-trainer"
+      ]
+    },
+    {
+      "id": "techai.ai.learn-examples",
+      "zone": "mogran.tuti",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "techai.ai.what-is"
+      ],
+      "title": {
+        "ar": "التعلّم من الأمثلة",
+        "en": "Learning from examples"
+      },
+      "experience": {
+        "ar": "الطفل يدرّب آلة في مزارع توتي لتفرّق بين المانجو والجوافة، بإعطائها صورًا"
+      },
+      "templates": [
+        "ai-trainer"
+      ]
+    },
+    {
+      "id": "techai.ai.data-quality",
+      "zone": "mogran.tuti",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "techai.ai.learn-examples"
+      ],
+      "title": {
+        "ar": "البيانات الجيدة والانحياز",
+        "en": "Good data and bias"
+      },
+      "experience": {
+        "ar": "تدريب بأمثلة ناقصة، فتخطئ الآلة مع الفواكه الخضراء، ويصلح الطفل البيانات"
+      },
+      "templates": [
+        "ai-trainer"
+      ]
+    },
+    {
+      "id": "techai.ai.testing",
+      "zone": "mogran.tuti",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "techai.ai.learn-examples"
+      ],
+      "title": {
+        "ar": "اختبار الآلة الذكية",
+        "en": "Testing an AI"
+      },
+      "goal": {
+        "ar": "يختبر النموذج بأمثلة جديدة ويقيس كم مرة أصاب"
+      },
+      "templates": [
+        "ai-trainer"
+      ]
+    },
+    {
+      "id": "techai.genai.what-is",
+      "zone": "mogran.meeting",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "techai.ai.data-quality"
+      ],
+      "title": {
+        "ar": "الذكاء الاصطناعي الذي يكتب ويرسم",
+        "en": "Generative AI"
+      },
+      "goal": {
+        "ar": "يعرف أنه يكمل الكلام والصور من أنماط، وأنه قد يخطئ وهو واثق"
+      },
+      "templates": [
+        "genai-sim"
+      ]
+    },
+    {
+      "id": "techai.genai.safe-use",
+      "zone": "mogran.meeting",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "techai.genai.what-is",
+        "techai.network.safety"
+      ],
+      "title": {
+        "ar": "التحدّث مع الذكاء الاصطناعي بأمان",
+        "en": "Using AI safely"
+      },
+      "goal": {
+        "ar": "لا يشارك معلومات خاصة، ويتأكّد من المعلومة من مصدر آخر، ويسأل كبيرًا عند الشك"
+      },
+      "templates": [
+        "chat-sim"
+      ]
+    },
+    {
+      "id": "techai.genai.prompting",
+      "zone": "mogran.meeting",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "techai.genai.what-is"
+      ],
+      "title": {
+        "ar": "طلب واضح ونتيجة أفضل",
+        "en": "Clear requests"
+      },
+      "experience": {
+        "ar": "يكتب طلبًا لقصة أو رسمة في محاكاة، ويرى كيف يغيّر وضوح الطلب النتيجة"
+      },
+      "templates": [
+        "genai-sim"
+      ]
+    },
+    {
+      "id": "techai.citizenship.privacy",
+      "zone": "mogran.meeting",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.network.safety"
+      ],
+      "title": {
+        "ar": "خصوصيتي وكلمة السر",
+        "en": "Privacy and passwords"
+      },
+      "templates": [
+        "chat-sim",
+        "sort-baskets"
+      ]
+    },
+    {
+      "id": "techai.citizenship.kindness",
+      "zone": "mogran.meeting",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.network.safety"
+      ],
+      "title": {
+        "ar": "اللطف والاحترام على الإنترنت",
+        "en": "Kindness online"
+      },
+      "templates": [
+        "chat-sim"
+      ]
+    },
+    {
+      "id": "techai.citizenship.balance",
+      "zone": "mogran.meeting",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "techai.tech.what-is"
+      ],
+      "title": {
+        "ar": "التوازن بين الشاشة والحياة",
+        "en": "Screen balance"
+      },
+      "templates": [
+        "sort-baskets"
+      ]
+    }
+  ]
+}

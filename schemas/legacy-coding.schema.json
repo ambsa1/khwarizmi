@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/legacy-coding.schema.json",
+  "title": "The 75 legacy coding concepts mapped to the new skill tree",
+  "type": "object",
+  "required": ["source", "levels"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "source": { "type": "string" },
+    "levels": {
+      "type": "array", "minItems": 75, "maxItems": 75,
+      "items": {
+        "type": "object",
+        "required": ["legacyId", "track", "concept", "skills", "mode", "zone"],
+        "additionalProperties": false,
+        "properties": {
+          "legacyId": { "type": "string", "pattern": "^[a-z][0-9]+b?$" },
+          "track": { "enum": ["talk", "lights", "draw", "path", "vars", "funcs", "bugs", "pylab"] },
+          "concept": { "$ref": "defs.schema.json#/$defs/text" },
+          "skills": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "defs.schema.json#/$defs/skillId" } },
+          "mode": { "enum": ["guided", "predict", "modify", "create", "debug", "python"] },
+          "zone": { "$ref": "defs.schema.json#/$defs/id" },
+          "python": { "type": "string" }
+        }
+      }
+    }
+  }
+}

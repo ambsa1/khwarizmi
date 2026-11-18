@@ -1,0 +1,482 @@
+{
+  "$schema": "../../schemas/skill-tree.schema.json",
+  "domain": "english",
+  "pillar": "future",
+  "world": "meroe",
+  "title": {
+    "ar": "الإنجليزية الحيّة",
+    "en": "Living English"
+  },
+  "status": "draft",
+  "skills": [
+    {
+      "id": "english.phonics.sounds-1",
+      "zone": "meroe.p1",
+      "ages": {
+        "min": 6
+      },
+      "title": {
+        "ar": "أصوات الحروف، المجموعة الأولى",
+        "en": "Letter sounds group 1: s a t p i n"
+      },
+      "experience": {
+        "ar": "كل صوت نقش على بوابة الهرم يضيء عندما ينطقه الطفل أو يلمسه"
+      },
+      "templates": [
+        "sound-gate",
+        "letter-trace"
+      ]
+    },
+    {
+      "id": "english.phonics.sounds-2",
+      "zone": "meroe.p1",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.sounds-1"
+      ],
+      "title": {
+        "ar": "أصوات الحروف، المجموعة الثانية",
+        "en": "Letter sounds group 2: c k e h r m d"
+      },
+      "templates": [
+        "sound-gate",
+        "letter-trace"
+      ]
+    },
+    {
+      "id": "english.phonics.sounds-3",
+      "zone": "meroe.p1",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.sounds-2"
+      ],
+      "title": {
+        "ar": "أصوات الحروف، المجموعة الثالثة",
+        "en": "Letter sounds group 3: g o u l f b j z w v y x qu"
+      },
+      "templates": [
+        "sound-gate",
+        "letter-trace"
+      ]
+    },
+    {
+      "id": "english.phonics.blend-cvc",
+      "zone": "meroe.p2",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.sounds-1"
+      ],
+      "title": {
+        "ar": "مزج ثلاثة أصوات لكلمة",
+        "en": "Blending CVC words"
+      },
+      "experience": {
+        "ar": "ثلاثة أحجار صوت تنزلق معًا فتصير كلمة، وتظهر صورتها في القصة"
+      },
+      "templates": [
+        "sound-blend"
+      ]
+    },
+    {
+      "id": "english.phonics.segment-cvc",
+      "zone": "meroe.p2",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.blend-cvc"
+      ],
+      "title": {
+        "ar": "تقطيع الكلمة لأصواتها",
+        "en": "Segmenting CVC words"
+      },
+      "templates": [
+        "sound-blend"
+      ]
+    },
+    {
+      "id": "english.read.tricky-1",
+      "zone": "meroe.p2",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.blend-cvc"
+      ],
+      "title": {
+        "ar": "كلمات تُقرأ بالنظر، المجموعة الأولى",
+        "en": "Tricky words 1: I the to no go into he she we me be"
+      },
+      "templates": [
+        "read-highlight",
+        "sort-baskets"
+      ]
+    },
+    {
+      "id": "english.vocab.family-home",
+      "zone": "meroe.p3",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.blend-cvc"
+      ],
+      "title": {
+        "ar": "العائلة والبيت",
+        "en": "Family and home"
+      },
+      "templates": [
+        "story-scene",
+        "match-pairs"
+      ]
+    },
+    {
+      "id": "english.vocab.food-market",
+      "zone": "meroe.p3",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.blend-cvc"
+      ],
+      "title": {
+        "ar": "الطعام والسوق",
+        "en": "Food and the market"
+      },
+      "templates": [
+        "story-scene",
+        "match-pairs"
+      ]
+    },
+    {
+      "id": "english.vocab.animals-nature",
+      "zone": "meroe.p3",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.blend-cvc"
+      ],
+      "title": {
+        "ar": "الحيوانات والطبيعة",
+        "en": "Animals and nature"
+      },
+      "templates": [
+        "story-scene",
+        "match-pairs"
+      ]
+    },
+    {
+      "id": "english.vocab.body-feelings",
+      "zone": "meroe.p3",
+      "ages": {
+        "min": 6
+      },
+      "requires": [
+        "english.phonics.blend-cvc"
+      ],
+      "title": {
+        "ar": "الجسم والمشاعر",
+        "en": "Body and feelings"
+      },
+      "templates": [
+        "story-scene",
+        "match-pairs"
+      ]
+    },
+    {
+      "id": "english.vocab.actions-places",
+      "zone": "meroe.p3",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.phonics.blend-cvc"
+      ],
+      "title": {
+        "ar": "الأفعال والأماكن",
+        "en": "Actions and places"
+      },
+      "templates": [
+        "story-scene",
+        "sentence-build"
+      ]
+    },
+    {
+      "id": "english.phonics.digraphs",
+      "zone": "meroe.p4",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.phonics.sounds-3",
+        "english.phonics.segment-cvc"
+      ],
+      "title": {
+        "ar": "الحروف المركّبة",
+        "en": "Digraphs: sh ch th ng ck"
+      },
+      "templates": [
+        "sound-blend",
+        "read-highlight"
+      ]
+    },
+    {
+      "id": "english.phonics.long-vowels",
+      "zone": "meroe.p4",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.phonics.digraphs"
+      ],
+      "title": {
+        "ar": "الحروف المتحرّكة الطويلة",
+        "en": "Long vowels: ai ee igh oa oo"
+      },
+      "templates": [
+        "sound-blend",
+        "read-highlight"
+      ]
+    },
+    {
+      "id": "english.read.tricky-2",
+      "zone": "meroe.p4",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.read.tricky-1"
+      ],
+      "title": {
+        "ar": "كلمات تُقرأ بالنظر، المجموعة الثانية",
+        "en": "Tricky words 2: was my you they all are her said have like"
+      },
+      "templates": [
+        "read-highlight",
+        "sort-baskets"
+      ]
+    },
+    {
+      "id": "english.sentence.this-is",
+      "zone": "meroe.p5",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.vocab.family-home"
+      ],
+      "title": {
+        "ar": "هذا، وهذه، وهي",
+        "en": "This is, it is"
+      },
+      "templates": [
+        "sentence-build"
+      ]
+    },
+    {
+      "id": "english.sentence.plurals",
+      "zone": "meroe.p5",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.sentence.this-is"
+      ],
+      "title": {
+        "ar": "المفرد والجمع",
+        "en": "Plurals"
+      },
+      "templates": [
+        "sentence-build",
+        "sort-baskets"
+      ]
+    },
+    {
+      "id": "english.sentence.can",
+      "zone": "meroe.p5",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.vocab.actions-places"
+      ],
+      "title": {
+        "ar": "أستطيع، ولا أستطيع",
+        "en": "I can / I can't"
+      },
+      "templates": [
+        "sentence-build",
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.sentence.there-is",
+      "zone": "meroe.p5",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "english.sentence.plurals"
+      ],
+      "title": {
+        "ar": "يوجد، ويوجد عدّة",
+        "en": "There is / there are"
+      },
+      "templates": [
+        "sentence-build",
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.sentence.present-simple",
+      "zone": "meroe.p5",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "english.sentence.can"
+      ],
+      "title": {
+        "ar": "عاداتي اليومية",
+        "en": "Present simple routines"
+      },
+      "templates": [
+        "sentence-build",
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.sentence.questions",
+      "zone": "meroe.p5",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "english.sentence.present-simple"
+      ],
+      "title": {
+        "ar": "أسئلة: ماذا، وأين، ومن",
+        "en": "Wh-questions"
+      },
+      "templates": [
+        "sentence-build",
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.listen.instructions",
+      "zone": "meroe.p6",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.vocab.actions-places"
+      ],
+      "title": {
+        "ar": "اسمع ونفّذ",
+        "en": "Listen and do"
+      },
+      "templates": [
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.listen.story",
+      "zone": "meroe.p6",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "english.listen.instructions"
+      ],
+      "title": {
+        "ar": "فهم قصة مسموعة",
+        "en": "Story listening"
+      },
+      "templates": [
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.read.story",
+      "zone": "meroe.p6",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "english.read.tricky-2",
+        "english.phonics.long-vowels"
+      ],
+      "title": {
+        "ar": "قراءة صفحة قصة",
+        "en": "Reading a story page"
+      },
+      "templates": [
+        "read-highlight",
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.speak.greetings",
+      "zone": "meroe.p6",
+      "ages": {
+        "min": 6
+      },
+      "title": {
+        "ar": "التحية والتعارف",
+        "en": "Greetings and introductions"
+      },
+      "experience": {
+        "ar": "الكنداكة تحيّي الطفل، والطفل يسجّل ردّه ويسمعه بجانب النطق الصحيح"
+      },
+      "templates": [
+        "record-compare",
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.speak.ask-answer",
+      "zone": "meroe.p6",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "english.speak.greetings",
+        "english.sentence.questions"
+      ],
+      "title": {
+        "ar": "أسأل وأجيب",
+        "en": "Ask and answer"
+      },
+      "templates": [
+        "record-compare",
+        "story-scene"
+      ]
+    },
+    {
+      "id": "english.speak.retell",
+      "zone": "meroe.p6",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "english.speak.ask-answer",
+        "english.read.story"
+      ],
+      "title": {
+        "ar": "أعيد رواية القصة",
+        "en": "Retelling a story"
+      },
+      "templates": [
+        "record-compare"
+      ]
+    }
+  ]
+}

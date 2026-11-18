@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/tokens.schema.json",
+  "title": "Design tokens: the single source of colours, type, spacing and motion",
+  "type": "object",
+  "required": ["color", "contrast", "worlds", "type", "space", "radius", "touch", "depth", "motion"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "color": { "type": "object", "minProperties": 10, "additionalProperties": { "$ref": "defs.schema.json#/$defs/hex" } },
+    "contrast": {
+      "type": "array", "minItems": 5,
+      "items": {
+        "type": "object", "required": ["fg", "bg", "min", "use"], "additionalProperties": false,
+        "properties": { "fg": { "type": "string" }, "bg": { "type": "string" }, "min": { "type": "number", "minimum": 3 }, "use": { "type": "string" } }
+      }
+    },
+    "worlds": {
+      "type": "object",
+      "propertyNames": { "$ref": "defs.schema.json#/$defs/worldId" },
+      "additionalProperties": {
+        "type": "object", "required": ["primary", "secondary", "ground", "water", "skyTop", "skyBottom"], "additionalProperties": false,
+        "properties": {
+          "primary": { "$ref": "defs.schema.json#/$defs/hex" }, "secondary": { "$ref": "defs.schema.json#/$defs/hex" },
+          "ground": { "$ref": "defs.schema.json#/$defs/hex" }, "water": { "$ref": "defs.schema.json#/$defs/hex" },
+          "skyTop": { "$ref": "defs.schema.json#/$defs/hex" }, "skyBottom": { "$ref": "defs.schema.json#/$defs/hex" }
+        }
+      }
+    },
+    "type": {
+      "type": "object", "required": ["families", "scale", "childMin"], "additionalProperties": false,
+      "properties": {
+        "families": {
+          "type": "object", "required": ["display", "ui", "readAr", "readEn"], "additionalProperties": false,
+          "properties": { "display": { "type": "string" }, "ui": { "type": "string" }, "readAr": { "type": "string" }, "readEn": { "type": "string" } }
+        },
+        "scale": {
+          "type": "array",
+          "items": {
+            "type": "object", "required": ["id", "size", "line", "family", "weight"], "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" }, "size": { "type": "integer", "minimum": 12 }, "line": { "type": "integer" },
+              "family": { "enum": ["display", "ui", "readAr", "readEn"] }, "weight": { "type": "integer" }, "parentsOnly": { "type": "boolean" }
+            }
+          }
+        },
+        "childMin": { "type": "integer", "minimum": 16 }
+      }
+    },
+    "space": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+    "radius": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "touch": { "type": "object", "required": ["little", "big"], "additionalProperties": false, "properties": { "little": { "type": "integer", "minimum": 64 }, "big": { "type": "integer", "minimum": 48 } } },
+    "depth": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "motion": {
+      "type": "object", "required": ["tap", "card", "screen", "celebrate", "maxBlock"], "additionalProperties": false,
+      "properties": { "tap": { "type": "integer" }, "card": { "type": "integer" }, "screen": { "type": "integer" }, "celebrate": { "type": "integer" }, "maxBlock": { "type": "integer", "maximum": 600 } }
+    }
+  }
+}

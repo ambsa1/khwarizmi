@@ -1,0 +1,70 @@
+// Screen router. Plain state (no URL routing) so the installed app always opens on "who's playing?".
+// Query parameters exist only for design review and automated screenshots:
+//   ?view=siraj | world&w=kassala&m=14 | perf      isolated views
+//   ?demo=guest&screen=path|map|passport           seeds a demo guest and opens that screen
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { unlockWithKey } from './lib/family';
+import type { WorldId } from './lib/tokens';
+import { useApp, type Screen } from './state/store';
+import { WorldWindow } from './three/WorldWindow';
+import { usePrefersReduced } from './ui/kit';
+import { Entry } from './screens/Entry';
+import { Guest } from './screens/Guest';
+import { MapScreen } from './screens/Map';
+import { Parents, Passport, Perf } from './screens/Others';
+import { Path } from './screens/Path';
+import { SirajPreview } from './screens/Preview';
+
+const q = new URLSearchParams(location.search);
+
+function bootDemo() {
+  const s = useApp.getState();
+  if (q.get('demo') === 'guest') {
+    const gender = q.get('g') === 'f' ? 'f' : 'm';
+    s.addGuest({ gender, age: +(q.get('age') ?? 8), grade: 3, avatar: gender === 'f' ? 'g7' : 'g3' });
+  }
+  const screen = q.get('screen') as Screen | null;
+  if (screen) s.go(screen);
+  else if (!['parents', 'perf'].includes(s.screen)) s.go('entry');
+}
+
+export function App() {
+  const view = q.get('view');
+  const screen = useApp(s => s.screen), current = useApp(s => s.current);
+  const familyKey = useApp(s => s.familyKey), family = useApp(s => s.family);
+  const reduced = usePrefersReduced();
+  const [booted, setBooted] = useState(false);
+
+  useEffect(() => { bootDemo(); setBooted(true); }, []);
+  // Re-open the sealed family data with the key saved on this device (the code itself is never stored).
+  useEffect(() => {
+    if (!familyKey || family) return;
+    unlockWithKey(familyKey).then(m => (m ? useApp.getState().setFamily(m) : useApp.getState().setFamilyKey(null)));
+  }, [familyKey, family]);
+  useEffect(() => { document.documentElement.classList.toggle('reduced', reduced); }, [reduced]);
+
+  if (view === 'siraj') return <SirajPreview />;
+  if (view === 'world') {
+    return <div className="screen"><WorldWindow world={(q.get('w') || 'kassala') as WorldId} mastered={+(q.get('m') ?? 14)} total={37} /></div>;
+  }
+  if (view === 'perf') return <Perf />;
+  if (!booted) return null;
+
+  const needsPlayer = screen === 'path' || screen === 'map' || screen === 'passport';
+  const shown: Screen = needsPlayer && !current ? 'entry' : screen;
+  const body = {
+    entry: <Entry />, guest: <Guest />, path: <Path />, map: <MapScreen />, passport: <Passport />, parents: <Parents />, perf: <Perf />,
+  }[shown];
+  return (
+    <MotionConfig reducedMotion={reduced ? 'always' : 'never'}>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={shown} style={{ position: 'fixed', inset: 0 }}
+          initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: reduced ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}>
+          {body}
+        </motion.div>
+      </AnimatePresence>
+    </MotionConfig>
+  );
+}

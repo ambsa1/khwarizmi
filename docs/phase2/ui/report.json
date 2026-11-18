@@ -1,0 +1,17 @@
+[
+  {
+    "page": "demo-guest-g-g-age-8-screen-map",
+    "device": "pavilion14-1366x768",
+    "stats": {
+      "fps": 60,
+      "ms": 16.7,
+      "calls": 54,
+      "tris": 8226,
+      "dpr": 1,
+      "tier": "high",
+      "gpu": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x00001506) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    },
+    "overflowX": false,
+    "errors": []
+  }
+]

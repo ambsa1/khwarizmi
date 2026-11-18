@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/skill-tree.schema.json",
+  "title": "Skill tree for one domain (or one school grade and subject)",
+  "type": "object",
+  "required": ["domain", "pillar", "title", "skills"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "domain": { "$ref": "defs.schema.json#/$defs/domain" },
+    "pillar": { "enum": ["school", "future"] },
+    "world": { "$ref": "defs.schema.json#/$defs/worldId" },
+    "grade": { "$ref": "defs.schema.json#/$defs/grade" },
+    "subject": { "$ref": "defs.schema.json#/$defs/subject" },
+    "title": { "$ref": "defs.schema.json#/$defs/text" },
+    "status": { "enum": ["awaiting-source", "draft", "approved"] },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "zone", "ages"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "defs.schema.json#/$defs/skillId" },
+          "title": { "$ref": "defs.schema.json#/$defs/text" },
+          "goal": { "$ref": "defs.schema.json#/$defs/text" },
+          "zone": { "$ref": "defs.schema.json#/$defs/id" },
+          "ages": { "$ref": "defs.schema.json#/$defs/ages" },
+          "requires": { "type": "array", "uniqueItems": true, "items": { "$ref": "defs.schema.json#/$defs/skillId" } },
+          "experience": { "$ref": "defs.schema.json#/$defs/text" },
+          "templates": { "type": "array", "uniqueItems": true, "items": { "$ref": "defs.schema.json#/$defs/id" } },
+          "isNew": { "type": "boolean", "description": "true = not covered by the 75 legacy coding levels" }
+        }
+      }
+    }
+  }
+}

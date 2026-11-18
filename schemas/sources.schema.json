@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/sources.schema.json",
+  "title": "Registry of textbook sources (the files themselves stay local in books/)",
+  "type": "object",
+  "required": ["sources"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "grade", "subject", "title", "tier", "publisher", "verifiedAgainstPaper"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "defs.schema.json#/$defs/id" },
+          "kind": { "enum": ["pupil-book", "teacher-guide", "activity-book", "flashcards", "audio"] },
+          "grade": { "$ref": "defs.schema.json#/$defs/grade" },
+          "subject": { "$ref": "defs.schema.json#/$defs/subject" },
+          "title": { "type": "string", "minLength": 1 },
+          "series": { "type": "string" },
+          "edition": { "type": "string" },
+          "year": { "type": "integer", "minimum": 1990, "maximum": 2035 },
+          "publisher": { "type": "string" },
+          "tier": { "enum": ["official", "unofficial-verified", "unofficial"] },
+          "url": { "type": "string", "format": "uri" },
+          "localPath": { "type": "string", "pattern": "^books/" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "bytes": { "type": "integer", "minimum": 1 },
+          "pages": { "type": "integer", "minimum": 1 },
+          "textLayer": { "enum": ["text", "scanned", "mixed", "unknown"] },
+          "verifiedAgainstPaper": { "type": "boolean" },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/worlds.schema.json",
+  "title": "Landmark worlds",
+  "type": "object",
+  "required": ["worlds"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "worlds": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["id", "order", "kind", "pillar", "domain", "title", "landmark", "story", "entry", "zones", "summit"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "defs.schema.json#/$defs/worldId" },
+          "order": { "type": "integer", "minimum": 1 },
+          "kind": { "enum": ["landmark", "hub"] },
+          "pillar": { "enum": ["school", "future"] },
+          "domain": { "$ref": "defs.schema.json#/$defs/domain" },
+          "ages": { "$ref": "defs.schema.json#/$defs/ages" },
+          "title": { "$ref": "defs.schema.json#/$defs/text" },
+          "approval": { "enum": ["approved", "proposed"] },
+          "landmark": {
+            "type": "object",
+            "required": ["name", "region", "signature"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "$ref": "defs.schema.json#/$defs/text" },
+              "region": { "$ref": "defs.schema.json#/$defs/text" },
+              "signature": { "type": "array", "minItems": 3, "items": { "$ref": "defs.schema.json#/$defs/text" } }
+            }
+          },
+          "story": { "$ref": "defs.schema.json#/$defs/text" },
+          "entry": {
+            "type": "object",
+            "required": ["firstFrame", "summitVisibleFromEntry"],
+            "additionalProperties": false,
+            "properties": {
+              "firstFrame": { "$ref": "defs.schema.json#/$defs/text" },
+              "summitVisibleFromEntry": { "const": true },
+              "timeOfDay": { "enum": ["dawn", "morning", "noon", "golden-hour", "dusk", "night"] }
+            }
+          },
+          "zones": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "order", "title", "place"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "$ref": "defs.schema.json#/$defs/id" },
+                "order": { "type": "integer", "minimum": 1 },
+                "title": { "$ref": "defs.schema.json#/$defs/text" },
+                "place": { "$ref": "defs.schema.json#/$defs/text" },
+                "grade": { "$ref": "defs.schema.json#/$defs/grade" }
+              }
+            }
+          },
+          "summit": {
+            "type": "object",
+            "required": ["id", "title", "place", "challenge", "unlock", "reward"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "defs.schema.json#/$defs/id" },
+              "title": { "$ref": "defs.schema.json#/$defs/text" },
+              "place": { "$ref": "defs.schema.json#/$defs/text" },
+              "challenge": { "$ref": "defs.schema.json#/$defs/text" },
+              "unlock": {
+                "type": "object",
+                "required": ["allZoneSkillsMastered", "minScore"],
+                "additionalProperties": false,
+                "properties": {
+                  "allZoneSkillsMastered": { "const": true },
+                  "minScore": { "type": "number", "minimum": 0.7, "maximum": 1 },
+                  "mixedChallenge": { "type": "boolean" }
+                }
+              },
+              "reward": {
+                "type": "object",
+                "required": ["stamp", "title"],
+                "additionalProperties": false,
+                "properties": { "stamp": { "$ref": "defs.schema.json#/$defs/id" }, "title": { "$ref": "defs.schema.json#/$defs/text" } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

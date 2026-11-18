@@ -1,0 +1,12 @@
+{
+  "$schema": "../../../schemas/school-subject.schema.json",
+  "grade": 5,
+  "subject": "islamic",
+  "title": {
+    "ar": "التربية الإسلامية، الصف الخامس",
+    "en": "Islamic Studies, Grade 5"
+  },
+  "status": "awaiting-source",
+  "sources": [],
+  "units": []
+}

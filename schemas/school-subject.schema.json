@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/school-subject.schema.json",
+  "title": "One school subject for one grade: units in textbook order",
+  "type": "object",
+  "required": ["grade", "subject", "title", "status", "sources", "units"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "grade": { "$ref": "defs.schema.json#/$defs/grade" },
+    "subject": { "$ref": "defs.schema.json#/$defs/subject" },
+    "title": { "$ref": "defs.schema.json#/$defs/text" },
+    "status": { "enum": ["awaiting-source", "source-registered", "segmented", "draft", "approved"] },
+    "sources": { "type": "array", "uniqueItems": true, "items": { "$ref": "defs.schema.json#/$defs/id" } },
+    "notes": { "$ref": "defs.schema.json#/$defs/text" },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "order", "title", "lessons"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "defs.schema.json#/$defs/id" },
+          "order": { "type": "integer", "minimum": 1 },
+          "title": { "$ref": "defs.schema.json#/$defs/text" },
+          "pages": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+          "lessons": { "type": "array", "items": { "$ref": "defs.schema.json#/$defs/id" } }
+        }
+      }
+    }
+  }
+}

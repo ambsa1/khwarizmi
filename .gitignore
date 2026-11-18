@@ -11,3 +11,16 @@ v2/tests/node_modules/
 v2/tests/shots/
 v2/tools/family-code.local.txt
 v2/tools/*.local.*
+
+# إعادة البناء: الكتب المدرسية تبقى على اللابتوب فقط، ومخرجات الاستخراج كذلك
+node_modules/
+books/
+ingest/work/
+ingest/.venv/
+
+# صور أطفال الأسرة وبياناتهم: محلية فقط، ولا تُرفع أبدًا
+private/
+
+# مخرجات بناء التطبيق وسجل خادم التطوير
+app/dist/
+app-dev.log

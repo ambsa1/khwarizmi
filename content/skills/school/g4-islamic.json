@@ -1,0 +1,14 @@
+{
+  "$schema": "../../../schemas/skill-tree.schema.json",
+  "domain": "school",
+  "pillar": "school",
+  "world": "marra",
+  "grade": 4,
+  "subject": "islamic",
+  "title": {
+    "ar": "التربية الإسلامية، الصف الرابع",
+    "en": "Islamic Studies, Grade 4"
+  },
+  "status": "awaiting-source",
+  "skills": []
+}

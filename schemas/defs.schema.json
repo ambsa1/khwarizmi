@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/defs.schema.json",
+  "title": "Shared definitions",
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*)*$", "maxLength": 96 },
+    "skillId": { "type": "string", "pattern": "^(coding|techai|english|brain|explorer|school)\\.[a-z0-9][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
+    "worldId": { "enum": ["kassala", "mogran", "meroe", "suakin", "marra", "saqiya"] },
+    "domain": { "enum": ["coding", "techai", "english", "brain", "explorer", "school"] },
+    "subject": { "enum": ["math", "science", "arabic", "islamic", "english"] },
+    "grade": { "type": "integer", "minimum": 1, "maximum": 6 },
+    "age": { "type": "integer", "minimum": 3, "maximum": 14 },
+    "ar": { "type": "string", "minLength": 1, "maxLength": 400, "pattern": "[\\u0600-\\u06FF]" },
+    "text": {
+      "type": "object",
+      "required": ["ar"],
+      "additionalProperties": false,
+      "properties": {
+        "ar": { "$ref": "#/$defs/ar" },
+        "en": { "type": "string", "minLength": 1, "maxLength": 400 }
+      }
+    },
+    "ages": {
+      "type": "object",
+      "required": ["min"],
+      "additionalProperties": false,
+      "properties": { "min": { "$ref": "#/$defs/age" }, "max": { "$ref": "#/$defs/age" } }
+    },
+    "hex": { "type": "string", "pattern": "^#[0-9A-F]{6}$" }
+  }
+}

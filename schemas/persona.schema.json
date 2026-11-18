@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://khawarizmi.local/schemas/persona.schema.json",
+  "title": "Siraj persona rules (the machine-checkable part of docs/SIRAJ_PERSONA.md)",
+  "type": "object",
+  "required": ["name", "maxWords", "bannedPhrases", "registers", "lineCategories", "genderForms"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "$ref": "defs.schema.json#/$defs/text" },
+    "maxWords": {
+      "type": "object", "required": ["instruction", "feedback", "story"], "additionalProperties": false,
+      "properties": {
+        "instruction": { "type": "integer", "minimum": 3, "maximum": 12 },
+        "feedback": { "type": "integer", "minimum": 2, "maximum": 10 },
+        "story": { "type": "integer", "minimum": 8, "maximum": 25 }
+      }
+    },
+    "bannedPhrases": { "type": "array", "minItems": 3, "items": { "$ref": "defs.schema.json#/$defs/ar" } },
+    "registers": {
+      "type": "object", "required": ["dialect", "fusha"], "additionalProperties": false,
+      "properties": {
+        "dialect": {
+          "type": "object", "required": ["usedFor", "markers"], "additionalProperties": false,
+          "properties": {
+            "usedFor": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "markers": { "type": "array", "minItems": 5, "items": { "$ref": "defs.schema.json#/$defs/ar" } }
+          }
+        },
+        "fusha": {
+          "type": "object", "required": ["usedFor"], "additionalProperties": false,
+          "properties": { "usedFor": { "type": "array", "minItems": 1, "items": { "type": "string" } } }
+        }
+      }
+    },
+    "lineCategories": {
+      "type": "array", "minItems": 6,
+      "items": {
+        "type": "object", "required": ["id", "title", "minVariants", "examples"], "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "defs.schema.json#/$defs/id" },
+          "title": { "$ref": "defs.schema.json#/$defs/text" },
+          "minVariants": { "type": "integer", "minimum": 1 },
+          "examples": {
+            "type": "array", "minItems": 2,
+            "items": {
+              "type": "object", "required": ["m"], "additionalProperties": false,
+              "properties": { "m": { "$ref": "defs.schema.json#/$defs/ar" }, "f": { "$ref": "defs.schema.json#/$defs/ar" } }
+            }
+          }
+        }
+      }
+    },
+    "genderForms": {
+      "type": "object", "required": ["required"], "additionalProperties": false,
+      "properties": { "required": { "const": true }, "rule": { "type": "string" } }
+    },
+    "expressions": { "type": "array", "items": { "$ref": "defs.schema.json#/$defs/id" } }
+  }
+}

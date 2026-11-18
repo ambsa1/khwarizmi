@@ -1,0 +1,785 @@
+{
+  "$schema": "../../schemas/skill-tree.schema.json",
+  "domain": "coding",
+  "pillar": "future",
+  "world": "kassala",
+  "title": {
+    "ar": "البرمجة والمنطق",
+    "en": "Programming & Logic"
+  },
+  "status": "draft",
+  "skills": [
+    {
+      "id": "coding.sequence.order",
+      "zone": "kassala.gash",
+      "ages": {
+        "min": 7
+      },
+      "title": {
+        "ar": "الأوامر تُنفَّذ بالترتيب",
+        "en": "Commands run in order"
+      },
+      "goal": {
+        "ar": "يرتّب أوامر بسيطة لتحقيق نتيجة مرئية"
+      },
+      "experience": {
+        "ar": "سراج يجدّف بمركب على القاش: كل بطاقة حركة، والترتيب الخطأ يرسو به في مكان آخر"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.sequence.values",
+      "zone": "kassala.gash",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.sequence.order"
+      ],
+      "title": {
+        "ar": "أوامر لها قيمة",
+        "en": "Commands with values"
+      },
+      "goal": {
+        "ar": "يغيّر قيمة الأمر، كالكلمة أو اللون أو المسافة"
+      },
+      "experience": {
+        "ar": "فوانيس المراكب تضيء باللون الذي يختاره الطفل في البطاقة"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.sequence.grid-moves",
+      "zone": "kassala.gash",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.sequence.order"
+      ],
+      "title": {
+        "ar": "الحركة في الاتجاهات الأربعة",
+        "en": "Moving in four directions"
+      },
+      "goal": {
+        "ar": "يحرّك سراج على شبكة بأوامر فوق وتحت ويمين ويسار"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.sequence.turtle",
+      "zone": "kassala.gash",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.sequence.values"
+      ],
+      "title": {
+        "ar": "الرسم بالتقدّم والالتفاف",
+        "en": "Drawing with forward and turn"
+      },
+      "goal": {
+        "ar": "يرسم أشكالًا بأمر التقدّم وأمر الالتفاف"
+      },
+      "experience": {
+        "ar": "سراج يرسم بقارب على رمل القاش خطوطًا تتحوّل إلى أسوار للحدائق"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.sequence.planning",
+      "zone": "kassala.gash",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.sequence.grid-moves"
+      ],
+      "title": {
+        "ar": "التخطيط لطريق كامل",
+        "en": "Planning a full route"
+      },
+      "goal": {
+        "ar": "يخطّط مسارًا يجمع أشياء ويتفادى العوائق قبل التشغيل"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.loops.repeat",
+      "zone": "kassala.orchards",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.sequence.order"
+      ],
+      "title": {
+        "ar": "التكرار عددًا من المرات",
+        "en": "Repeat N times"
+      },
+      "goal": {
+        "ar": "يستعمل بطاقة التكرار بدل تكرار نفس البطاقة"
+      },
+      "experience": {
+        "ar": "صفوف الأشجار في البستان متشابهة: سقي شجرة واحدة يُكرَّر لكل الصف"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.loops.body",
+      "zone": "kassala.orchards",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.loops.repeat"
+      ],
+      "title": {
+        "ar": "عدّة أوامر داخل التكرار",
+        "en": "Several commands inside a loop"
+      },
+      "goal": {
+        "ar": "يضع مجموعة أوامر داخل التكرار ويعرف ما يتكرّر وما لا يتكرّر"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.loops.shorter",
+      "zone": "kassala.orchards",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.loops.body"
+      ],
+      "title": {
+        "ar": "برنامج أقصر بالتكرار",
+        "en": "Shorter programs with loops"
+      },
+      "goal": {
+        "ar": "يكتشف النمط المتكرّر ويختصر البرنامج"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.loops.nested",
+      "zone": "kassala.orchards",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.loops.shorter"
+      ],
+      "title": {
+        "ar": "تكرار داخل تكرار",
+        "en": "Nested loops"
+      },
+      "goal": {
+        "ar": "يكرّر نمطًا هو نفسه تكرار"
+      },
+      "experience": {
+        "ar": "عدّة صفوف أشجار، وكل صف فيه عدّة أشجار"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.events.trigger",
+      "zone": "kassala.houses",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.sequence.order"
+      ],
+      "isNew": true,
+      "title": {
+        "ar": "عندما يحدث شيء",
+        "en": "When something happens"
+      },
+      "goal": {
+        "ar": "يربط أوامر بحدث، كطرق الباب أو وصول سراج"
+      },
+      "experience": {
+        "ar": "عندما يطرق سراج باب البيت يضيء الفانوس"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.conditions.if",
+      "zone": "kassala.houses",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.loops.repeat"
+      ],
+      "title": {
+        "ar": "إذا",
+        "en": "If"
+      },
+      "goal": {
+        "ar": "ينفّذ أمرًا فقط إذا تحقّق شرط"
+      },
+      "experience": {
+        "ar": "إذا كان الباب مفتوحًا يدخل سراج ويضيء البيت"
+      },
+      "templates": [
+        "code-path-3d"
+      ],
+      "isNew": true
+    },
+    {
+      "id": "coding.conditions.if-else",
+      "zone": "kassala.houses",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.conditions.if"
+      ],
+      "title": {
+        "ar": "إذا، وإلا",
+        "en": "If / else"
+      },
+      "goal": {
+        "ar": "يختار بين طريقين حسب الشرط"
+      },
+      "templates": [
+        "code-path-3d"
+      ],
+      "isNew": true
+    },
+    {
+      "id": "coding.conditions.compare",
+      "zone": "kassala.houses",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.conditions.if",
+        "coding.variables.store"
+      ],
+      "title": {
+        "ar": "المقارنة: أكبر وأصغر ويساوي",
+        "en": "Comparisons"
+      },
+      "goal": {
+        "ar": "يكتب شرطًا يقارن رقمين"
+      },
+      "templates": [
+        "code-path-3d",
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.loops.until",
+      "zone": "kassala.houses",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.conditions.if"
+      ],
+      "isNew": true,
+      "title": {
+        "ar": "كرّر حتى يتحقّق شرط",
+        "en": "Repeat until"
+      },
+      "goal": {
+        "ar": "يكرّر بلا عدد معروف حتى يصل لهدف"
+      },
+      "experience": {
+        "ar": "امشِ حتى تصل للباب، مهما كان الطريق طويلًا"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.variables.store",
+      "zone": "kassala.souq",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.sequence.values"
+      ],
+      "title": {
+        "ar": "المتغيّر يحفظ قيمة",
+        "en": "A variable stores a value"
+      },
+      "goal": {
+        "ar": "يضع رقمًا في صندوق له اسم"
+      },
+      "experience": {
+        "ar": "سلّة البائع في السوق لها اسم، وفيها عدد من الفواكه"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.variables.update",
+      "zone": "kassala.souq",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.variables.store"
+      ],
+      "title": {
+        "ar": "تغيير قيمة المتغيّر",
+        "en": "Updating a variable"
+      },
+      "goal": {
+        "ar": "يزيد وينقص ما في الصندوق"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.variables.output",
+      "zone": "kassala.souq",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.variables.store"
+      ],
+      "title": {
+        "ar": "عرض قيمة المتغيّر",
+        "en": "Showing a variable"
+      },
+      "goal": {
+        "ar": "يجعل سراج يقول ما في الصندوق"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.variables.counter",
+      "zone": "kassala.souq",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.variables.update",
+        "coding.loops.body"
+      ],
+      "title": {
+        "ar": "العدّاد داخل التكرار",
+        "en": "Counting inside a loop"
+      },
+      "goal": {
+        "ar": "يعدّ بالواحد أو بالاثنين داخل التكرار"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.variables.many",
+      "zone": "kassala.souq",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.variables.store"
+      ],
+      "title": {
+        "ar": "أكثر من متغيّر",
+        "en": "Several variables"
+      },
+      "goal": {
+        "ar": "يستعمل صندوقين بأسماء مختلفة"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.lists.basics",
+      "zone": "kassala.souq",
+      "ages": {
+        "min": 10
+      },
+      "requires": [
+        "coding.variables.many",
+        "coding.loops.body"
+      ],
+      "isNew": true,
+      "title": {
+        "ar": "القائمة: صناديق مرتّبة",
+        "en": "Lists"
+      },
+      "goal": {
+        "ar": "يحفظ عدّة قيم في قائمة ويمرّ عليها"
+      },
+      "experience": {
+        "ar": "رفّ الدكّان فيه صناديق مرقّمة، وسراج يمرّ عليها واحدًا واحدًا"
+      },
+      "templates": [
+        "code-path-3d",
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.functions.define",
+      "zone": "kassala.crafts",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.loops.body"
+      ],
+      "title": {
+        "ar": "تعليم سراج حركة جديدة",
+        "en": "Defining a function"
+      },
+      "goal": {
+        "ar": "يجمع أوامر تحت اسم جديد"
+      },
+      "experience": {
+        "ar": "الحِرَفي يعلّم سراج غرزة السعف مرة واحدة، فيستعملها في كل سلّة"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.functions.reuse",
+      "zone": "kassala.crafts",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.functions.define"
+      ],
+      "title": {
+        "ar": "استعمال الحركة الجديدة مرّات",
+        "en": "Calling a function many times"
+      },
+      "goal": {
+        "ar": "ينادي الدالة عدّة مرات، ومع التكرار"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.functions.many",
+      "zone": "kassala.crafts",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.functions.reuse"
+      ],
+      "title": {
+        "ar": "أكثر من حركة جديدة",
+        "en": "Several functions"
+      },
+      "goal": {
+        "ar": "يعرّف دالتين ويركّب بهما برنامجًا"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.functions.params",
+      "zone": "kassala.crafts",
+      "ages": {
+        "min": 10
+      },
+      "requires": [
+        "coding.functions.many",
+        "coding.variables.store"
+      ],
+      "isNew": true,
+      "title": {
+        "ar": "حركة جديدة تأخذ قيمة",
+        "en": "Functions with parameters"
+      },
+      "goal": {
+        "ar": "يعرّف دالة تتغيّر نتيجتها حسب القيمة المعطاة"
+      },
+      "experience": {
+        "ar": "اصنع سلّة بحجم تختاره أنت"
+      },
+      "templates": [
+        "code-path-3d",
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.debug.observe",
+      "zone": "kassala.ascent",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.sequence.order"
+      ],
+      "title": {
+        "ar": "شغّل، وقارن بالمطلوب",
+        "en": "Run and compare"
+      },
+      "goal": {
+        "ar": "يلاحظ الفرق بين ما حدث وما كان مطلوبًا"
+      },
+      "experience": {
+        "ar": "حشرة صغيرة تختبئ في البرنامج، والطريق الصاعد مغلق حتى يجدها"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.debug.order",
+      "zone": "kassala.ascent",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.debug.observe"
+      ],
+      "title": {
+        "ar": "إصلاح خطأ الترتيب",
+        "en": "Fixing order bugs"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.debug.value",
+      "zone": "kassala.ascent",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.debug.observe",
+        "coding.sequence.values"
+      ],
+      "title": {
+        "ar": "إصلاح قيمة خاطئة",
+        "en": "Fixing value bugs"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.debug.missing-extra",
+      "zone": "kassala.ascent",
+      "ages": {
+        "min": 7
+      },
+      "requires": [
+        "coding.debug.observe"
+      ],
+      "title": {
+        "ar": "إصلاح أمر ناقص أو زائد",
+        "en": "Fixing missing or extra steps"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.debug.loop",
+      "zone": "kassala.ascent",
+      "ages": {
+        "min": 8
+      },
+      "requires": [
+        "coding.debug.observe",
+        "coding.loops.body"
+      ],
+      "title": {
+        "ar": "إصلاح خطأ داخل التكرار",
+        "en": "Fixing loop bugs"
+      },
+      "templates": [
+        "code-path-3d"
+      ]
+    },
+    {
+      "id": "coding.python.calls",
+      "zone": "kassala.upper",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.sequence.values"
+      ],
+      "title": {
+        "ar": "أول سطر بايثون",
+        "en": "First Python lines"
+      },
+      "goal": {
+        "ar": "يكتب أوامر بايثون بأقواسها وقيمها"
+      },
+      "experience": {
+        "ar": "محطة الكتابة عند عين توتيل: ما يكتبه الطفل ينفّذه سراج فورًا"
+      },
+      "templates": [
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.python.for-range",
+      "zone": "kassala.upper",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.python.calls",
+        "coding.loops.body"
+      ],
+      "title": {
+        "ar": "التكرار في بايثون",
+        "en": "for and range"
+      },
+      "templates": [
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.python.indent",
+      "zone": "kassala.upper",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.python.for-range"
+      ],
+      "title": {
+        "ar": "المسافة البادئة تحدّد ما بالداخل",
+        "en": "Indentation"
+      },
+      "templates": [
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.python.assign",
+      "zone": "kassala.upper",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.python.calls",
+        "coding.variables.update"
+      ],
+      "title": {
+        "ar": "المتغيّرات في بايثون",
+        "en": "Assignment"
+      },
+      "templates": [
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.python.loop-var",
+      "zone": "kassala.upper",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.python.for-range",
+        "coding.python.assign"
+      ],
+      "title": {
+        "ar": "متغيّر العدّ في التكرار",
+        "en": "The loop variable"
+      },
+      "templates": [
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.python.def",
+      "zone": "kassala.upper",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.python.indent",
+        "coding.functions.reuse"
+      ],
+      "title": {
+        "ar": "تعريف دالة في بايثون",
+        "en": "def"
+      },
+      "templates": [
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.python.if-else",
+      "zone": "kassala.upper",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.python.loop-var",
+        "coding.conditions.if-else"
+      ],
+      "title": {
+        "ar": "الشرط في بايثون",
+        "en": "if / else in Python"
+      },
+      "templates": [
+        "python-editor"
+      ]
+    },
+    {
+      "id": "coding.create.project",
+      "zone": "kassala.upper",
+      "ages": {
+        "min": 9
+      },
+      "requires": [
+        "coding.functions.many",
+        "coding.conditions.if-else",
+        "coding.variables.counter"
+      ],
+      "title": {
+        "ar": "مشروع حر من الصفر",
+        "en": "Free project"
+      },
+      "goal": {
+        "ar": "يخطّط ويبني برنامجًا خاصًّا به يستعمل كل ما تعلّمه"
+      },
+      "templates": [
+        "code-path-3d",
+        "python-editor"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "../../../schemas/school-subject.schema.json",
+  "grade": 1,
+  "subject": "english",
+  "title": {
+    "ar": "اللغة الإنجليزية المدرسية، الصف الأول",
+    "en": "School English, Grade 1"
+  },
+  "status": "awaiting-source",
+  "sources": [
+    "smile.g1.pupil",
+    "smile.g1.teacher",
+    "smile.g1.flashcards"
+  ],
+  "units": [],
+  "notes": {
+    "ar": "المصدر الرسمي سلسلة سمايل. الملفات مسجّلة وتنتظر التنزيل في مجلد الكتب."
+  }
+}
