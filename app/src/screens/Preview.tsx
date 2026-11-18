@@ -1,6 +1,9 @@
 // Isolated previews for design review and screenshots:  ?view=siraj[&outfit=east|none][&action=wave] | kassala | map
 import { OrbitControls } from '@react-three/drei';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { placeName, stationCount, subjectName } from '../lib/content';
+import type { WorldId } from '../lib/tokens';
+import { WorldWindow } from '../three/WorldWindow';
 import type { OutfitId } from '../three/outfits';
 import { Siraj, type SirajAction } from '../three/Siraj';
 import { Stage } from '../three/Stage';
@@ -27,6 +30,27 @@ export function SirajPreview() {
         {(['east', 'none'] as OutfitId[]).map(o => <button key={o} className={'btn ' + (o === outfit ? 'nile' : 'paper')} style={{ minHeight: 48, fontSize: 18 }} onClick={() => setOutfit(o)}>{o === 'east' ? 'زي الشرق' : 'بلا زي'}</button>)}
         <label className="chip">glow <input type="range" min={0} max={1} step={0.05} value={glow} onChange={e => setGlow(+e.target.value)} /></label>
       </div>
+    </div>
+  );
+}
+
+/** Review tour of one world (for the combined review video):  ?view=tour&w=<world>[&step=1400]
+ *  grey desert -> every station built in turn (revival + celebration shot) -> the finale shot. Guest data only. */
+export function WorldTour() {
+  const q = new URLSearchParams(location.search);
+  const world = (q.get('w') || 'saqiya') as WorldId, step = +(q.get('step') ?? 1400);
+  const total = stationCount(world);
+  const [m, setM] = useState(0);
+  useEffect(() => {
+    let i = 0, t: ReturnType<typeof setTimeout>;
+    const next = () => { i++; setM(i); if (i < total) t = setTimeout(next, step); };
+    t = setTimeout(next, 3500);
+    return () => clearTimeout(t);
+  }, [total, step]);
+  return (
+    <div className="screen">
+      <WorldWindow world={world} mastered={m} total={total} />
+      <div className="tour-title"><b>{subjectName(world)}</b> <span>{placeName(world)}</span> <span className="num" dir="ltr">{m} / {total}</span></div>
     </div>
   );
 }

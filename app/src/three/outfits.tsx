@@ -7,17 +7,22 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-export type OutfitId = 'none' | 'east';
+export type OutfitId = 'none' | 'east' | 'nile';
 
 /** Which outfit Siraj wears in each world. Worlds not listed keep his plain copper body until their outfit is designed. */
 export const OUTFIT_OF_WORLD: Record<string, OutfitId> = {
   kassala: 'east',   // eastern Sudan
   suakin: 'east',    // eastern Sudan, Red Sea coast
+  // The Nile valley (Khartoum, Dongola, Nubian villages, the Gezira): the reference photos show one dress, the wide white
+  // jalabiya with a long white shawl over the shoulders and leather sandals - centre and north are the same outfit.
+  mogran: 'nile', saqiya: 'nile', meroe: 'nile',
+  // Darfur: the one usable reference (Ed Daein) shows the same white jalabiya; a distinct Darfur outfit waits for references.
+  marra: 'nile',
 };
 export const outfitFor = (world?: string): OutfitId => (world && OUTFIT_OF_WORLD[world]) || 'none';
 
 /** Does the outfit hide the copper body (so the body band and chest plate are not drawn)? */
-export const COVERS_BODY: Record<OutfitId, boolean> = { none: false, east: true };
+export const COVERS_BODY: Record<OutfitId, boolean> = { none: false, east: true, nile: true };
 
 // ---------- textures ----------
 let sideiriTex: THREE.CanvasTexture | null = null;
@@ -115,7 +120,43 @@ function EastOutfit() {
   );
 }
 
+/** The Nile valley outfit (reference photos: an old man in Khartoum, a farmer in his irrigated field at Dongola, Nubian men,
+ *  a Gezira farmer): ankle-length loose white jalabiya with a round neck and a short buttoned opening, a long white shawl
+ *  laid round the neck with both ends hanging down the chest (tone-on-tone embroidery at the ends), leather sandals. */
+function NileOutfit() {
+  const g = useMemo(() => {
+    const robe = mergeGeometries([
+      tint(lathe([[0.2, 1.03], [0.33, 0.96], [0.41, 0.82], [0.425, 0.6], [0.455, 0.36], [0.5, 0.15], [0.49, 0.1]]), '#F4F1E8'),
+      tint(lathe([[0.2, 1.03], [0.205, 1.055], [0.185, 1.065]]), '#F4F1E8'),
+      // short opening at the neck with two buttons
+      tint(at(new THREE.BoxGeometry(0.035, 0.16, 0.012), 0, 0.92, 0.395, -0.35, 0), '#E2DCCF'),
+      ...[0.95, 0.89].map(y => tint(at(new THREE.SphereGeometry(0.014, 8, 6), 0, y, 0.405), '#CFC6B4')),
+      // leather sandals (markoub) peeking out under the hem
+      ...[-1, 1].map(sd => tint(at(new THREE.BoxGeometry(0.13, 0.03, 0.2), sd * 0.15, 0.085, 0.36), '#7A4E2C')),
+    ])!;
+    // the shawl: round the back of the neck and over both shoulders, its two ends hanging down the chest
+    const shawl = mergeGeometries([
+      // over the shoulders and round the back, below the lantern head; open at the front where the two ends fall
+      tint(at(new THREE.TorusGeometry(0.37, 0.055, 8, 32, Math.PI * 2 - 0.9).rotateZ(Math.PI / 2 + 0.45), 0, 0.93, 0, Math.PI / 2, 0, 0), '#FFFFFF'),
+      ...[-1, 1].flatMap(sd => [
+        tint(at(new THREE.BoxGeometry(0.12, 0.5, 0.025), sd * 0.18, 0.74, 0.39, -0.2, 0, sd * 0.05), '#FFFFFF'),
+        // embroidered ends (tone on tone, as in the photos)
+        ...[0.53, 0.56, 0.59].map(y => tint(at(new THREE.BoxGeometry(0.122, 0.012, 0.028), sd * 0.18, y, 0.432 - (0.74 - y) * 0.2, -0.2, 0, sd * 0.05), '#C9C2B2')),
+      ]),
+    ])!;
+    return { robe, shawl };
+  }, []);
+  const cloth = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78 }), []);
+  return (
+    <group>
+      <mesh geometry={g.robe} material={cloth} />
+      <mesh geometry={g.shawl} material={cloth} />
+    </group>
+  );
+}
+
 export function Outfit({ id }: { id: OutfitId }) {
   if (id === 'east') return <EastOutfit />;
+  if (id === 'nile') return <NileOutfit />;
   return null;
 }

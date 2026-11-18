@@ -18,7 +18,7 @@ import { MapScreen } from './screens/Map';
 import { Parents, Passport, Perf } from './screens/Others';
 import { Path } from './screens/Path';
 import { Lesson } from './screens/Lesson';
-import { SirajPreview } from './screens/Preview';
+import { SirajPreview, WorldTour } from './screens/Preview';
 
 const q = new URLSearchParams(location.search);
 
@@ -60,6 +60,7 @@ export function App() {
   useEffect(() => { document.documentElement.classList.toggle('reduced', reduced); }, [reduced]);
 
   if (view === 'siraj') return <SirajPreview />;
+  if (view === 'tour') return booted ? <WorldTour /> : null;
   if (view === 'world') {
     return <div className="screen"><WorldWindow world={(q.get('w') || 'kassala') as WorldId} mastered={+(q.get('m') ?? 14)} total={37} /></div>;
   }

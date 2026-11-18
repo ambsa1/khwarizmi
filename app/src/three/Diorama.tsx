@@ -1,4 +1,5 @@
-// A small placeholder diorama for worlds whose full scene arrives in later phases (Phase 2 builds Kassala only).
+// Map symbols: each world's landmark in miniature, built from the same station objects as the world itself.
+// The small diorama below is the fallback scene when a world's 3D files are not downloaded yet.
 // Same lighting and Siraj, a rounded island in the world's colours, and its summit object, so the screen still
 // reads as "your world" for the 3-6 year olds in Saqiya and for anyone who picks another world on the map.
 import { useFrame, useThree } from '@react-three/fiber';
@@ -8,11 +9,18 @@ import { T, type WorldId } from '../lib/tokens';
 import { skyMaterial } from './kit';
 import { outfitFor } from './outfits';
 import { Siraj } from './Siraj';
+import { KITS, steppedPyramid } from './town/kits';
+
+const kitMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+/** a station kit in miniature (the same objects the child builds in that world) */
+function KitMesh({ geo, position, scale, rotY = 0 }: { geo: THREE.BufferGeometry; position: [number, number, number]; scale: number; rotY?: number }) {
+  return <mesh geometry={geo} material={kitMat} position={position} scale={scale} rotation-y={rotY} />;
+}
 
 export function Landmark({ world, scale = 1 }: { world: WorldId; scale?: number }) {
-  const c = T.worlds[world];
   const wheel = useRef<THREE.Group>(null);
-  useFrame((_, dt) => { if (wheel.current) wheel.current.rotation.z += dt * 0.6; });
+  useFrame((_, dt) => { if (wheel.current) wheel.current.rotation.x += dt * 0.6; });
+  const kits = useMemo(() => ({ mooring: KITS.mooring(), coral: KITS.coralHouse(), terrace: KITS.terraceFarm(), saqiya: KITS.saqiya(), pyr: steppedPyramid(3.6, 6.0, 12, 6.0) }), []);
   switch (world) {
     case 'kassala':
       return (
@@ -28,54 +36,43 @@ export function Landmark({ world, scale = 1 }: { world: WorldId; scale?: number 
         </group>
       );
     case 'mogran':
+      // the meeting of the two Niles, each in its own colour, with a jetty and a felucca (as on Tuti island)
       return (
         <group scale={scale}>
-          <mesh position-y={1.2}><cylinderGeometry args={[0.32, 0.5, 2.4, 12]} /><meshLambertMaterial color="#EAF2F6" /></mesh>
-          <mesh position-y={2.55}><sphereGeometry args={[0.42, 16, 12]} /><meshLambertMaterial color="#7FB8E6" emissive="#1F5FAD" emissiveIntensity={0.3} /></mesh>
-          <mesh position={[0, 0.06, 0.9]} rotation-x={-Math.PI / 2}><planeGeometry args={[2.6, 0.5]} /><meshLambertMaterial color={c.primary} /></mesh>
-          <mesh position={[0, 0.065, 1.25]} rotation-x={-Math.PI / 2}><planeGeometry args={[2.6, 0.3]} /><meshLambertMaterial color={c.water} /></mesh>
+          <mesh position={[-0.75, 0.05, 0.2]} rotation={[-Math.PI / 2, 0, 0.5]}><planeGeometry args={[2.6, 0.75]} /><meshLambertMaterial color="#8C6A46" /></mesh>
+          <mesh position={[0.75, 0.05, 0.2]} rotation={[-Math.PI / 2, 0, -0.5]}><planeGeometry args={[2.6, 0.75]} /><meshLambertMaterial color="#5C8A7A" /></mesh>
+          <mesh position={[0, 0.06, -0.85]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.95, 1.6]} /><meshLambertMaterial color="#6E8070" /></mesh>
+          <KitMesh geo={kits.mooring.built} position={[0, 0, 0.3]} scale={0.26} rotY={Math.PI} />
         </group>
       );
     case 'meroe':
       return (
         <group scale={scale}>
-          {[[0, 0, 2.6, 0.9], [-1.1, 0.4, 1.8, 0.62], [1.1, 0.3, 1.9, 0.66], [-0.4, 1, 1.4, 0.5]].map(([x, z, h, r], i) => (
-            <mesh key={i} position={[x, h / 2, z]} rotation-y={Math.PI / 4}><coneGeometry args={[r, h, 4]} /><meshLambertMaterial color={i ? c.secondary : c.primary} flatShading /></mesh>
-          ))}
+          <KitMesh geo={kits.pyr} position={[0, 0, 0]} scale={0.42} />
+          <KitMesh geo={kits.pyr} position={[-1.1, 0, 0.5]} scale={0.3} />
+          <KitMesh geo={kits.pyr} position={[1.05, 0, 0.35]} scale={0.33} />
         </group>
       );
     case 'suakin':
       return (
         <group scale={scale}>
-          {[[0, 0, 1.2, 1.4], [-0.95, 0.4, 0.8, 0.9], [0.95, 0.35, 0.8, 1], [0.2, 0.9, 0.7, 0.7]].map(([x, z, w, h], i) => (
-            <group key={i} position={[x, 0, z]}>
-              <mesh position-y={h / 2}><boxGeometry args={[w, h, w * 0.9]} /><meshLambertMaterial color={c.primary} /></mesh>
-              <mesh position={[0, h * 0.6, w * 0.46]}><boxGeometry args={[w * 0.3, h * 0.3, 0.05]} /><meshLambertMaterial color={c.secondary} /></mesh>
-            </group>
-          ))}
+          <KitMesh geo={kits.coral.built} position={[0, 0, 0]} scale={0.34} />
+          <mesh position={[0, 0.04, 1.2]} rotation-x={-Math.PI / 2}><planeGeometry args={[3, 0.9]} /><meshLambertMaterial color="#2E8A8C" /></mesh>
         </group>
       );
     case 'marra':
       return (
         <group scale={scale}>
-          {[0, 1, 2, 3, 4, 5].map(i => (
-            <mesh key={i} position-y={0.17 + i * 0.32}><cylinderGeometry args={[1.5 - i * 0.2, 1.6 - i * 0.2, 0.34, 18]} /><meshLambertMaterial color={i % 2 ? '#4E9A45' : c.primary} /></mesh>
-          ))}
-          <mesh position-y={2.06}><cylinderGeometry args={[0.38, 0.38, 0.04, 16]} /><meshLambertMaterial color={c.water} /></mesh>
+          <KitMesh geo={kits.terrace.built} position={[0, 0, 0]} scale={0.34} />
+          <mesh position={[0.9, 0.06, -0.6]} rotation-x={-Math.PI / 2}><circleGeometry args={[0.45, 14]} /><meshLambertMaterial color="#3E7C9A" /></mesh>
         </group>
       );
     case 'saqiya':
     default:
       return (
         <group scale={scale}>
-          <group ref={wheel} position={[0.9, 1.05, 0.2]}>
-            <mesh><torusGeometry args={[0.8, 0.08, 6, 20]} /><meshLambertMaterial color="#8A5A3B" /></mesh>
-            {[0, 1, 2, 3].map(i => <mesh key={i} rotation-z={(i * Math.PI) / 4}><boxGeometry args={[1.6, 0.08, 0.08]} /><meshLambertMaterial color="#A8764F" /></mesh>)}
-          </group>
-          <mesh position={[-0.6, 0.45, 0]}><boxGeometry args={[1.1, 0.9, 0.9]} /><meshLambertMaterial color={c.primary} /></mesh>
-          <mesh position={[-0.6, 0.3, 0.46]}><boxGeometry args={[0.32, 0.6, 0.02]} /><meshLambertMaterial color="#1F5FAD" /></mesh>
-          <mesh position={[-0.2, 1.6, -1]}><sphereGeometry args={[0.75, 12, 10]} /><meshLambertMaterial color={c.secondary} flatShading /></mesh>
-          <mesh position={[-0.2, 0.8, -1]}><cylinderGeometry args={[0.1, 0.14, 1, 6]} /><meshLambertMaterial color="#7A5236" /></mesh>
+          <KitMesh geo={kits.saqiya.built} position={[-0.6, 0, 0]} scale={0.42} />
+          <group ref={wheel} position={[-0.6, 2.3 * 0.42, -0.6 * 0.42]}><KitMesh geo={kits.saqiya.spin!.geo} position={[0, 0, 0]} scale={0.42} /></group>
         </group>
       );
   }
