@@ -8,6 +8,7 @@ import { unlockWithKey } from './lib/family';
 import type { WorldId } from './lib/tokens';
 import { useLearning } from './data/learning';
 import { loadContent } from './lib/content';
+import { logError } from './ui/ErrorBoundary';
 import { useApp, type Screen } from './state/store';
 import { WorldWindow } from './three/WorldWindow';
 import { usePrefersReduced } from './ui/kit';
@@ -41,7 +42,12 @@ export function App() {
 
   // start-up: the content core pack, then the children's learning data, then the first screen
   const [bootError, setBootError] = useState<unknown>(null);
-  useEffect(() => { loadContent().then(() => useLearning.getState().load()).then(() => { bootDemo(); setBooted(true); }, setBootError); }, []);
+  useEffect(() => {
+    const boot = () => loadContent().then(() => useLearning.getState().load());
+    // a one-off start-up failure (e.g. a race with the service worker) is logged and retried once before the error screen
+    boot().catch(e => { void logError(e, 'start-up'); return new Promise(r => setTimeout(r, 500)).then(boot); })
+      .then(() => { bootDemo(); setBooted(true); }, setBootError);
+  }, []);
   if (bootError) throw bootError;   // -> the calm error screen (ErrorBoundary), and the parents' log
   // old v2 players whose family id matches a child are linked as soon as the family is open
   const learningReady = useLearning(s => s.ready);
