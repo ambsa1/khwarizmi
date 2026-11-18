@@ -27,5 +27,154 @@
    }
   ],
   "bytes": 3311128
+ },
+ "marra": {
+  "files": [
+   {
+    "path": "worlds/marra/detail_ground.png",
+    "bytes": 622846
+   },
+   {
+    "path": "worlds/marra/field.bin",
+    "bytes": 353632
+   },
+   {
+    "path": "worlds/marra/massif.bin",
+    "bytes": 889904
+   },
+   {
+    "path": "worlds/marra/terraces.bin",
+    "bytes": 217640
+   },
+   {
+    "path": "worlds/marra/terrain.bin",
+    "bytes": 99588
+   },
+   {
+    "path": "worlds/marra/tint.bin",
+    "bytes": 74691
+   },
+   {
+    "path": "worlds/marra/world.json",
+    "bytes": 40208
+   }
+  ],
+  "bytes": 2298509
+ },
+ "meroe": {
+  "files": [
+   {
+    "path": "worlds/meroe/detail_ground.png",
+    "bytes": 203180
+   },
+   {
+    "path": "worlds/meroe/field.bin",
+    "bytes": 222912
+   },
+   {
+    "path": "worlds/meroe/massif.bin",
+    "bytes": 126776
+   },
+   {
+    "path": "worlds/meroe/terrain.bin",
+    "bytes": 62436
+   },
+   {
+    "path": "worlds/meroe/tint.bin",
+    "bytes": 46827
+   },
+   {
+    "path": "worlds/meroe/world.json",
+    "bytes": 16331
+   }
+  ],
+  "bytes": 678462
+ },
+ "mogran": {
+  "files": [
+   {
+    "path": "worlds/mogran/detail_ground.png",
+    "bytes": 364520
+   },
+   {
+    "path": "worlds/mogran/field.bin",
+    "bytes": 283456
+   },
+   {
+    "path": "worlds/mogran/massif.bin",
+    "bytes": 351976
+   },
+   {
+    "path": "worlds/mogran/terrain.bin",
+    "bytes": 79464
+   },
+   {
+    "path": "worlds/mogran/tint.bin",
+    "bytes": 59598
+   },
+   {
+    "path": "worlds/mogran/world.json",
+    "bytes": 22528
+   }
+  ],
+  "bytes": 1161542
+ },
+ "saqiya": {
+  "files": [
+   {
+    "path": "worlds/saqiya/detail_ground.png",
+    "bytes": 288729
+   },
+   {
+    "path": "worlds/saqiya/field.bin",
+    "bytes": 615072
+   },
+   {
+    "path": "worlds/saqiya/massif.bin",
+    "bytes": 199060
+   },
+   {
+    "path": "worlds/saqiya/terrain.bin",
+    "bytes": 172860
+   },
+   {
+    "path": "worlds/saqiya/tint.bin",
+    "bytes": 129645
+   },
+   {
+    "path": "worlds/saqiya/world.json",
+    "bytes": 50336
+   }
+  ],
+  "bytes": 1455702
+ },
+ "suakin": {
+  "files": [
+   {
+    "path": "worlds/suakin/detail_ground.png",
+    "bytes": 90033
+   },
+   {
+    "path": "worlds/suakin/field.bin",
+    "bytes": 240800
+   },
+   {
+    "path": "worlds/suakin/massif.bin",
+    "bytes": 259308
+   },
+   {
+    "path": "worlds/suakin/terrain.bin",
+    "bytes": 67596
+   },
+   {
+    "path": "worlds/suakin/tint.bin",
+    "bytes": 50697
+   },
+   {
+    "path": "worlds/suakin/world.json",
+    "bytes": 15620
+   }
+  ],
+  "bytes": 724054
  }
 }
