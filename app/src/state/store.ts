@@ -1,4 +1,5 @@
-// App state. Persisted per device in localStorage (wrapped so private mode / blocked storage never crashes).
+// App state (screens, players, settings). Persisted per device in localStorage, wrapped so private mode / blocked storage
+// never crashes. What each child has LEARNED lives separately in the learner database (data/learning.ts).
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { Tier } from '../lib/tier';
@@ -27,8 +28,6 @@ type State = {
   tierOverride: 'auto' | Tier;
   measuredTier: Tier | null;          // result of the 2-second test on first run
   world: Record<string, string>;      // profileId -> world chosen on the map
-  progress: Record<string, Record<string, number>>; // profileId -> worldId -> mastered skills (demo data in Phase 2)
-  lit: Record<string, number>;                         // profileId -> lamps lit today
   go: (s: Screen) => void;
   setCurrent: (id: string | null) => void;
   addGuest: (p: Omit<Profile, 'id' | 'kind'>) => string;
@@ -40,8 +39,6 @@ type State = {
   setMeasuredTier: (t: Tier | null) => void;
   setWorld: (profileId: string, worldId: string) => void;
   removeGuest: (id: string) => void;
-  advance: (profileId: string, worldId: string, total: number) => void;
-  resetDemo: () => void;
 };
 
 const safeStorage = createJSONStorage(() => {
@@ -51,14 +48,6 @@ const safeStorage = createJSONStorage(() => {
   }
 });
 
-// Demo progress so every screen shows a believable mid-journey state.
-export const DEMO_STAMPS: Record<string, number> = { m1: 3, m2: 1, m3: 1, m4: 0 };
-const DEMO: Record<string, Record<string, number>> = {
-  m1: { kassala: 14, mogran: 6, meroe: 4, suakin: 9, marra: 0 },
-  m2: { kassala: 9, mogran: 3, meroe: 8, suakin: 5, marra: 0 },
-  m3: { kassala: 3, meroe: 2, suakin: 4, saqiya: 7, marra: 0 },
-  m4: { saqiya: 4 },
-};
 
 export const useApp = create<State>()(persist((set, get) => ({
   screen: 'entry',
@@ -71,14 +60,11 @@ export const useApp = create<State>()(persist((set, get) => ({
   tierOverride: 'auto',
   measuredTier: null,
   world: {},
-  progress: { ...DEMO },
-  lit: {},
   go: screen => set({ screen }),
   setCurrent: current => set({ current }),
   addGuest: p => {
     const id = 'g-' + Date.now().toString(36);
-    set({ profiles: [...get().profiles.filter(x => x.kind === 'guest').slice(-5), { ...p, id, kind: 'guest' }], current: id,
-      progress: { ...get().progress, [id]: { kassala: 2, saqiya: 3 } } });
+    set({ profiles: [...get().profiles.filter(x => x.kind === 'guest').slice(-5), { ...p, id, kind: 'guest' }], current: id });
     return id;
   },
   setFamilyKey: familyKey => set({ familyKey }),
@@ -89,16 +75,10 @@ export const useApp = create<State>()(persist((set, get) => ({
   setMeasuredTier: measuredTier => set({ measuredTier }),
   setWorld: (pid, wid) => set({ world: { ...get().world, [pid]: wid } }),
   removeGuest: id => set({ profiles: get().profiles.filter(p => p.id !== id), current: get().current === id ? null : get().current }),
-  advance: (pid, wid, total) => {
-    const cur = get().progress[pid]?.[wid] ?? 0;
-    if (cur >= total) return;
-    set({ progress: { ...get().progress, [pid]: { ...get().progress[pid], [wid]: cur + 1 } }, lit: { ...get().lit, [pid]: (get().lit[pid] ?? 0) + 1 } });
-  },
-  resetDemo: () => set({ progress: { ...DEMO }, lit: {}, world: {} }),
 }), {
   name: 'khawarizmi.v2',
   storage: safeStorage,
-  partialize: s => ({ profiles: s.profiles, current: s.current, familyKey: s.familyKey, numerals: s.numerals, motion: s.motion, tierOverride: s.tierOverride, measuredTier: s.measuredTier, world: s.world, progress: s.progress, lit: s.lit }),
+  partialize: s => ({ profiles: s.profiles, current: s.current, familyKey: s.familyKey, numerals: s.numerals, motion: s.motion, tierOverride: s.tierOverride, measuredTier: s.measuredTier, world: s.world }),
 }));
 
 /** Current player: a family member (from the decrypted manifest) or a saved guest. */

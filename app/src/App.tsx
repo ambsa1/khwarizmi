@@ -6,6 +6,7 @@ import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { unlockWithKey } from './lib/family';
 import type { WorldId } from './lib/tokens';
+import { useLearning } from './data/learning';
 import { useApp, type Screen } from './state/store';
 import { WorldWindow } from './three/WorldWindow';
 import { usePrefersReduced } from './ui/kit';
@@ -36,7 +37,10 @@ export function App() {
   const reduced = usePrefersReduced();
   const [booted, setBooted] = useState(false);
 
-  useEffect(() => { bootDemo(); setBooted(true); }, []);
+  useEffect(() => { useLearning.getState().load().then(() => { bootDemo(); setBooted(true); }); }, []);
+  // old v2 players whose family id matches a child are linked as soon as the family is open
+  const learningReady = useLearning(s => s.ready);
+  useEffect(() => { if (family && learningReady) useLearning.getState().linkFamily(family.members.map(m => m.id)); }, [family, learningReady]);
   // Re-open the sealed family data with the key saved on this device (the code itself is never stored).
   useEffect(() => {
     if (!familyKey || family) return;

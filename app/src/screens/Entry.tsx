@@ -2,7 +2,8 @@
 // guest profiles saved on this device appear too. A 2-second press on the lock opens the parents' corner.
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { DEMO_STAMPS, useApp, type Profile } from '../state/store';
+import { stampsOf, useLearning } from '../data/learning';
+import { useApp, type Profile } from '../state/store';
 import { useNum } from '../lib/num';
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
@@ -32,11 +33,12 @@ export function SirajLive({ action }: { action: SirajAction }) {
 export function Entry() {
   const family = useApp(s => s.family), guests = useApp(s => s.profiles), setCurrent = useApp(s => s.setCurrent), go = useApp(s => s.go);
   const num = useNum();
+  const learners = useLearning(s => s.learners);
   const guard = useGuard();
   const [picked, setPicked] = useState<string | null>(null);
   const players: (Profile & { ring?: string; stamps: number })[] = [
-    ...(family?.members ?? []).map(m => ({ id: m.id, kind: 'family' as const, name: m.name, gender: m.gender, age: m.age, grade: null, avatar: m.id, ring: m.ring, stamps: DEMO_STAMPS[m.id] ?? 0 })),
-    ...guests.map(g => ({ ...g, stamps: 0 })),
+    ...(family?.members ?? []).map(m => ({ id: m.id, kind: 'family' as const, name: m.name, gender: m.gender, age: m.age, grade: null, avatar: m.id, ring: m.ring, stamps: stampsOf(learners[m.id]) })),
+    ...guests.map(g => ({ ...g, stamps: stampsOf(learners[g.id]) })),
   ];
   const pick = (id: string) => {
     if (picked) return;

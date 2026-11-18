@@ -5,6 +5,7 @@ import { unlockWithCode } from '../lib/family';
 import { fmt, useNum } from '../lib/num';
 import { gpuName, guessTier, hasWebGL2, SETTINGS } from '../lib/tier';
 import { T, type WorldId } from '../lib/tokens';
+import { masteredIn, useLearning } from '../data/learning';
 import { useApp, useProfile } from '../state/store';
 import { KassalaTown, TOWN_FAR, TOWN_FOG } from '../three/town/KassalaTown';
 import { Stage, stats, useTier } from '../three/Stage';
@@ -14,7 +15,7 @@ import { SHORT_NAME } from './Map';
 
 export function Passport() {
   const p = useProfile();
-  const progress = useApp(s => s.progress);
+  const learners = useLearning(s => s.learners);
   const num = useNum();
   if (!p) return null;
   return (
@@ -23,7 +24,7 @@ export function Passport() {
         <header className="map-head"><h1 className="t-h1" style={{ margin: 0 }}>جوازي</h1></header>
         <div className="stamps">
           {WORLDS.map(w => {
-            const total = Math.max(1, skillCount(w.id)), got = progress[p.id]?.[w.id] ?? 0, done = got >= total && skillCount(w.id) > 0;
+            const total = Math.max(1, skillCount(w.id)), got = masteredIn(learners[p.id], w.id), done = got >= total && skillCount(w.id) > 0;
             const c = T.worlds[w.id as WorldId];
             return (
               <div key={w.id} className={'stamp card' + (done ? ' done' : '')}>
@@ -99,11 +100,7 @@ export function Parents() {
             <button className="btn paper" onClick={() => s.setMeasuredTier(null)}>أعد الاختبار</button>
           </div>
         </section>
-        <section className="card pc">
-          <h2 className="t-h2">بيانات التجربة</h2>
-          <p className="t-small soft">المرحلة الثانية فيها تقدّم تجريبي فقط، عشان كل الشاشات تبان في منتصف الرحلة.</p>
-          <button className="btn paper" onClick={() => { s.resetDemo(); setMsg('رجع التقدّم التجريبي لأوّله.'); }}>أعد التقدّم التجريبي</button>
-        </section>
+        <LearnerData />
       </div>
     </div>
   );
@@ -155,5 +152,54 @@ export function Perf() {
         <p className="t-small soft">حدود هذه الفئة: <span className="ltr">{budget.fps}</span> إطارًا في الثانية، و<span className="ltr">{budget.calls}</span> أمر رسم. المصابيح: <span className="ltr">{fmt(lamps, 'latin')} / {fmt(zones.length, 'latin')}</span></p>
       </div>
     </div>
+  );
+}
+
+/** Parents' corner: where the children's progress is kept, a backup file to save and restore, and old (v2) progress
+ *  waiting to be linked to a child. Names of old players are shown here only, to the parent. */
+function LearnerData() {
+  const L = useLearning();
+  const family = useApp(st => st.family), guests = useApp(st => st.profiles);
+  const [msg, setMsg] = useState<string | null>(null);
+  const kids = [...(family?.members ?? []).map(m => ({ id: m.id, label: m.name })), ...guests.map((g, i) => ({ id: g.id, label: `ضيف ${i + 1}` }))];
+  const download = () => {
+    const blob = new Blob([JSON.stringify(L.exportBackup())], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `khawarizmi-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(a.href);
+    setMsg('اتحفظت النسخة الاحتياطية في ملف.');
+  };
+  const restore = async (f: File | undefined) => {
+    if (!f) return;
+    try { const r = L.importBackup(JSON.parse(await f.text())); setMsg(r.ok ? `اترجع تقدّم ${r.count} من الأطفال.` : 'الملف دا ما نسخة احتياطية صالحة.'); }
+    catch { setMsg('الملف دا ما نسخة احتياطية صالحة.'); }
+  };
+  const waiting = L.legacy.filter(x => !x.linkedTo && x.levels > 0);
+  return (
+    <section className="card pc learner-data">
+      <h2 className="t-h2">تقدّم الأطفال</h2>
+      <p className="t-small soft">
+        {L.durable ? 'محفوظ في هذا الجهاز' : 'التخزين غير متاح في هذا المتصفح، فالتقدّم مؤقت حتى تُغلق الصفحة'}
+        {L.durable && (L.persisted ? '، والمتصفح تعهّد بعدم مسحه.' : '. احفظ نسخة احتياطية من وقت لآخر.')}
+      </p>
+      <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+        <button className="btn paper" onClick={download}>احفظ نسخة احتياطية</button>
+        <label className="btn paper" style={{ cursor: 'pointer' }}>استرجع نسخة<input type="file" accept="application/json,.json" hidden onChange={e => restore(e.target.files?.[0])} /></label>
+      </div>
+      {waiting.length > 0 && (
+        <div className="col" style={{ gap: 8 }}>
+          <p className="t-small soft">تقدّم من النسخة السابقة ينتظر ربطه بطفل:</p>
+          {waiting.map(w => (
+            <div key={w.legacyId} className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+              <span className="t-small"><b>{w.name || 'لاعب'}</b> · {w.levels} مرحلة برمجة</span>
+              <select className="code" style={{ flex: 'none', minWidth: 140 }} defaultValue="" onChange={e => { if (e.target.value) { L.linkLegacy(w.legacyId, e.target.value); setMsg('اتربط التقدّم القديم.'); } }}>
+                <option value="" disabled>اربطه بـ…</option>
+                {kids.map(k => <option key={k.id} value={k.id}>{k.label}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+      )}
+      {msg && <p className="t-small" role="status">{msg}</p>}
+    </section>
   );
 }

@@ -108,6 +108,86 @@ await page.waitForTimeout(500);
 const fps = await page.evaluate(() => window.__stats?.fps ?? 0);
 ok('3D window renders frames', fps > 0, `fps=${fps}`);
 
+
+// 4b. learner data (phase 3): survives reloads, migrates old shapes, recovers from corruption, backs up and restores,
+//     and carries progress over from the version published before the rebuild (v2, 'khwarizmi.v1')
+const pill = () => page.locator('.world-pill').getAttribute('aria-label').catch(() => '');
+const builtFrom = t => { const m = String(t).match(/:\s*([٠-٩0-9]+)/); return m ? +m[1].replace(/[٠-٩]/g, d => d.charCodeAt(0) - 0x660) : -1; };
+// the installed app always opens on "who's playing?": reopen, then tap the (only) player card, as a child would
+const openPath = async pg => { await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.who-card', { timeout: 10000 }).catch(async e => { await pg.screenshot({ path: process.env.TEMP + '/openpath-fail.png' }); console.log('openPath stalled; storage:', await pg.evaluate(() => localStorage.getItem('khawarizmi.v2'))); throw e; }); await pg.locator('.who-card').last().click(); await pg.waitForSelector('.path', { timeout: 10000 }); };
+const toPath = () => openPath(page);
+const openParents = async pg => { await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.entry', { timeout: 10000 }); await pg.locator('.entry-corner button').dispatchEvent('keydown', { key: 'Enter' }); await pg.waitForSelector('.learner-data', { timeout: 10000 }); };
+const guestId = () => page.evaluate(() => JSON.parse(localStorage.getItem('khawarizmi.v2')).state.current);
+const idb = (fn, ...args) => page.evaluate(([src, a]) => new Promise((res, rej) => {
+  const r = indexedDB.open('khawarizmi'); r.onerror = () => rej(r.error);
+  r.onsuccess = () => { const db = r.result; Promise.resolve(new Function('db', 'args', src)(db, a)).then(v => { db.close(); res(v); }, rej); };
+}), [fn, args]);
+const putRec = `return new Promise((res, rej) => { const tx = db.transaction(args[0], 'readwrite'); tx.objectStore(args[0]).put(args[2], args[1]); tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error); });`;
+const getRec = `return new Promise((res, rej) => { const tx = db.transaction(args[0], 'readonly'); const q = tx.objectStore(args[0]).get(args[1]); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });`;
+
+await page.setViewportSize({ width: 360, height: 800 });
+await page.locator('.btn.go').click(); await page.waitForTimeout(1400);
+const gid = await guestId();
+const builtBefore = builtFrom(await pill());
+await toPath(); await page.waitForTimeout(800);
+ok('progress survives closing and reopening', builtFrom(await pill()) === builtBefore && builtBefore >= 2, `houses ${builtBefore} -> ${builtFrom(await pill())}`);
+
+// an old-shape record (schema 0, no days) is migrated on load
+const sk = ['coding.sequence.order', 'coding.sequence.values', 'coding.sequence.grid-moves'];
+await idb(putRec, 'learners', gid, { id: gid, skills: Object.fromEntries(sk.map(k => [k, { status: 'mastered', box: 1, attempts: 1, correct: 1, first: 1, last: 1, due: null }])) });
+await toPath(); await page.waitForTimeout(800);
+const migrated = await idb(getRec, 'learners', gid);
+ok('older data shape is migrated on load', migrated?.schema === 1 && builtFrom(await pill()) >= 3, `schema ${migrated?.schema}, houses ${builtFrom(await pill())}`);
+
+// a corrupted record falls back to the last good copy
+await idb(putRec, 'meta', `lastGood:${gid}`, migrated);
+await idb(putRec, 'learners', gid, { broken: true });
+await toPath(); await page.waitForTimeout(800);
+ok('corrupted data recovers from the last good copy', builtFrom(await pill()) >= 3, `houses ${builtFrom(await pill())}`);
+
+// backup: download from the parents' corner, restore into a brand-new browser
+await openParents(page);
+const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'احفظ نسخة احتياطية' }).click()]);
+const backupPath = await dl.path();
+const housesHere = builtFrom(await (async () => { await toPath(); await page.waitForTimeout(500); return pill(); })());
+const ctx2 = await browser.newContext({ viewport: { width: 360, height: 800 }, locale: 'ar' });
+// same players (settings only, no learning data) placed before the app starts, so it cannot overwrite them
+await ctx2.addInitScript(state => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('khawarizmi.v2', state); sessionStorage.setItem('seeded', '1'); } },
+  await page.evaluate(() => localStorage.getItem('khawarizmi.v2')));
+const p2 = await ctx2.newPage();
+await p2.goto(base, { waitUntil: 'load' });
+await openParents(p2);
+await p2.locator('.learner-data input[type=file]').setInputFiles(backupPath);
+await p2.waitForTimeout(800);
+const restoredMsg = await p2.locator('.learner-data [role=status]').innerText().catch(() => '');
+await openPath(p2); await p2.waitForTimeout(800);
+const housesThere = builtFrom(await p2.locator('.world-pill').getAttribute('aria-label'));
+ok('backup restores on another browser', housesThere === housesHere && housesHere > 0, `${restoredMsg} houses ${housesHere} -> ${housesThere}`);
+await ctx2.close();
+
+// v2 progress: an old player with every coding level solved; linked by hand to a guest in the parents' corner
+const ctx3 = await browser.newContext({ viewport: { width: 360, height: 800 }, locale: 'ar' });
+const p3 = await ctx3.newPage();
+await p3.goto(base, { waitUntil: 'load' });
+const levels = JSON.parse(readFileSync(join(HERE, '..', '..', 'content', 'legacy', 'coding-75.json'), 'utf8')).levels.map(l => l.legacyId);
+await p3.evaluate(([lv]) => localStorage.setItem('khwarizmi.v1', JSON.stringify({ v: 2, players: [{ id: 'old1', name: 'لاعب قديم', age: 9, gender: 'b', progress: Object.fromEntries(lv.map(k => [k, 3])) }] })), [levels]);
+await p3.reload({ waitUntil: 'load' }); await p3.waitForSelector('.entry');
+await p3.getByRole('button', { name: 'ضيف جديد' }).click();
+await p3.getByRole('button', { name: 'ولد' }).click(); await p3.locator('.age-ball').nth(5).click();
+await p3.locator('.terrace').nth(2).click(); await p3.locator('.avatar-pick').first().click();
+await p3.waitForSelector('.path');
+await openParents(p3); await p3.waitForSelector('.learner-data select', { timeout: 5000 }).catch(() => {});
+const waitingOld = await p3.locator('.learner-data select').count();
+if (waitingOld) await p3.locator('.learner-data select').first().selectOption({ index: 1 });
+await p3.waitForTimeout(500);
+await openPath(p3); await p3.waitForTimeout(800);
+const fromV2 = builtFrom(await p3.locator('.world-pill').getAttribute('aria-label'));
+const archived = await p3.evaluate(() => new Promise(res => { const r = indexedDB.open('khawarizmi'); r.onsuccess = () => { const q = r.result.transaction('legacy').objectStore('legacy').getAllKeys(); q.onsuccess = () => res(q.result.length); }; }));
+ok('v2 progress is archived, translated and linked', waitingOld === 1 && fromV2 > 0 && archived === 1, `waiting ${waitingOld}, houses from v2 ${fromV2}, raw copies ${archived}`);
+await ctx3.close();
+await page.setViewportSize({ width: 360, height: 800 });
+await toPath(); await page.waitForTimeout(800);
+
 // 3. map
 await page.getByRole('button', { name: 'الخريطة' }).click();
 await page.waitForSelector('.map');

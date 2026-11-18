@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { SHORT_NAME, WORLDS, skillCount } from '../lib/content';
 import { useNum } from '../lib/num';
 import type { WorldId } from '../lib/tokens';
+import { masteredIn, useLearning } from '../data/learning';
 import { useApp, useProfile } from '../state/store';
 import { Stage } from '../three/Stage';
 import { SudanMapScene, type MapSpot } from '../three/SudanMap';
@@ -15,7 +16,7 @@ export { SHORT_NAME };
 
 export function MapScreen() {
   const p = useProfile();
-  const go = useApp(s => s.go), setWorld = useApp(s => s.setWorld), chosen = useApp(s => s.world), progress = useApp(s => s.progress);
+  const go = useApp(s => s.go), setWorld = useApp(s => s.setWorld), chosen = useApp(s => s.world), learners = useLearning(s => s.learners);
   const num = useNum();
   const [line, setLine] = useState<string | null>(null);
   const [picked, setPicked] = useState<WorldId | null>(null);
@@ -27,7 +28,7 @@ export function MapScreen() {
     const total = Math.max(1, skillCount(w.id));
     const ages = w.ages as { min: number; max?: number };
     const locked = p.age < ages.min || (ages.max !== undefined && p.age > ages.max + 1);
-    return { id: w.id as WorldId, name: SHORT_NAME[w.id], value: (progress[p.id]?.[w.id] ?? 0) / total, locked, current: w.id === cur };
+    return { id: w.id as WorldId, name: SHORT_NAME[w.id], value: masteredIn(learners[p.id], w.id) / total, locked, current: w.id === cur };
   });
   const pick = (id: WorldId) => {
     setPicked(id);

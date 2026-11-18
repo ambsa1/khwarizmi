@@ -6,8 +6,10 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { SHORT_NAME, skillCount, worldById, worldSkills } from '../lib/content';
+// (Phase 3: the golden button completes the next real skill in the learner database; lessons arrive in phase 6.)
 import { useNum } from '../lib/num';
 import type { WorldId } from '../lib/tokens';
+import { litToday, masteredIn, nextSkillIn, useLearning } from '../data/learning';
 import { useApp, useProfile } from '../state/store';
 import type { SirajAction } from '../three/Siraj';
 import { WorldWindow } from '../three/WorldWindow';
@@ -19,8 +21,8 @@ export const currentWorld = (pid: string, age: number, chosen: Record<string, st
 
 export function Path() {
   const p = useProfile();
-  const go = useApp(s => s.go), advance = useApp(s => s.advance), chosen = useApp(s => s.world);
-  const progress = useApp(s => s.progress), litToday = useApp(s => s.lit);
+  const go = useApp(s => s.go), chosen = useApp(s => s.world);
+  const learners = useLearning(s => s.learners), complete = useLearning(s => s.complete);
   const num = useNum();
   const guard = useGuard(900);
   const [action, setAction] = useState<SirajAction>('wave');
@@ -30,9 +32,10 @@ export function Path() {
   const world = currentWorld(p.id, p.age, chosen);
   const name = SHORT_NAME[world] ?? world;
   const total = Math.max(1, skillCount(world));
-  const mastered = Math.min(total, progress[p.id]?.[world] ?? 0);
-  const lit = litToday[p.id] ?? 0;
-  const next = worldSkills(world)[mastered];
+  const me = learners[p.id];
+  const mastered = Math.min(total, masteredIn(me, world));
+  const lit = litToday(me);
+  const next = nextSkillIn(me, world);
   const done = mastered >= total;
 
   // Phase 2 has no lessons yet: the button plays the "house built, lamp lit" moment so the feel can be judged.
@@ -40,7 +43,7 @@ export function Path() {
     if (done) { go('map'); return; }
     setAction('hop');
     setTimeout(() => {
-      advance(p.id, world, total);
+      if (next) complete(p.id, next.id);
       setAction('celebrate'); setParty(n => n + 1);
       setLine(say(p, 'عفارم عليك! بنيت بيت جديد!', 'عفارم عليكِ! بنيتي بيت جديد!'));
       setTimeout(() => { setAction('idle'); setLine(null); }, 2400);
