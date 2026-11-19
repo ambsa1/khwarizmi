@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { imageUrl } from '../lib/family';
 import { useApp, type Profile, type Screen } from '../state/store';
-import { GuestAvatar } from './GuestAvatars';
+import { artUrl, GUEST_AVATARS, GuestAvatar } from './GuestAvatars';
 import { IconMap, IconPassport, IconPath } from './Icons';
 
 /** Masculine / feminine wording (Sudanese Arabic addresses boys and girls differently). */
@@ -34,6 +34,28 @@ export function usePrefersReduced() {
 }
 
 /** Round avatar: decrypted family portrait or illustrated guest, inside a ring in the child's colour. */
+/** the player's picture as a plain image address: a guest's illustration, or a family child's portrait (decrypted on
+ *  the device after the family code). Used for the passport photo and the saved certificate. */
+export function usePlayerImage(profile: Profile | null | undefined) {
+  const key = useApp(s => s.familyKey), family = useApp(s => s.family);
+  const member = profile?.kind === 'family' ? family?.members.find(m => m.id === profile.id) : undefined;
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    if (member && key) imageUrl(key, member.image).then(u => live && setSrc(u)).catch(() => {});
+    return () => { live = false; };
+  }, [member, key]);
+  if (!profile) return null;
+  if (profile.kind === 'family') return src;
+  const id = GUEST_AVATARS.find(a => a.id === profile.avatar)?.id ?? GUEST_AVATARS[0].id;
+  return artUrl(`avatars/${id}.webp`);
+}
+/** a rectangular passport photo (3:4) of the player */
+export function PlayerPhoto({ profile, className }: { profile: Profile; className?: string }) {
+  const src = usePlayerImage(profile);
+  return <span className={'player-photo ' + (className ?? '')}>{src && <img src={src} alt="" draggable={false} />}</span>;
+}
+
 export function Avatar({ profile, size = 56, ring }: { profile: Profile; size?: number; ring?: string }) {
   const key = useApp(s => s.familyKey), family = useApp(s => s.family);
   const member = profile.kind === 'family' ? family?.members.find(m => m.id === profile.id) : undefined;

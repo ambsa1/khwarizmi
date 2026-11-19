@@ -31,14 +31,14 @@ const MARRA = `<svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stro
   <path d="M34 42c6-8 18-8 22 0 6-4 14 0 12 8H30c-4-2-2-8 4-8zM144 32c6-8 18-8 22 0 6-4 14 0 12 8h-38c-4-2-2-8 4-8z" stroke-width="3.5"/>
 </svg>`;
 const icon = name => readFileSync(new URL(name + '.svg', ICONS), 'utf8');
-// world: landmark, ink colour (the dark of its family), face tint
+// world: landmark, ink colour, face tint. Six distinct inks: brick red, purple, Nile blue, turquoise, gold, emerald.
 const WORLDS = {
-  kassala: { art: icon('kassala-mountain'), ink: '#954E3A', tint: '#F6E4DD' },
-  saqiya: { art: SAQIYA, ink: '#963C1C', tint: '#F7E6D8' },
-  mogran: { art: icon('blue-nile-bridge'), ink: '#163E70', tint: '#E3ECF6' },
-  suakin: { art: icon('suakin-gate'), ink: '#166A69', tint: '#E0F2F0' },
-  meroe: { art: icon('meroe-pyramids'), ink: '#A25810', tint: '#F8E7D2' },
-  marra: { art: MARRA, ink: '#2A6532', tint: '#E4F0E3' },
+  kassala: { art: icon('kassala-mountain'), ink: '#A8432A', tint: '#F7E3DC' },
+  saqiya: { art: SAQIYA, ink: '#5B3FA0', tint: '#ECE6F6' },
+  mogran: { art: icon('blue-nile-bridge'), ink: '#1F4E8C', tint: '#E1EAF5' },
+  suakin: { art: icon('suakin-gate'), ink: '#12807F', tint: '#DDF2F0' },
+  meroe: { art: icon('meroe-pyramids'), ink: '#A87508', tint: '#FBEFD3' },
+  marra: { art: MARRA, ink: '#18774A', tint: '#DDF0E5' },
 };
 
 const fit = svg => {

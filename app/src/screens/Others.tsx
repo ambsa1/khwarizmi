@@ -13,118 +13,194 @@ import { KassalaTown, TOWN_FAR, TOWN_FOG } from '../three/town/KassalaTown';
 import { Stage, stats, useTier } from '../three/Stage';
 import { IconBack, IconStar } from '../ui/Icons';
 import { back, useModalBack } from '../ui/nav';
-import { Avatar, gradeLabel, playerName, TabBar } from '../ui/kit';
+import { Avatar, gradeLabel, PlayerPhoto, playerName, TabBar, usePlayerImage } from '../ui/kit';
+import { saveCertificate } from '../ui/certificate';
+import { Sound } from '../audio/SoundManager';
 import { TopBar } from '../ui/TopBar';
 import { SHORT_NAME } from './Map';
 
 const RANKS: [number, string][] = [[0, 'مستكشف صغير'], [5, 'رحّال'], [20, 'مستكشف ماهر'], [50, 'حارس الخريطة'], [100, 'خوارزمي']];
-/** each world's stamp (public/art/stamps, tools/stamps-render.mjs) is turned a little differently, like real stamps */
-const TILT: Record<string, number> = { kassala: -7, saqiya: 5, mogran: -4, suakin: 8, meroe: -9, marra: 4 };
-const stampUrl = (id: string) => import.meta.env.BASE_URL + `art/stamps/${id}.webp`;
+/** each world's stamp (public/art/stamps, tools/stamps-render.mjs): its ink, and a small natural tilt (-5 to +6 degrees) */
+export const STAMP_INK: Record<string, string> = { kassala: '#A8432A', saqiya: '#5B3FA0', mogran: '#1F4E8C', suakin: '#12807F', meroe: '#A87508', marra: '#18774A' };
+const TILT: Record<string, number> = { kassala: -4, saqiya: 5, mogran: -2, suakin: 6, meroe: -5, marra: 3 };
+export const stampUrl = (id: string) => import.meta.env.BASE_URL + `art/stamps/${id}.webp`;
+type Me = ReturnType<typeof useLearning.getState>['learners'][string] | undefined;
 /** the day a world was finished: the last day any of its skills was practised */
-const doneOn = (me: ReturnType<typeof useLearning.getState>['learners'][string] | undefined, id: string) =>
-  Math.max(0, ...worldSkills(id).map(k => me?.skills[k.id]?.last ?? 0));
-const dateAr = (t: number) => new Date(t || Date.now()).toLocaleDateString('ar-SD', { day: 'numeric', month: 'long', year: 'numeric' });
+const doneOn = (me: Me, id: string) => Math.max(0, ...worldSkills(id).map(k => me?.skills[k.id]?.last ?? 0));
+export const dateAr = (t: number) => new Date(t || Date.now()).toLocaleDateString('ar-SD', { day: 'numeric', month: 'long', year: 'numeric' });
+/** a stable passport number for the player: KHW-<year of the first lesson>-<three digits from the player id> */
+function passNo(id: string, me: Me) {
+  let h = 7; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const first = Math.min(Date.now(), ...Object.values(me?.skills ?? {}).map(s => s.first || Date.now()));
+  return `KHW-${new Date(first).getFullYear()}-${String(h % 1000).padStart(3, '0')}`;
+}
+const RANK_LATIN: Record<string, string> = { 'مستكشف صغير': 'YOUNG', 'رحّال': 'TRAVELLER', 'مستكشف ماهر': 'SKILLED', 'حارس الخريطة': 'MAPKEEPER', 'خوارزمي': 'KHWARIZMI' };
+/** two decorative machine-readable lines (playful, not the format of any real document) */
+function Mrz({ no, rank, grade, sealed }: { no: string; rank: string; grade: number | null | undefined; sealed: number }) {
+  const pad = (t: string, n = 32) => (t + '<'.repeat(n)).slice(0, n);
+  const l1 = pad(`KHW<EXPLORER<<${RANK_LATIN[rank] ?? 'EXPLORER'}<<SIRAJ`);
+  const l2 = pad(`${no.replace(/-/g, '')}<${grade ? 'G' + grade : 'KG'}<<${sealed}<6<<SUDAN<MAP`);
+  return (
+    <svg className="pp-mrz" viewBox="0 0 640 64" preserveAspectRatio="none" aria-hidden>
+      <text x="8" y="26" textLength="624" lengthAdjust="spacingAndGlyphs" fontSize="22">{l1}</text>
+      <text x="8" y="56" textLength="624" lengthAdjust="spacingAndGlyphs" fontSize="22">{l2}</text>
+    </svg>
+  );
+}
 
-/** The explorer's passport: a data page (photo, name, grade, title, stamps and overall progress) and a stamps page
- *  with the six worlds: a soft watermark-coloured stamp until a world is finished, then the full ink stamp with its date. */
+/** The explorer's passport, open: a warm leather cover with gold edges around two facing pages joined by a shaded
+ *  spine (side by side on a wide screen, one above the other on a phone): the data page (3:4 photo in a guilloche
+ *  frame, the fields in a passport grid, overall progress, decorative machine lines) and the stamps page (six visa
+ *  boxes; a finished world's ink stamp lands on the page with a stamp-slam). */
 export function Passport() {
   const p = useProfile();
   const learners = useLearning(s => s.learners);
   const num = useNum();
   const [open, setOpen] = useState<WorldId | null>(null);
+  const reduced = useApp(s => s.motion) === 'reduced';
+  const me = p ? learners[p.id] : undefined;
+  const sealedIds = WORLDS.filter(w => { const t = stationCount(w.id as WorldId); return t > 0 && masteredIn(me, w.id) >= t; }).map(w => w.id);
+  // the stamp thump: once per opening, when the first finished stamp lands
+  useEffect(() => {
+    if (!sealedIds.length || reduced) return;
+    const t = setTimeout(() => Sound.play('stamp'), 520);
+    return () => clearTimeout(t);
+  }, [sealedIds.length, reduced]);
   if (!p) return null;
-  const me = learners[p.id];
   const stations = WORLDS.reduce((a, w) => a + masteredIn(me, w.id), 0);
   const stars = WORLDS.reduce((a, w) => a + worldSkills(w.id).filter(k => isMastered(me?.skills[k.id])).length, 0);
   const rank = [...RANKS].reverse().find(([n]) => stations >= n)![1];
   const name = playerName(p), grade = gradeLabel(p, num);
   const allStations = WORLDS.reduce((a, w) => a + stationCount(w.id as WorldId), 0);
-  const sealed = WORLDS.filter(w => { const t = stationCount(w.id as WorldId); return t > 0 && masteredIn(me, w.id) >= t; }).length;
+  const no = passNo(p.id, me);
+  let landed = 0;
   return (
     <div className="screen sand has-rail">
       <div className="main col grow scroll passport-main">
         <TopBar title="جوازي" />
-        <div className="passport-book">
-          <section className="pp-id explorer-id" aria-label="بطاقة المستكشف">
-            <header className="pp-head">
-              <svg className="pp-emblem" viewBox="0 0 48 48" width="40" height="40" aria-hidden>
-                <path d="M24 4l3 5h-6zM16 12h16l-3 5H19z" fill="#BA7C03" /><circle cx="24" cy="28" r="11" fill="#FFB627" stroke="#BA7C03" strokeWidth="2.5" />
-                <circle cx="24" cy="28" r="5" fill="#FFF3D6" /><path d="M14 42h20" stroke="#BA7C03" strokeWidth="3" strokeLinecap="round" />
-              </svg>
-              <div className="pp-title"><b>جواز المستكشف</b><span>رحلة خوارزمي في السودان</span></div>
-            </header>
-            <div className="pp-body">
-              <div className="pp-photo"><Avatar profile={p} size={124} /></div>
-              <dl className="pp-fields">
-                <div><dt>الاسم</dt><dd>{name}</dd></div>
-                <div><dt>الصف</dt><dd>{grade || '—'}</dd></div>
-                <div><dt>اللقب</dt><dd className="explorer-rank">{rank}</dd></div>
-                <div><dt>الأختام</dt><dd><b className="pp-big">{num(sealed)}</b> من {num(WORLDS.length)}</dd></div>
-                <div><dt>النجوم</dt><dd><IconStar size={20} style={{ color: 'var(--c-gold)', verticalAlign: '-3px' }} /> {num(stars)}</dd></div>
-              </dl>
-            </div>
-            <div className="pp-progress" aria-label={`${num(stations)} من ${num(allStations)} محطة`}>
-              <span className="pp-progress-label">رحلتك في كل السودان</span>
-              <span className="explorer-bar" aria-hidden><i style={{ width: `${Math.round(stations / Math.max(1, allStations) * 100)}%` }} /></span>
-              <span className="soft">{num(stations)} من {num(allStations)} محطة معمورة</span>
-            </div>
-          </section>
-          <section className="pp-visas" aria-label="صفحة الأختام">
-            <h2 className="pp-page-title">صفحة الأختام</h2>
-            <div className="stamps">
-              {WORLDS.map(w => {
-                const id = w.id as WorldId, total = stationCount(id), got = Math.min(masteredIn(me, id), total), done = total > 0 && got >= total;
-                return (
-                  <button key={id} className={'stamp visa' + (done ? ' done' : '')} onClick={() => setOpen(id)} aria-label={`${subjectName(id)} في ${placeName(id)}${done ? ': مكتمل' : ''}`}>
-                    <img className="visa-stamp" src={stampUrl(id)} alt="" draggable={false} style={{ ['--tilt' as string]: `${TILT[id] ?? 0}deg` }} />
-                    <b className="stamp-title">{placeName(id)}<span className="stamp-place">{subjectName(id)}</span></b>
-                    <span className={'visa-status' + (done ? ' ok' : '')}>
-                      {done ? `مكتمل · ${dateAr(doneOn(me, id))}` : total ? `${num(got)} من ${num(total)} ${total > 10 ? 'محطة' : 'محطات'}` : 'قريبًا'}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+        <div className="passport-cover">
+          <div className="passport-book">
+            <section className="pp-page pp-id" aria-label="صفحة بيانات المستكشف">
+              <header className="pp-head">
+                <svg className="pp-emblem" viewBox="0 0 48 48" width="40" height="40" aria-hidden>
+                  <path d="M24 4l3 5h-6zM16 12h16l-3 5H19z" fill="#BA7C03" /><circle cx="24" cy="28" r="11" fill="#FFB627" stroke="#BA7C03" strokeWidth="2.5" />
+                  <circle cx="24" cy="28" r="5" fill="#FFF3D6" /><path d="M14 42h20" stroke="#BA7C03" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+                <div className="pp-title"><b>جواز المستكشف</b><span>رحلة خوارزمي في السودان</span></div>
+              </header>
+              <div className="pp-body">
+                <div className="pp-photo-frame"><PlayerPhoto profile={p} className="pp-photo" /></div>
+                <dl className="pp-fields lead">
+                  <div><dt>الاسم</dt><dd>{name}</dd></div>
+                  <div><dt>الصف</dt><dd>{grade || '—'}</dd></div>
+                  <div><dt>اللقب</dt><dd className="explorer-rank">{rank}</dd></div>
+                </dl>
+                <dl className="pp-fields more">
+                  <div className="pp-no-row"><dt>رقم الجواز</dt><dd className="pp-no" dir="ltr">{no}</dd></div>
+                  <div><dt>الأختام</dt><dd><b className="pp-big">{num(sealedIds.length)}</b> / {num(WORLDS.length)}</dd></div>
+                  <div><dt>النجوم</dt><dd><IconStar size={20} style={{ color: 'var(--c-gold)', verticalAlign: '-3px' }} /> {num(stars)}</dd></div>
+                </dl>
+              </div>
+              <div className="pp-progress" aria-label={`${num(stations)} من ${num(allStations)} محطة`}>
+                <span className="pp-progress-label">رحلتك في كل السودان <span className="soft">{num(stations)} من {num(allStations)} محطة</span></span>
+                <span className="explorer-bar" aria-hidden><i style={{ width: `${Math.round(stations / Math.max(1, allStations) * 100)}%` }} /></span>
+              </div>
+              <Mrz no={no} rank={rank} grade={p.grade} sealed={sealedIds.length} />
+            </section>
+            <div className="pp-spine" aria-hidden />
+            <section className="pp-page pp-visas" aria-label="صفحة الأختام">
+              <h2 className="pp-page-title">صفحة الأختام</h2>
+              <div className="stamps">
+                {WORLDS.map(w => {
+                  const id = w.id as WorldId, total = stationCount(id), got = Math.min(masteredIn(me, id), total), done = total > 0 && got >= total;
+                  const i = done ? landed++ : 0;
+                  return (
+                    <button key={id} className={'stamp visa' + (done ? ' done' : '')} onClick={() => setOpen(id)} aria-label={`${placeName(id)}: ${subjectName(id)}${done ? '، مكتمل' : ''}`}
+                      style={{ ['--ink' as string]: STAMP_INK[id], ['--tilt' as string]: `${TILT[id] ?? 0}deg`, ['--i' as string]: i }}>
+                      <span className="visa-head"><b>{placeName(id)}</b><span>{subjectName(id)}</span></span>
+                      <span className="visa-mark"><img className="visa-stamp" src={stampUrl(id)} alt="" draggable={false} /></span>
+                      <span className={'visa-status' + (done ? ' ok' : '')}>
+                        {done ? <>مكتمل<small>{dateAr(doneOn(me, id))}</small></> : total ? `${num(got)} من ${num(total)} ${total > 10 ? 'محطة' : 'محطات'}` : 'قريبًا'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
         </div>
       </div>
       <TabBar current="passport" />
-      {open && <StampSheet world={open} name={name} onClose={() => setOpen(null)} />}
+      {open && <StampSheet world={open} onClose={() => setOpen(null)} />}
     </div>
   );
 }
 
-/** a stamp opened: the skills mastered in that world, and a small certificate when the world is complete */
-function StampSheet({ world, name, onClose }: { world: WorldId; name: string; onClose: () => void }) {
+/** a stamp opened: a finished world shows its certificate (skills inside it, the stamp, Siraj's signature, a save
+ *  button); a world in progress shows the skills mastered so far */
+function StampSheet({ world, onClose }: { world: WorldId; onClose: () => void }) {
   const p = useProfile(); const learners = useLearning(s => s.learners); const num = useNum();
   const me = p ? learners[p.id] : undefined;
   const skills = worldSkills(world).filter(k => isMastered(me?.skills[k.id]));
-  const total = stationCount(world), done = total > 0 && masteredIn(me, world) >= total;
+  const total = stationCount(world), got = Math.min(masteredIn(me, world), total), done = total > 0 && got >= total;
+  const photo = usePlayerImage(p);
+  const [saving, setSaving] = useState(false);
   useModalBack(true, onClose);
+  if (!p) return null;
+  const name = playerName(p), grade = gradeLabel(p, num), girl = p.gender === 'f', date = dateAr(doneOn(me, world));
+  const line = `${girl ? 'تُمنح البطلة' : 'يُمنح البطل'} ${name}${grade ? ` (${grade})` : ''} هذه الشهادة تقديرًا ${girl ? 'لذكائها ومثابرتها' : 'لذكائه ومثابرته'} في إتمام جميع محطات عالم ${placeName(world)} بنجاح`;
+  const save = async () => {
+    setSaving(true);
+    try { await saveCertificate({ name, line, world: placeName(world), subject: subjectName(world), skills: skills.map(k => k.title.ar), more: n => `ومعاها ${num(n)} ${n > 10 ? 'مهارة' : 'مهارات'} تانية`, date, photo, stamp: stampUrl(world), ink: STAMP_INK[world], girl }); }
+    finally { setSaving(false); }
+  };
   return (
     <>
       <div className="sheet-scrim" onClick={onClose} />
-      <div className="sheet page" role="dialog" aria-modal="true" aria-label={subjectName(world)}>
+      <div className={'sheet page' + (done ? ' cert-sheet' : '')} role="dialog" aria-modal="true" aria-label={subjectName(world)}>
         <div className="sheet-grip" />
         <div className="sheet-head">
           <button className="icon-btn back-btn" aria-label="رجوع" onClick={onClose}><IconBack /></button>
-          <h2 className="t-h2">{subjectName(world)} • {placeName(world)}</h2>
+          <h2 className="t-h2">{placeName(world)} • {subjectName(world)}</h2>
         </div>
-        {done && p && (
-          <div className="certificate">
-            <Avatar profile={p} size={72} />
-            <b>شهادة إتمام</b>
-            <b className="cert-name">{name}</b>
-            <span>{p.gender === 'f' ? 'عمّرت' : 'عمّر'} كل محطات عالم {placeName(world)}{gradeLabel(p, num) && ` · ${gradeLabel(p, num)}`}</span>
-            <span className="soft">{dateAr(doneOn(me, world))}</span>
-            <img className="cert-stamp" src={stampUrl(world)} alt="" draggable={false} />
-          </div>
+        {done ? (
+          <>
+            <article className="certificate" style={{ ['--ink' as string]: STAMP_INK[world] }}>
+              <i className="cert-water" aria-hidden /><i className="cert-corner tl" /><i className="cert-corner tr" /><i className="cert-corner bl" /><i className="cert-corner br" />
+              <header className="cert-head">
+                <span className="cert-kicker">رحلة خوارزمي</span>
+                <h3 className="cert-title">شهادة إنجاز وتفوّق</h3>
+              </header>
+              <div className="cert-body">
+                <div className="cert-main">
+                  <PlayerPhoto profile={p} className="cert-photo" />
+                  <b className="cert-name">{name}</b>
+                  <p className="cert-line">{line}</p>
+                </div>
+                <div className="cert-skills">
+                  <h4>{girl ? 'المهارات التي أتقنتها' : 'المهارات التي أتقنها'}</h4>
+                  <ul>{skills.map(k => <li key={k.id}><IconStar size={20} style={{ color: 'var(--c-gold)', flex: 'none' }} /> {k.title.ar}</li>)}</ul>
+                </div>
+              </div>
+              <footer className="cert-foot">
+                <img className="cert-stamp" src={stampUrl(world)} alt="" draggable={false} />
+                <div className="cert-date"><span>تاريخ الإتمام</span><b>{date}</b></div>
+                <div className="cert-sign">
+                  <svg viewBox="0 0 160 48" width="150" height="45" aria-hidden><path d="M8 34c14-18 22 6 32-6s10-18 22-4 12 10 24-4 18-6 26 2 12 6 36-6" fill="none" stroke="#2B2118" strokeWidth="3" strokeLinecap="round" /><path d="M20 40h120" stroke="#BA7C03" strokeWidth="1.5" /></svg>
+                  <span>المرشد سراج</span>
+                </div>
+              </footer>
+            </article>
+            <button className="btn big wide cert-save" onClick={save} disabled={saving}>{saving ? 'لحظة…' : 'احفظ الشهادة صورة'}</button>
+          </>
+        ) : (
+          <>
+            <p className="soft">{num(got)} من {num(total)} {total > 10 ? 'محطة' : 'محطات'}، {num(skills.length)} {skills.length === 1 ? 'مهارة' : 'مهارات'}</p>
+            {skills.length ? (
+              <ul className="mastered">{skills.map(k => <li key={k.id}><IconStar size={20} style={{ color: 'var(--c-gold)' }} /> {k.title.ar}</li>)}</ul>
+            ) : <p>لسه ما في مهارات هنا. يلا نبدأ الرحلة!</p>}
+          </>
         )}
-        {skills.length ? (
-          <ul className="mastered">{skills.map(k => <li key={k.id}><IconStar size={20} style={{ color: 'var(--c-gold)' }} /> {k.title.ar}</li>)}</ul>
-        ) : <p>لسه ما في مهارات هنا. يلا نبدأ الرحلة!</p>}
-        <p className="soft">{num(skills.length)} {skills.length === 1 ? 'مهارة' : 'مهارات'}</p>
       </div>
     </>
   );

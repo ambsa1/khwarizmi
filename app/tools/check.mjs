@@ -236,10 +236,10 @@ await ctx3.close();
   const doneStamp = await pg.evaluate(() => { const b = [...document.querySelectorAll('.stamp.visa')].find(x => x.querySelector('img')?.getAttribute('src')?.includes('kassala')); return { done: b?.classList.contains('done'), status: b?.querySelector('.visa-status')?.textContent ?? '' }; });
   await pg.locator('.stamp.visa.done').first().click(); await pg.waitForSelector('.certificate', { timeout: 5000 }).catch(() => {});
   await pg.waitForTimeout(500);
-  const cert = await pg.evaluate(() => { const c = document.querySelector('.certificate'); const imgs = c ? [...c.querySelectorAll('img')] : []; return { has: !!c, name: c?.querySelector('.cert-name')?.textContent ?? '', imgs: imgs.map(i => i.getAttribute('src')?.split('/').pop()), loaded: imgs.filter(i => i.complete && i.naturalWidth > 0).length }; });
+  const cert = await pg.evaluate(() => { const c = document.querySelector('.certificate'); const imgs = c ? [...c.querySelectorAll('img')] : []; return { has: !!c, line: c?.querySelector('.cert-line')?.textContent ?? '', skills: c?.querySelectorAll('.cert-skills li').length ?? 0, save: !!document.querySelector('.cert-save'), name: c?.querySelector('.cert-name')?.textContent ?? '', imgs: imgs.map(i => i.getAttribute('src')?.split('/').pop()), loaded: imgs.filter(i => i.complete && i.naturalWidth > 0).length }; });
   ok('a finished world: full ink stamp with its date, and a certificate with the child picture, name and the stamp',
-    doneStamp.done && doneStamp.status.includes('مكتمل') && cert.has && cert.name.length > 0 && cert.imgs.includes('g3.webp') && cert.imgs.includes('kassala.webp') && cert.loaded === 2,
-    JSON.stringify({ doneStamp, cert }));
+    doneStamp.done && doneStamp.status.includes('مكتمل') && cert.has && cert.name.length > 0 && cert.line.includes(cert.name) && cert.line.includes('بنجاح') && cert.skills > 0 && cert.save && cert.imgs.includes('g3.webp') && cert.imgs.includes('kassala.webp') && cert.loaded === 2,
+    JSON.stringify({ doneStamp, cert: { ...cert, line: cert.line.slice(0, 40) } }));
   await cx.close();
 }
 await page.setViewportSize({ width: 360, height: 800 });
@@ -269,10 +269,10 @@ small = await smallText(); ok('passport: no text under 18px', small.length === 0
     const stamps = [...document.querySelectorAll('.visa-stamp')];
     const sc = document.querySelector('.passport-main'); sc.scrollTop = sc.scrollHeight; await new Promise(r => setTimeout(r, 300));
     const last = document.querySelectorAll('.stamp.visa'); const lr = last[last.length - 1].getBoundingClientRect(), bar = document.querySelector('.tabbar').getBoundingClientRect();
-    return { text: id?.innerText ?? '', photo: photo?.getAttribute('src')?.split('/').pop(), stamps: stamps.length, loaded: stamps.filter(i => i.complete && i.naturalWidth > 0).length, clear: Math.round(bar.top - lr.bottom) };
+    return { mrz: document.querySelectorAll('.pp-mrz text').length, text: id?.innerText ?? '', photo: photo?.getAttribute('src')?.split('/').pop(), stamps: stamps.length, loaded: stamps.filter(i => i.complete && i.naturalWidth > 0).length, clear: Math.round(bar.top - lr.bottom) };
   });
   ok('the new guest picture, name and grade carry into the top bar and the passport; six stamps; nothing under the bottom bar',
-    guestPill.label.includes('سامي') && guestPill.img === 'g3.webp' && guestPill.loaded && pp.text.includes('سامي') && pp.text.includes('الصف') && pp.photo === 'g3.webp' && pp.stamps === 6 && pp.loaded === 6 && pp.clear >= 8,
+    guestPill.label.includes('سامي') && guestPill.img === 'g3.webp' && guestPill.loaded && pp.text.includes('سامي') && pp.text.includes('الصف') && pp.text.includes('KHW-') && pp.mrz === 2 && pp.photo === 'g3.webp' && pp.stamps === 6 && pp.loaded === 6 && pp.clear >= 8,
     JSON.stringify({ guestPill, pp: { ...pp, text: pp.text.slice(0, 60) } }));
 }
 
