@@ -5,11 +5,11 @@ Arabic (Sudanese) learning app for children: Vite + React + TypeScript, three.js
 mixed-text rule (no English word or number at the start/end of an Arabic line; commands/paths on their own line).
 
 - Branch: `rebuild/phase1` (pushed). Live: https://ambsa1.github.io/khwarizmi/ (deployed from `main` by `npm run deploy`).
-- Last shipped: 2026-11-19, seven upgrades (full-width desktop, sand palette, back navigation, guest delete, single-tap
-  lock, silent 2.5 s gates, civic landmarks). Checks 47/47 locally and on the live site.
+- Last shipped: 2026-11-20, layered heritage backgrounds on every screen (see "Backgrounds" below) + clock-based long
+  press. Checks 48/48 locally and on the live site.
 
 ## How to work
-- `cd app && npm run release` = validate, packs, build, preview, `tools/check.mjs` (47 checks). Must print `47/47 passed`.
+- `cd app && npm run release` = validate, packs, build, preview, `tools/check.mjs` (48 checks). Must print `48/48 passed`.
 - Commit and deploy ONLY when every check passes: `grep -q "N/N passed" log && git commit ...`, then `npm run deploy`
   (refuses a dirty tree), then `node tools/check.mjs https://ambsa1.github.io/khwarizmi/` on the live site.
 - Dev server: `npx vite --host 127.0.0.1 --port 5186 --strictPort` (in `app/`). Stop background servers at session end.
@@ -57,8 +57,21 @@ mixed-text rule (no English word or number at the start/end of an Arabic line; c
   (Siraj -> family, version line -> developer), no ring. Guests can be removed (× then confirm) on "who's playing?" and
   in the public parents' corner.
 
+- Backgrounds (`ui/Backdrop.tsx`, `styles/backdrop.css`): one fixed layer behind every screen: 3-tone base gradient +
+  light pools + embossed Sudanese ink icons (tiles `public/art/heritage/*.webp`) + paper grain. General screens show all
+  four regions (`all`); journey/lesson show the world's region (east: kassala/suakin, north: saqiya/meroe, centre:
+  mogran, west: marra) with per-world colours (`data-world`). «بيتنا» = sand (`data-home`); rest time = night tile.
+  Geometric bands (`--band-thin`, `--band-rich`): crown key cards, frame the certificate, run along the entry foot.
+  Rebuild tiles: `node tools/heritage-render.mjs ../identity/_build/masks` then
+  `python tools/heritage-tiles.py ../identity/_build/masks` (each tile must stay < 250 KB).
+- Design folder `identity/` (rules, colour network, icons, prompts) is local only: excluded via `.git/info/exclude`.
+
 ## NEXT TASK
-None pending. Ask the user for the next request.
+Phase 2 of the visual identity: the user is generating images with an outside tool (backgrounds spec given on
+2026-11-20: 12 guest avatars + new-guest, boy/girl cards, 6 map world cards, 6 world entry paintings, 6 passport stamps,
+certificate frame, 2 reward cards). When they arrive: crop to size/safe zone, harmonise colours to the network, same
+grain, compress (<250 KB backgrounds, <40 KB avatars), place under `app/public/art/<section>/`, wire into the screens.
+Never send «بيتنا» material to an outside tool.
 
 ## Waiting on the user
 - Darfur outfit for Marra (Siraj wears the Nile outfit there until the user sends Darfur reference photos).
