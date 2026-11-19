@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useApp } from '../state/store';
 import { SirajLive } from '../screens/Entry';
 import { Bubble, LongPress } from './kit';
+import { BackdropLayer } from './Backdrop';
 
 const KEY = 'khawarizmi.play';
 const today = () => new Date().toISOString().slice(0, 10);
@@ -29,6 +30,7 @@ export function PlayTime() {
   if (!over || !playing) return null;
   return (
     <div className="screen rest" role="dialog" aria-modal="true" aria-label="وقت الراحة">
+      <BackdropLayer region="all" tone="night" fixed={false} />
       <div className="entry-siraj" style={{ margin: '8vh auto 0' }}><SirajLive action="sleepy" /></div>
       <Bubble>وقت الراحة! نكمّل بكرة إن شاء الله.</Bubble>
       <div style={{ marginTop: 24, display: 'grid', placeItems: 'center', gap: 8 }}>

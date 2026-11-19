@@ -12,7 +12,6 @@ import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
 import { Siraj, type SirajAction } from '../three/Siraj';
 import { Stage } from '../three/Stage';
-import { Courtyard } from '../ui/Courtyard';
 import { IconLock, IconPlus, IconStar } from '../ui/Icons';
 import { AppMenu } from '../ui/TopBar';
 import { Avatar, Bubble, playerName, useGuard } from '../ui/kit';
@@ -64,7 +63,6 @@ export function Entry() {
   const label = (p: Profile) => playerName(p);
   return (
     <div className={'screen entry' + (players.length ? ' has-players' : '')}>
-      <Courtyard />
       <div className="entry-corner">
         <button className="icon-btn lock-btn" aria-label={family ? 'ركن الأهل: بيتنا' : 'ركن الأهل'} onClick={() => go('parents')}><IconLock /></button>
       </div>

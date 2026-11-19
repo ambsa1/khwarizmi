@@ -3,6 +3,7 @@
 //   world view  - the live drone view of the child's world; nothing sits on it except Siraj's speech bubble
 //   action band - one golden button (with the next skill inside it) and today's three steps as one progress bar
 // Navigation is the bottom bar on phones, a side rail on wide screens. The passport lives only in the navigation.
+import { useWorldBackdrop } from '../ui/Backdrop';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sound } from '../audio/SoundManager';
 import { TopBar } from '../ui/TopBar';
@@ -42,6 +43,7 @@ export function Path() {
     Sound.onSirajCelebrate('station'); setTimeout(() => Sound.play('star'), 900);
     setTimeout(() => setToast(null), 3000);
   };
+  useWorldBackdrop(p ? currentWorld(p.id, p.age, chosen) : null);
   if (!p) return null;
   const world = currentWorld(p.id, p.age, chosen);
   const name = subjectName(world);

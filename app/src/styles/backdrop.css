@@ -1,0 +1,111 @@
+/* ============================================================================================================
+   The layered background (ui/Backdrop.tsx) and the geometric bands. Loaded after theme.css.
+   Colours come from the identity colour network (identity/03-color-network.md): a warm sand base, a gold light pool
+   behind the hero, a cool pool in the opposite corner; inside a world the base and pools take that world's tones.
+   ============================================================================================================ */
+.backdrop {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  --b0: #FFF8EC; --b1: #F7E7CB; --b2: #E9D2B0;
+  --warm: rgba(255, 182, 39, .38); --cool: rgba(31, 95, 173, .13); --deep: rgba(217, 100, 58, .20);
+  --tw: 2050px; --pat: .62;
+  /* the icons stay crisp at the edges and step back (not away) where the content sits */
+  --fade: radial-gradient(ellipse 58% 52% at 50% 55%, rgba(0, 0, 0, .62) 30%, #000 90%);
+  background:
+    radial-gradient(circle at 82% 22%, var(--warm), transparent 36%),
+    radial-gradient(circle at 6% 92%, var(--cool), transparent 40%),
+    radial-gradient(circle at 50% 118%, var(--deep), transparent 46%),
+    linear-gradient(165deg, var(--b0) 0%, var(--b1) 52%, var(--b2) 100%);
+  transition: background-color 600ms;
+}
+.backdrop.inside { position: absolute; z-index: -1; }
+.backdrop::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: var(--tile); background-size: var(--tw) auto; background-position: 50% 0; background-repeat: repeat;
+  opacity: var(--pat);
+  -webkit-mask-image: var(--fade); mask-image: var(--fade);
+}
+.backdrop::after { content: ''; position: absolute; inset: 0; background-image: var(--grain); background-size: 256px; opacity: .16; }
+/* phones: smaller icons, the content column runs down the middle */
+@media (max-width: 767px) {
+  .backdrop { --tw: 1330px; --fade: radial-gradient(ellipse 78% 46% at 50% 56%, rgba(0, 0, 0, .6) 30%, #000 90%); }
+}
+@media (min-width: 1800px) { .backdrop { --tw: 2300px; } }
+
+/* inside a world: the base, light pools and icon colour follow the world (tokens.worlds) */
+.backdrop[data-region='east'], .backdrop[data-region='north'], .backdrop[data-region='center'], .backdrop[data-region='west'] { --pat: .58; --tw: 1025px; }
+@media (max-width: 767px) { .backdrop[data-region='east'], .backdrop[data-region='north'], .backdrop[data-region='center'], .backdrop[data-region='west'] { --tw: 665px; } }
+@media (min-width: 1800px) { .backdrop[data-region='east'], .backdrop[data-region='north'], .backdrop[data-region='center'], .backdrop[data-region='west'] { --tw: 1150px; } }
+/* the night tile has the same layout as the all-Sudan one */
+.backdrop[data-tone='night'] { --tw: 2050px; }
+@media (max-width: 767px) { .backdrop[data-tone='night'] { --tw: 1330px; } }
+.backdrop[data-world='kassala'] { --b0: #FFF6EE; --b1: #F8E4D4; --b2: #E6C3AC; --warm: rgba(247, 162, 107, .36); --cool: rgba(92, 184, 214, .16); --deep: rgba(201, 139, 122, .32); }
+.backdrop[data-world='suakin']  { --b0: #F5FBFA; --b1: #E4F1EE; --b2: #E2D6BE; --warm: rgba(255, 182, 39, .26); --cool: rgba(31, 163, 163, .24); --deep: rgba(138, 90, 59, .16); }
+.backdrop[data-world='saqiya']  { --b0: #FDF8EA; --b1: #F3E7C6; --b2: #DEC28C; --warm: rgba(255, 182, 39, .36); --cool: rgba(79, 163, 209, .18); --deep: rgba(62, 155, 79, .20); }
+.backdrop[data-world='meroe']   { --b0: #FFF6E8; --b1: #FAE2BF; --b2: #E6B585; --warm: rgba(246, 179, 138, .42); --cool: rgba(111, 183, 201, .14); --deep: rgba(181, 113, 74, .30); }
+.backdrop[data-world='mogran']  { --b0: #F6FAFC; --b1: #E6EFF3; --b2: #D8CBAA; --warm: rgba(255, 182, 39, .28); --cool: rgba(31, 95, 173, .22); --deep: rgba(93, 170, 90, .18); }
+.backdrop[data-world='marra']   { --b0: #F4F9F2; --b1: #E0EDDC; --b2: #C3D8B1; --warm: rgba(255, 201, 120, .28); --cool: rgba(47, 143, 191, .20); --deep: rgba(46, 125, 79, .26); }
+/* «بيتنا»: the warm sand and gold page, a faint royal light behind the family picture */
+.backdrop[data-home] { --b0: #F7EDDA; --b1: #F2E3C8; --b2: #EAD5B2; --warm: rgba(255, 182, 39, .30); --cool: rgba(123, 97, 201, .16); --deep: rgba(201, 150, 60, .22); --pat: .5; }
+/* rest time: night with gold icons */
+.backdrop[data-tone='night'] {
+  --b0: #232C52; --b1: #1B2340; --b2: #141A33; --warm: rgba(255, 182, 39, .14); --cool: rgba(46, 196, 196, .16); --deep: rgba(123, 97, 201, .30); --pat: .34;
+}
+.backdrop[data-tone='night']::after { opacity: .1; }
+@media (prefers-reduced-transparency: reduce) { .backdrop { --pat: .4; } }
+
+/* every screen is transparent over the backdrop (the old flat sand and the code-drawn courtyard are gone) */
+html, body { background: #EAD5B7; }
+body, .sand, .screen.sand, .entry, .screen.entry, .parents:has(.our-home) { background: transparent; }
+.rest { background: transparent; isolation: isolate; }
+/* at night the bubble and the parents' button are solid cream (glass over the dark sky would turn grey) */
+.rest .card, .rest .icon-btn { background: rgba(255, 251, 243, .94); border: 1px solid rgba(248, 210, 136, .7); box-shadow: 0 0 0 6px rgba(255, 182, 39, .10), 0 16px 34px -12px rgba(0, 0, 0, .6); }
+.rest .icon-btn { width: auto; min-width: 56px; padding: 0 18px; white-space: nowrap; }
+.rest > .card { margin-inline: var(--gutter); max-width: calc(100% - 2 * var(--gutter)); }
+.path-window { background: transparent; }
+.world-gate { background: rgba(255, 250, 240, .35); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.stage-fallback { background: radial-gradient(60% 50% at 50% 45%, rgba(255, 236, 190, .55), transparent); }
+
+/* ============================================================================================================
+   Geometric bands: stacked rows of zigzags, stripes, diamonds and beads, coloured from the network
+   (clay, Siraj gold, palm green, Nile blue, Red Sea teal, earth ink, cream). The thin band crowns the important
+   cards; the rich band frames the certificate and runs along the foot of "who's playing?".
+   ============================================================================================================ */
+:root {
+  --band-thin: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Crect width='24' height='12' fill='%23D9643A'/%3E%3Cpath d='M0 1.5h24v1.2H0zM0 9.3h24v1.2H0z' fill='%23FFB627'/%3E%3Cpath d='M12 2.2 19 6l-7 3.8L5 6z' fill='%23FFF3D6'/%3E%3Cpath d='M12 3.8 15 6l-3 2.2L9 6z' fill='%231F5FAD'/%3E%3Cpath d='M-3 2.7h6L0 5.2zM21 2.7h6L24 5.2zM-3 9.3h6L0 6.8zM21 9.3h6L24 6.8z' fill='%233E9B4F'/%3E%3Cpath d='M0 0h24v1.5H0zM0 10.5h24V12H0z' fill='%235B3B26'/%3E%3C/svg%3E");
+  --band-rich: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='40' viewBox='0 0 48 40'%3E%3Crect width='48' height='6' fill='%23FFB627'/%3E%3Cpath d='M0 0h8L4 6zM8 0h8l-4 6zM16 0h8l-4 6zM24 0h8l-4 6zM32 0h8l-4 6zM40 0h8l-4 6z' fill='%23D9643A'/%3E%3Crect y='6' width='48' height='1.5' fill='%235B3B26'/%3E%3Crect y='7.5' width='48' height='6' fill='%23D9643A'/%3E%3Cpath d='M2 7.5h3v6H2zM8 7.5h1.5v6H8zM13 7.5h4v6h-4zM21 7.5h1.5v6H21zM26 7.5h3v6h-3zM33 7.5h1.5v6H33zM38 7.5h4v6h-4zM45 7.5h1.5v6H45z' fill='%23FFB627'/%3E%3Cpath d='M5.5 7.5h1.5v6H5.5zM18 7.5h2v6h-2zM30 7.5h1.5v6H30zM42.5 7.5h1.5v6h-1.5z' fill='%231F5FAD'/%3E%3Cpath d='M10 7.5h2v6h-2zM23.5 7.5h1.5v6h-1.5zM35 7.5h2v6h-2z' fill='%23FFFBF3'/%3E%3Cpath d='M0 7.5h1.5v6H0zM46.5 7.5H48v6h-1.5z' fill='%233E9B4F'/%3E%3Crect y='13.5' width='48' height='1.5' fill='%235B3B26'/%3E%3Crect y='15' width='48' height='12' fill='%233E9B4F'/%3E%3Cpath d='M12 15.6 23 21l-11 5.4L1 21zM36 15.6 47 21l-11 5.4L25 21z' fill='%23FFB627'/%3E%3Cpath d='M12 17.4 19.4 21 12 24.6 4.6 21zM36 17.4 43.4 21 36 24.6 28.6 21z' fill='%23D9643A'/%3E%3Cpath d='M12 19.4 15.2 21 12 22.6 8.8 21zM36 19.4 39.2 21 36 22.6 32.8 21z' fill='%23FFFBF3'/%3E%3Crect y='27' width='48' height='1.5' fill='%235B3B26'/%3E%3Crect y='28.5' width='48' height='5' fill='%235B3B26'/%3E%3Cg%3E%3Ccircle cx='3' cy='31' r='1.8' fill='%23FFB627'/%3E%3Ccircle cx='9' cy='31' r='1.8' fill='%231FA3A3'/%3E%3Ccircle cx='15' cy='31' r='1.8' fill='%23D9643A'/%3E%3Ccircle cx='21' cy='31' r='1.8' fill='%23FFFBF3'/%3E%3Ccircle cx='27' cy='31' r='1.8' fill='%233E9B4F'/%3E%3Ccircle cx='33' cy='31' r='1.8' fill='%23FFB627'/%3E%3Ccircle cx='39' cy='31' r='1.8' fill='%231F5FAD'/%3E%3Ccircle cx='45' cy='31' r='1.8' fill='%23D9643A'/%3E%3C/g%3E%3Crect y='33.5' width='48' height='6.5' fill='%23D9643A'/%3E%3Cpath d='M0 40l4-6 4 6zM8 40l4-6 4 6zM16 40l4-6 4 6zM24 40l4-6 4 6zM32 40l4-6 4 6zM40 40l4-6 4 6z' fill='%23FFB627'/%3E%3C/svg%3E");
+  --band-thin-h: 12px; --band-rich-h: 28px;
+}
+
+/* the thin band crowns: the passport's explorer card, the lesson card, the gate cards, the parents' cards */
+/* (the band layer covers the whole card and inherits its corners, so the card itself never clips its content) */
+.explorer-id, .lesson-card, .gate-card, .parents .card.pc, .our-kid, .dev-prompt { position: relative; flex-shrink: 0; }
+.explorer-id::before, .lesson-card::before, .gate-card::before, .parents .card.pc::before, .our-kid::before, .dev-prompt::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: var(--band-thin) repeat-x 0 0 / auto var(--band-thin-h);
+}
+.explorer-id { padding-top: calc(16px + var(--band-thin-h)); }
+.gate-card { padding-top: calc(22px + var(--band-thin-h)); }
+.parents .card.pc, .dev-prompt { padding-top: calc(16px + var(--band-thin-h)) !important; }
+.our-kid { padding-top: calc(14px + var(--band-thin-h)); }
+.lesson-card { padding-top: calc(var(--lesson-pad, 20px) + var(--band-thin-h)); }
+
+/* the certificate: the rich band above and below, on cream */
+.certificate { position: relative; background: #FFFBF3; border: 1px solid rgba(186, 124, 3, .45);
+  padding: calc(14px + var(--band-rich-h)) 14px calc(14px + var(--band-rich-h)); box-shadow: 0 10px 24px -14px rgba(91, 59, 38, .4); }
+.certificate::before, .certificate::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: var(--band-rich) repeat-x 0 0 / auto var(--band-rich-h); }
+.certificate::after { transform: scaleY(-1); }
+
+/* "who's playing?": the rich band runs along the foot of the screen like the hem of a woven mat */
+.entry::after { content: ''; position: absolute; inset: auto 0 0 0; height: calc(var(--band-rich-h) + var(--safe-b)); z-index: 0; pointer-events: none;
+  background: var(--band-rich) repeat-x 0 0 / auto var(--band-rich-h), #5B3B26; box-shadow: 0 -6px 18px -8px rgba(91, 59, 38, .45); }
+.entry .entry-who { padding-bottom: calc(28px + var(--band-rich-h) + var(--safe-b)); }
+
+/* «بيتنا»: the family picture melts into the page through a mask (no colour overlay, so the icons show around it) */
+.our-banner::after { display: none; }
+.our-banner { -webkit-mask-image: linear-gradient(180deg, #000 48%, transparent 97%), linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(180deg, #000 48%, transparent 97%), linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%); mask-composite: intersect; }
+
+/* glass on the new background: a touch warmer and a little more solid so text stays at full contrast over the icons */
+:root { --glass-bg: rgba(255, 251, 243, .74); --glass-strong: rgba(255, 251, 243, .9); --glass-border: 1px solid rgba(255, 255, 255, .7);
+  --glass-shadow: 0 1px 0 rgba(255, 255, 255, .85) inset, 0 16px 34px -14px rgba(91, 59, 38, .32); }
+.glass, .card, .btn.paper, .icon-btn, .tabbar, .seg, .chip:not(.night) { -webkit-backdrop-filter: blur(14px) saturate(1.35); backdrop-filter: blur(14px) saturate(1.35); }

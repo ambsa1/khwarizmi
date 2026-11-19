@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './styles/global.css';
 import './styles/screens.css';
 import './styles/theme.css';
+import './styles/backdrop.css';
 import { installSound } from './audio/SoundManager';
 import { installCloud } from './cloud/cloud';
 import { installLayoutWatchdog } from './cloud/watchdog';

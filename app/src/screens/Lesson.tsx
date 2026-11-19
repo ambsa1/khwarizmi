@@ -14,6 +14,7 @@ import { Siraj } from '../three/Siraj';
 import { Stage } from '../three/Stage';
 import { IconClose, IconPlay } from '../ui/Icons';
 import { useGuard } from '../ui/kit';
+import { useWorldBackdrop } from '../ui/Backdrop';
 
 /** The camera looks at Siraj's middle, not his feet (the default target is the origin). */
 function Aim() {
@@ -33,6 +34,7 @@ export function Lesson() {
   const [doc, setDoc] = useState<LessonDoc | null | undefined>(undefined);
   const [i, setI] = useState(0);
   useEffect(() => { if (at) lessonFor(at.world, at.skill).then(l => setDoc(l ?? null)); }, [at]);
+  useWorldBackdrop(at?.world);
   if (!p || !at) return null;
   if (doc === null) { go('path'); return null; }
 

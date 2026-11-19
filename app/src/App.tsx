@@ -21,6 +21,7 @@ import { Lesson } from './screens/Lesson';
 import { SirajPreview, WorldTour } from './screens/Preview';
 import { DevPage, FamilyPage } from './screens/Gates';
 import { PlayTime } from './ui/PlayTime';
+import { Backdrop } from './ui/Backdrop';
 
 const q = new URLSearchParams(location.search);
 
@@ -76,6 +77,7 @@ export function App() {
   }[shown];
   return (
     <MotionConfig reducedMotion={reduced ? 'always' : 'never'}>
+      <Backdrop />
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={shown} style={{ position: 'fixed', inset: 0 }}
           initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
