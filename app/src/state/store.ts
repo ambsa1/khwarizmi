@@ -8,7 +8,7 @@ import type { FamilyManifest, KeyWrap } from '../lib/family';
 export type Profile = {
   id: string;            // 'm1'..'m4' for family members, 'g-<time>' for guests
   kind: 'family' | 'guest';
-  name?: string;         // family only (decrypted at runtime, never written to public files)
+  name?: string;         // family: decrypted at runtime, never written to public files; guest: optional name they typed
   gender: 'm' | 'f';
   age: number;           // 3..11 (11 = "10+")
   grade: number | null;  // 1..6, null = not at school yet

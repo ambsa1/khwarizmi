@@ -67,6 +67,7 @@ export function FamilyPage() {
               <button className="btn" onClick={() => s.go('entry')}>اختار اللاعب</button>
               <button className="btn paper" onClick={lock}>اقفل وضع الأسرة</button>
             </div>
+            <LegacyLink />
           </>
         ) : (
           <form className="col" style={{ gap: 14 }} onSubmit={e => { e.preventDefault(); if (code.trim()) void submit(); }}>
@@ -84,6 +85,31 @@ export function FamilyPage() {
         )}
       </section>
     </GateShell>
+  );
+}
+
+/** v2 progress (archived on this device) linked to one of the four children - only here, behind the family code */
+function LegacyLink() {
+  const L = useLearning(), family = useApp(st => st.family);
+  const [msg, setMsg] = useState<string | null>(null);
+  const waiting = L.legacy.filter(x => !x.linkedTo && x.levels > 0);
+  if (!family) return null;
+  // after the last link the list is empty, but the confirmation stays
+  if (!waiting.length) return msg ? <div className="col legacy-link"><p className="t-small" role="status">{msg}</p></div> : null;
+  return (
+    <div className="col legacy-link" style={{ gap: 8 }}>
+      <p className="t-small soft">تقدّم من النسخة السابقة ينتظر ربطه بأحد الأبناء:</p>
+      {waiting.map(w => (
+        <div key={w.legacyId} className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+          <span className="t-small"><b>{w.name || 'لاعب'}</b> · {w.levels} مرحلة برمجة</span>
+          <select className="code" style={{ flex: 'none', minWidth: 140 }} defaultValue="" onChange={e => { if (e.target.value) { L.linkLegacy(w.legacyId, e.target.value); setMsg('اتربط التقدّم القديم.'); } }}>
+            <option value="" disabled>اربطه بـ…</option>
+            {family.members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+        </div>
+      ))}
+      {msg && <p className="t-small" role="status">{msg}</p>}
+    </div>
   );
 }
 

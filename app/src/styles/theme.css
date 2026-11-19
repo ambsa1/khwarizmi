@@ -175,3 +175,24 @@ input[type=range].vol { width: 100%; accent-color: var(--c-gold); height: 36px; 
 .world-gate > * { background: var(--glass-strong); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: var(--glass-border); box-shadow: var(--glass-shadow); border-radius: 999px; padding: 8px 18px; margin: 0; }
 .world-gate .gate-bar { width: 180px; height: 12px; padding: 0; overflow: hidden; display: block; }
 .world-gate .gate-bar i { display: block; height: 100%; background: linear-gradient(90deg, #F5C451, #E8892B); border-radius: 999px; transition: width 300ms; }
+
+/* long presses: no text selection or image dragging; the ring sits over the held thing */
+.hold-area, .entry-siraj, .version { user-select: none; -webkit-user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; touch-action: none; position: relative; }
+.entry-siraj canvas, .entry-siraj img { -webkit-user-drag: none; user-select: none; }
+.version { cursor: default; }
+/* desktop: menu pages are a centred modal, all content visible (no clipped bottom sheet) */
+@media (min-width: 768px) {
+  .sheet.page { inset: 0; margin: auto; height: fit-content; max-height: 85vh; overflow-y: auto; width: min(620px, calc(100% - 64px)); border-radius: 24px; padding: 16px 22px 22px; transform: none; }
+  .sheet.page .sheet-grip { display: none; }
+  /* who's playing: the cards centred beside Siraj and the house */
+  .entry .entry-who { justify-content: center; align-items: center; }
+  .entry .who-grid { margin: auto; }
+  /* parents' corner: a wider column */
+  .parents-body { max-width: 840px; width: 100%; margin: 0 auto; }
+}
+.guest-name { display: grid; gap: 6px; width: min(420px, 100%); margin: 0 auto 12px; }
+.guest-name .code { min-height: 56px; border-radius: var(--r-btn); border: 1px solid rgba(107, 90, 72, .25); padding: 0 16px; font-size: 20px; background: rgba(255, 255, 255, .9); }
+.guest-progress { margin: 0; padding-inline-start: 22px; display: grid; gap: 4px; font-size: 18px; }
+
+/* a 3D area the device could not draw: a calm empty panel (the screen around it keeps working) */
+.stage-fallback { position: absolute; inset: 0; background: radial-gradient(60% 50% at 50% 45%, rgba(255, 236, 190, .7), transparent), var(--g-sand); }

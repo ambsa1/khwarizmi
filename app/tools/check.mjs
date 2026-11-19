@@ -182,14 +182,11 @@ await p3.getByRole('button', { name: 'ضيف جديد' }).click();
 await p3.getByRole('button', { name: 'ولد' }).click(); await p3.locator('.age-ball').nth(5).click();
 await p3.locator('.terrace').nth(2).click(); await p3.locator('.avatar-pick').first().click();
 await p3.waitForSelector('.path');
-await openParents(p3); await p3.waitForSelector('.learner-data select', { timeout: 5000 }).catch(() => {});
-const waitingOld = await p3.locator('.learner-data select').count();
-if (waitingOld) await p3.locator('.learner-data select').first().selectOption({ index: 1 });
-await p3.waitForTimeout(500);
-await openPath(p3); await p3.waitForTimeout(800);
-const fromV2 = builtFrom(await p3.locator('.world-pill').getAttribute('aria-label'));
-const archived = await p3.evaluate(() => new Promise(res => { const r = indexedDB.open('khawarizmi'); r.onsuccess = () => { const q = r.result.transaction('legacy').objectStore('legacy').getAllKeys(); q.onsuccess = () => res(q.result.length); }; }));
-ok('v2 progress is archived, translated and linked', waitingOld === 1 && fromV2 > 0 && archived === 1, `waiting ${waitingOld}, houses from v2 ${fromV2}, raw copies ${archived}`);
+await openParents(p3); await p3.waitForTimeout(800);
+const parentsText = await p3.locator('.parents').innerText();
+const idbRead = (store, key) => p3.evaluate(([st, k]) => new Promise(res => { const r = indexedDB.open('khawarizmi'); r.onsuccess = () => { const q = k ? r.result.transaction(st).objectStore(st).get(k) : r.result.transaction(st).objectStore(st).getAllKeys(); q.onsuccess = () => res(q.result); }; }), [store, key]);
+const translated = ((await idbRead('meta', 'legacyPlayers')) ?? []).length, archived = ((await idbRead('legacy')) ?? []).length;
+ok('v2 progress is archived and translated, never shown in the public parents corner', translated === 1 && archived === 1 && !parentsText.includes('لاعب قديم') && !parentsText.includes('اربطه'), `translated ${translated}, raw copies ${archived}`);
 await ctx3.close();
 await page.setViewportSize({ width: 360, height: 800 });
 await toPath(); await page.waitForTimeout(800);
@@ -271,10 +268,14 @@ small = await smallText(); ok('passport: no text under 18px', small.length === 0
 // 4b. developer gate (local only): hold the version number 4 s in menu > about; wrong code refused, right code opens the panel
 const devFile = join(PRIVATE, 'dev-code.txt');
 if (existsSync(devFile)) {
+  await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto(base, { waitUntil: 'load' }); await page.waitForSelector('.entry');
   await page.getByRole('button', { name: 'القائمة' }).first().click();
   await page.getByRole('button', { name: 'عن تطبيق خوارزمي' }).click();
   await page.waitForTimeout(900);   // let the sheet finish sliding in
+  const vb = await page.locator('.version').boundingBox(), sb = await page.locator('.sheet.page').boundingBox();
+  ok('desktop: menu pages are a centred modal with the version line in view', vb && sb && vb.y + vb.height <= 768 && Math.abs((sb.x + sb.width / 2) - 683) < 4 && Math.abs((sb.y + sb.height / 2) - 384) < 4,
+    `version bottom ${Math.round((vb?.y ?? 0) + (vb?.height ?? 0))}, modal centre ${Math.round((sb?.x ?? 0) + (sb?.width ?? 0) / 2)},${Math.round((sb?.y ?? 0) + (sb?.height ?? 0) / 2)}`);
   await page.locator('.version').scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
   const v = await page.locator('.version').boundingBox();
   await page.mouse.move(v.x + v.width / 2, v.y + v.height / 2); await page.mouse.down(); await page.waitForTimeout(4400); await page.mouse.up();
@@ -284,6 +285,7 @@ if (existsSync(devFile)) {
   await page.locator('#dev-code').fill(readFileSync(devFile, 'utf8').trim()); await page.getByRole('button', { name: 'ادخل' }).click();
   const opened = await page.waitForSelector('.dev .dev-tabs', { timeout: 15000 }).then(() => true).catch(() => false);
   ok('developer gate: hidden gesture, wrong code refused, right code opens the panel', refused.includes('ما اتطابق') && opened, refused);
+  await page.setViewportSize({ width: 360, height: 800 });
 }
 
 // 5. family mode (local only)
@@ -345,6 +347,18 @@ if (existsSync(codeFile)) {
   const stored = await again.evaluate(() => JSON.stringify(localStorage));
   ok('neither the activation word, the personal code nor the open key is stored', !stored.includes(word) && !stored.includes('2468') && !stored.includes('familyKey'));
   await again.close();
+  const ctx4 = await browser.newContext({ viewport: { width: 360, height: 800 }, locale: 'ar' });
+  await ctx4.addInitScript(lv => { if (!localStorage.getItem('khwarizmi.v1')) localStorage.setItem('khwarizmi.v1', JSON.stringify({ v: 2, players: [{ id: 'old1', name: 'لاعب قديم', age: 9, gender: 'b', progress: Object.fromEntries(lv.map(k => [k, 3])) }] })); }, levels);
+  const p4 = await ctx4.newPage(); await p4.goto(base, { waitUntil: 'load' }); await p4.waitForSelector('.entry');
+  const holdSiraj = async pg => { const b = await pg.locator('.entry-siraj').boundingBox(); await pg.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await pg.mouse.down(); await pg.waitForTimeout(4400); await pg.mouse.up(); };
+  await holdSiraj(p4); await p4.waitForSelector('#fam-code'); await p4.locator('#fam-code').fill(word); await p4.getByRole('button', { name: 'افتح' }).click();
+  await p4.waitForSelector('#fam-code2', { timeout: 15000 }); await p4.locator('#fam-code').fill('2468'); await p4.locator('#fam-code2').fill('2468'); await p4.getByRole('button', { name: 'احفظ وادخل' }).click();
+  await p4.waitForSelector('.who-card', { timeout: 15000 }); await p4.waitForTimeout(1200); await holdSiraj(p4);
+  const linkable = await p4.waitForSelector('.legacy-link select', { timeout: 8000 }).then(() => true).catch(() => false);
+  if (linkable) await p4.locator('.legacy-link select').selectOption({ index: 1 });
+  const linkedMsg = await p4.locator('.legacy-link [role=status]').innerText().catch(() => '');
+  ok('v2 progress is linked to a child only inside the unlocked family page', linkable && linkedMsg.includes('اتربط'), linkedMsg);
+  await ctx4.close();
 } else ok('family mode', true, 'skipped: no private code on this machine');
 
 ok('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));

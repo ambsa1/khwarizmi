@@ -3,11 +3,12 @@
 //   centre: the screen or world title
 //   end (left in RTL): the menu (bottom sheet on phones, popover on wide screens): about, guide, sound, privacy
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { HoldRing, useHold } from './Hold';
 import { createPortal } from 'react-dom';
 import { Sound, useSoundSettings } from '../audio/SoundManager';
 import { useApp, useProfile } from '../state/store';
-import { Avatar } from './kit';
+import { Avatar, playerName } from './kit';
 
 const P = { width: 26, height: 26, viewBox: '0 0 32 32', fill: 'none', stroke: 'currentColor', strokeWidth: 2.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
 const IconDots = () => <svg {...P}><circle cx="16" cy="7" r="2.4" fill="currentColor" /><circle cx="16" cy="16" r="2.4" fill="currentColor" /><circle cx="16" cy="25" r="2.4" fill="currentColor" /></svg>;
@@ -42,10 +43,10 @@ function SoundPage() {
 
 /** the version line; holding it four seconds opens the developer gate */
 function Version() {
-  const go = useApp(s => s.go), t = useRef(0);
-  const down = () => { clearTimeout(t.current); t.current = window.setTimeout(() => go('dev'), 4000); };
-  const up = () => clearTimeout(t.current);
-  return <p className="soft version" onPointerDown={down} onPointerUp={up} onPointerLeave={up} onPointerCancel={up} onContextMenu={e => e.preventDefault()}>الإصدار <span className="ltr">{__APP_VERSION__}</span></p>;
+  const go = useApp(s => s.go);
+  const hold = useHold(4000, () => go('dev'));
+  return <p className="soft version" {...hold.handlers}>الإصدار <span className="ltr">{__APP_VERSION__}</span>
+    <HoldRing p={hold.p} size={30} style={{ verticalAlign: 'middle', marginInlineStart: 8 }} /></p>;
 }
 
 function PageBody({ page }: { page: Page }) {
@@ -116,7 +117,7 @@ export function AppMenu() {
 export function TopBar({ title }: { title: ReactNode }) {
   const p = useProfile(), go = useApp(s => s.go);
   if (!p) return null;
-  const name = p.kind === 'family' ? p.name : p.gender === 'f' ? 'ضيفة' : 'ضيف';
+  const name = playerName(p);
   return (
     <header className="topbar">
       <button className="glass player-pill" aria-label={`${name}: غيّر اللاعب`} onClick={() => go('entry')}>

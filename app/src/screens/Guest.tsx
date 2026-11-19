@@ -20,6 +20,7 @@ export function Guest() {
   const [gender, setGender] = useState<'m' | 'f'>('m');
   const [age, setAge] = useState(7);
   const [grade, setGrade] = useState<number | null>(null);
+  const [name, setName] = useState('');
   const who = { gender };
   const back = () => setStep(s => (s === 'gender' ? (go('entry'), s) : s === 'age' ? 'gender' : s === 'grade' ? 'age' : age <= 4 ? 'age' : 'grade'));
   const question: Record<Step, string> = {
@@ -29,7 +30,7 @@ export function Guest() {
     avatar: say(who, 'اختار صورتك', 'اختاري صورتك'),
   };
   const avatars = [...GUEST_AVATARS].sort((a, b) => Number(b.gender === gender) - Number(a.gender === gender));
-  const finish = (avatar: string) => { addGuest({ gender, age, grade, avatar }); go('path'); };
+  const finish = (avatar: string) => { addGuest({ gender, age, grade, avatar, name: name.trim().slice(0, 16) || undefined }); go('path'); };
   const stepIndex = ['gender', 'age', 'grade', 'avatar'].indexOf(step);
 
   return (
@@ -74,6 +75,12 @@ export function Guest() {
               <button className="btn paper wide" onClick={guard(() => { setGrade(null); setStep('avatar'); })}>
                 {say(who, 'لسه ما دخلت المدرسة', 'لسه ما دخلت المدرسة')}
               </button>
+            </div>
+          )}
+          {step === 'avatar' && (
+            <div className="guest-name">
+              <label htmlFor="guest-name" className="t-body">{say(who, 'اسمك (لو داير):', 'اسمك (لو دايرة):')}</label>
+              <input id="guest-name" className="code" maxLength={16} autoComplete="off" dir="rtl" placeholder={gender === 'f' ? 'ضيفة' : 'ضيف'} value={name} onChange={e => setName(e.target.value)} />
             </div>
           )}
           {step === 'avatar' && (

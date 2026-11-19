@@ -11,7 +11,7 @@ import { useApp, useProfile } from '../state/store';
 import { KassalaTown, TOWN_FAR, TOWN_FOG } from '../three/town/KassalaTown';
 import { Stage, stats, useTier } from '../three/Stage';
 import { IconBack, IconClose, IconStar } from '../ui/Icons';
-import { Avatar, TabBar } from '../ui/kit';
+import { Avatar, playerName, TabBar } from '../ui/kit';
 import { TopBar } from '../ui/TopBar';
 import { SHORT_NAME, SUBJECT_COLOR } from './Map';
 
@@ -36,7 +36,7 @@ export function Passport() {
   const stations = WORLDS.reduce((a, w) => a + masteredIn(me, w.id), 0);
   const stars = WORLDS.reduce((a, w) => a + worldSkills(w.id).filter(k => isMastered(me?.skills[k.id])).length, 0);
   const rank = [...RANKS].reverse().find(([n]) => stations >= n)![1];
-  const name = (p.kind === 'family' ? p.name : p.gender === 'f' ? 'ضيفة' : 'ضيف') ?? '';
+  const name = playerName(p);
   return (
     <div className="screen sand has-rail">
       <div className="main col grow scroll">
@@ -202,9 +202,9 @@ export function Perf() {
  *  waiting to be linked to a child. Names of old players are shown here only, to the parent. */
 function LearnerData() {
   const L = useLearning();
-  const family = useApp(st => st.family), guests = useApp(st => st.profiles);
+  const guests = useApp(st => st.profiles);
   const [msg, setMsg] = useState<string | null>(null);
-  const kids = [...(family?.members ?? []).map(m => ({ id: m.id, label: m.name })), ...guests.map((g, i) => ({ id: g.id, label: `ضيف ${i + 1}` }))];
+  // the public parents' corner shows only this device's guests; family children and the v2 archive live behind the family code
   const download = () => {
     const blob = new Blob([JSON.stringify(L.exportBackup())], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -216,10 +216,9 @@ function LearnerData() {
     try { const r = L.importBackup(JSON.parse(await f.text())); setMsg(r.ok ? `اترجع تقدّم ${r.count} من الأطفال.` : 'الملف دا ما نسخة احتياطية صالحة.'); }
     catch { setMsg('الملف دا ما نسخة احتياطية صالحة.'); }
   };
-  const waiting = L.legacy.filter(x => !x.linkedTo && x.levels > 0);
   return (
     <section className="card pc learner-data">
-      <h2 className="t-h2">تقدّم الأطفال</h2>
+      <h2 className="t-h2">تقدّم الضيوف</h2>
       <p className="t-small soft">
         {L.durable ? 'محفوظ في هذا الجهاز' : 'التخزين غير متاح في هذا المتصفح، فالتقدّم مؤقت حتى تُغلق الصفحة'}
         {L.durable && (L.persisted ? '، والمتصفح تعهّد بعدم مسحه.' : '. احفظ نسخة احتياطية من وقت لآخر.')}
@@ -228,19 +227,10 @@ function LearnerData() {
         <button className="btn paper" onClick={download}>احفظ نسخة احتياطية</button>
         <label className="btn paper" style={{ cursor: 'pointer' }}>استرجع نسخة<input type="file" accept="application/json,.json" hidden onChange={e => restore(e.target.files?.[0])} /></label>
       </div>
-      {waiting.length > 0 && (
-        <div className="col" style={{ gap: 8 }}>
-          <p className="t-small soft">تقدّم من النسخة السابقة ينتظر ربطه بطفل:</p>
-          {waiting.map(w => (
-            <div key={w.legacyId} className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
-              <span className="t-small"><b>{w.name || 'لاعب'}</b> · {w.levels} مرحلة برمجة</span>
-              <select className="code" style={{ flex: 'none', minWidth: 140 }} defaultValue="" onChange={e => { if (e.target.value) { L.linkLegacy(w.legacyId, e.target.value); setMsg('اتربط التقدّم القديم.'); } }}>
-                <option value="" disabled>اربطه بـ…</option>
-                {kids.map(k => <option key={k.id} value={k.id}>{k.label}</option>)}
-              </select>
-            </div>
-          ))}
-        </div>
+      {guests.length > 0 && (
+        <ul className="guest-progress">
+          {guests.map(g => <li key={g.id}><b>{playerName(g)}</b> · {WORLDS.reduce((a, w) => a + masteredIn(L.learners[g.id], w.id), 0)} محطة معمورة</li>)}
+        </ul>
       )}
       {msg && <p className="t-small" role="status">{msg}</p>}
     </section>

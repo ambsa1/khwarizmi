@@ -2,7 +2,7 @@
 // lowers resolution when frames drop, pauses when hidden, and exposes live stats for the perf overlay.
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { guessTier, SETTINGS, type Tier } from '../lib/tier';
 import { useApp } from '../state/store';
@@ -65,11 +65,30 @@ function Probe() {
 
 type Props = { children: ReactNode; camera?: { position: [number, number, number]; fov?: number; far?: number }; className?: string; transparent?: boolean; fog?: [string, number, number]; label?: string };
 
-export function Stage({ children, camera = { position: [0, 2, 6], fov: 40 }, className, transparent, fog, label }: Props) {
+/** A 3D canvas that fails alone: if the browser cannot create (or keeps losing) a WebGL context, only this area shows
+ *  a calm empty panel; the screen around it keeps working. */
+class StageBoundary extends Component<{ children: ReactNode; label?: string }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(e: Error) { void logError(e, '3d'); }
+  render() { return this.state.failed ? <div className="stage-fallback" role="img" aria-label={this.props.label} /> : this.props.children; }
+}
+
+export function Stage(props: Props) {
+  return <StageBoundary label={props.label}><StageCanvas {...props} /></StageBoundary>;
+}
+
+function StageCanvas({ children, camera = { position: [0, 2, 6], fov: 40 }, className, transparent, fog, label }: Props) {
   const tier = useTier();
   const s = SETTINGS[tier];
   const [dpr, setDpr] = useState(Math.min(s.dpr[1], window.devicePixelRatio || 1));
   const [canvasKey, setCanvasKey] = useState(0);
+  // the browser keeps only a few WebGL contexts alive: release ours as soon as this screen leaves, and recreate a lost
+  // one at most three times (never in a loop that would use up the device's contexts)
+  const glRef = useRef<THREE.WebGLRenderer | null>(null), alive = useRef(true), remounts = useRef(0);
+  const [gaveUp, setGaveUp] = useState(false);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; const gl = glRef.current; glRef.current = null; try { gl?.dispose(); gl?.forceContextLoss(); } catch { /* already gone */ } }; }, []);
+  if (gaveUp) return <div className="stage-fallback" role="img" aria-label={label} />;
   stats.tier = tier;
   return (
     <Canvas
@@ -82,9 +101,11 @@ export function Stage({ children, camera = { position: [0, 2, 6], fov: 40 }, cla
       gl={{ antialias: s.antialias, alpha: !!transparent, powerPreference: 'high-performance', stencil: false, preserveDrawingBuffer: false }}
       camera={{ position: camera.position, fov: camera.fov ?? 40, near: camera.far ? 0.5 : 0.1, far: camera.far ?? 400 }}
       onCreated={({ gl, scene }) => {
+        glRef.current = gl;
         const el = gl.domElement; let timer = 0;
-        el.addEventListener('webglcontextlost', e => { e.preventDefault(); void logError('WebGL context lost', '3d'); timer = window.setTimeout(() => setCanvasKey(k => k + 1), 2500); }, { once: true });
-        el.addEventListener('webglcontextrestored', () => { clearTimeout(timer); setCanvasKey(k => k + 1); }, { once: true });
+        const again = () => { if (!alive.current) return; if (++remounts.current > 3) { setGaveUp(true); return; } setCanvasKey(k => k + 1); };
+        el.addEventListener('webglcontextlost', e => { if (!alive.current) return; e.preventDefault(); void logError('WebGL context lost', '3d'); timer = window.setTimeout(again, 2500); }, { once: true });
+        el.addEventListener('webglcontextrestored', () => { clearTimeout(timer); again(); }, { once: true });
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
         gl.outputColorSpace = THREE.SRGBColorSpace;

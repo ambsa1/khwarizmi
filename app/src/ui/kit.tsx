@@ -7,6 +7,8 @@ import { GuestAvatar } from './GuestAvatars';
 import { IconMap, IconPassport, IconPath } from './Icons';
 
 /** Masculine / feminine wording (Sudanese Arabic addresses boys and girls differently). */
+export const playerName = (p: { kind: 'family' | 'guest'; name?: string; gender: 'm' | 'f' }) =>
+  (p.name?.trim() || (p.kind === 'family' ? '' : p.gender === 'f' ? 'ضيفة' : 'ضيف'));
 export const say = (p: { gender: 'm' | 'f' } | null | undefined, m: string, f: string) => (p?.gender === 'f' ? f : m);
 
 /** Ignores repeated taps inside `ms` (little ones double and triple tap). */

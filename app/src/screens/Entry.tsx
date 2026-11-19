@@ -3,7 +3,7 @@
 // seconds. The lock (2-second press) opens the parents' corner: guest controls
 // and the daily play-time limit. The menu sits opposite it.
 import { motion } from 'framer-motion';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { stampsOf, useLearning } from '../data/learning';
 import { useApp, type Profile } from '../state/store';
 import { useNum } from '../lib/num';
@@ -14,7 +14,8 @@ import { Stage } from '../three/Stage';
 import { Courtyard } from '../ui/Courtyard';
 import { IconLock, IconPlus, IconStar } from '../ui/Icons';
 import { AppMenu } from '../ui/TopBar';
-import { Avatar, Bubble, LongPress, useGuard } from '../ui/kit';
+import { Avatar, Bubble, LongPress, playerName, useGuard } from '../ui/kit';
+import { HoldRing, useHold } from '../ui/Hold';
 
 function Aim() {
   const cam = useThree(s => s.camera);
@@ -50,12 +51,10 @@ export function Entry() {
     setTimeout(() => { setCurrent(id); go('path'); }, 650);
   };
   const action: SirajAction = picked ? 'cheer' : 'wave';
-  // the secret gesture: hold Siraj for four seconds -> the family page
-  const hold = useRef(0);
-  const down = () => { clearTimeout(hold.current); hold.current = window.setTimeout(() => go('family'), 4000); };
-  const up = () => clearTimeout(hold.current);
+  // the secret gesture: hold Siraj for four seconds (mouse or finger) -> the family page
+  const hold = useHold(4000, () => go('family'));
   const portrait = window.innerWidth >= 700 || window.innerHeight >= 860 ? 132 : window.innerHeight >= 740 ? 112 : 96;
-  const label = (p: Profile) => (p.kind === 'family' ? p.name : p.gender === 'f' ? 'ضيفة' : 'ضيف');
+  const label = (p: Profile) => playerName(p);
   return (
     <div className={'screen entry' + (players.length ? ' has-players' : '')}>
       <Courtyard />
@@ -64,8 +63,8 @@ export function Entry() {
       </div>
       <div className="entry-menu"><AppMenu /></div>
       <div className="entry-hero">
-        <div className="entry-siraj" onPointerDown={down} onPointerUp={up} onPointerLeave={up} onPointerCancel={up}
-          onContextMenu={e => e.preventDefault()} data-secret="family"><SirajLive action={action} /></div>
+        <div className="entry-siraj" {...hold.handlers} data-secret="family"><SirajLive action={action} />
+          <HoldRing p={hold.p} size={84} style={{ position: 'absolute', left: '50%', top: '55%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }} /></div>
         <Bubble>مين الجاي يلعب؟</Bubble>
       </div>
       <div className="entry-who">
