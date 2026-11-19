@@ -196,3 +196,36 @@ input[type=range].vol { width: 100%; accent-color: var(--c-gold); height: 36px; 
 
 /* a 3D area the device could not draw: a calm empty panel (the screen around it keeps working) */
 .stage-fallback { position: absolute; inset: 0; background: radial-gradient(60% 50% at 50% 45%, rgba(255, 236, 190, .7), transparent), var(--g-sand); }
+
+/* desktop (>= 768px): every centred column and modal gets a real desktop width; the page scrolls normally */
+@media (min-width: 768px) {
+  .parents-body, .dev-body { max-width: 900px; width: 100%; margin: 0 auto; }
+  .gate-body .gate-card { width: min(640px, 100%); }
+  .sheet.page { width: min(900px, calc(100% - 64px)); }
+  .dev-tabs { max-width: 900px; }
+  .dev .dev-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dev .dev-body > p, .dev .dev-body > .dev-prompt, .dev .dev-body > .dev-kid { grid-column: 1 / -1; }
+}
+.dev-count { background: rgba(232, 137, 43, .16); font-weight: 700; white-space: nowrap; }
+.dev-err.old { opacity: .72; }
+.dev-prompt { padding: 16px; display: grid; gap: 10px; }
+.dev-prompt textarea { width: 100%; font: 14px/1.5 ui-monospace, Consolas, monospace; border-radius: 12px; border: 1px solid rgba(107, 90, 72, .2); background: rgba(255, 255, 255, .85); padding: 10px 12px; resize: vertical; text-align: left; }
+.dev-tabs { flex-wrap: wrap; justify-content: center; }
+
+/* «بيتنا»: the family photo melts into a soft lavender page, the four children's cards sit over its lower edge */
+.parents:has(.our-home) { background: linear-gradient(180deg, #EEE7F8 0%, #F6F1FA 38%, #FBF6EE 100%); }
+.our-home { position: relative; display: grid; justify-items: center; }
+.our-banner { position: relative; width: 100%; height: clamp(230px, 34vw, 330px); overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 12%, black 60%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, black 12%, black 60%, transparent 100%); }
+.our-banner img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; filter: saturate(.92) brightness(1.03);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 12%, black 88%, transparent 100%); mask-image: linear-gradient(to right, transparent 0, black 12%, black 88%, transparent 100%); }
+.our-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(196, 176, 232, .22), rgba(238, 231, 248, .35)); mix-blend-mode: soft-light; pointer-events: none; }
+.our-kids { position: relative; margin-top: clamp(-90px, -6vw, -30px); width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 768px) { .our-kids { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.our-kid { display: grid; justify-items: center; gap: 6px; padding: 14px 10px; text-align: center; background: rgba(255, 255, 255, .78);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(160, 140, 210, .25); box-shadow: 0 8px 24px rgba(110, 90, 160, .12); }
+.our-kid b { margin: 0; }
+.our-bar { width: 100%; height: 10px; border-radius: 999px; background: rgba(150, 130, 200, .18); overflow: hidden; display: block; }
+.our-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--ring, #8E7CC3), #F2B53A); }
+/* phones: the whole family picture at full width (all four children in view), still melting into the page */
+@media (max-width: 767px) { .our-banner { height: auto; } .our-banner img { height: auto; display: block; } }

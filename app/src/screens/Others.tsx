@@ -4,10 +4,11 @@ import { placeName, stationCount, subjectName, WORLDS, worldSkills } from '../li
 import { fmt, useNum } from '../lib/num';
 import { gpuName, guessTier, hasWebGL2, SETTINGS } from '../lib/tier';
 import type { WorldId } from '../lib/tokens';
-import { isMastered, masteredIn, useLearning } from '../data/learning';
+import { dayKey, isMastered, masteredIn, useLearning } from '../data/learning';
+import { imageUrl } from '../lib/family';
 import { lowSpace, mb, usePacks, worldBytes } from '../data/packs';
 import { CONTENT } from '../lib/content';
-import { useApp, useProfile } from '../state/store';
+import { useApp, useProfile, type Profile } from '../state/store';
 import { KassalaTown, TOWN_FAR, TOWN_FOG } from '../three/town/KassalaTown';
 import { Stage, stats, useTier } from '../three/Stage';
 import { IconBack, IconClose, IconStar } from '../ui/Icons';
@@ -116,10 +117,11 @@ export function Parents() {
     <div className="screen sand parents">
       <header className="guest-top">
         <button className="icon-btn" aria-label="رجوع" onClick={() => s.go('entry')}><IconBack /></button>
-        <h1 className="t-h1" style={{ margin: 0 }}>ركن الأهل</h1>
+        <h1 className="t-h1" style={{ margin: 0 }}>{s.family ? 'بيتنا' : 'ركن الأهل'}</h1>
         <span style={{ width: 56 }} />
       </header>
       <div className="scroll grow parents-body">
+        {s.family && <OurHome />}
         <section className="card pc">
           <h2 className="t-h2">وقت اللعب في اليوم</h2>
           <Seg label="وقت اللعب في اليوم" value={String(s.playLimit) as '0'} onChange={v => s.setPlayLimit(+v)} options={[['0', 'بلا حد'], ['20', '٢٠ دقيقة'], ['30', '٣٠ دقيقة'], ['45', '٤٥ دقيقة'], ['60', 'ساعة']] as ['0', string][]} />
@@ -195,6 +197,45 @@ export function Perf() {
         <p className="t-small soft">حدود هذه الفئة: <span className="ltr">{budget.fps}</span> إطارًا في الثانية، و<span className="ltr">{budget.calls}</span> أمر رسم. المصابيح: <span className="ltr">{fmt(lamps, 'latin')} / {fmt(zones.length, 'latin')}</span></p>
       </div>
     </div>
+  );
+}
+
+/** «بيتنا»: the private family corner (only when family mode is unlocked). The family photo (sealed, decrypted on this
+ *  device for this session only) melts into the page as a banner, and each of the four children has a progress card. */
+function OurHome() {
+  const family = useApp(st => st.family), key = useApp(st => st.familyKey);
+  const learners = useLearning(st => st.learners);
+  const num = useNum();
+  const [photo, setPhoto] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    if (family?.group && key) imageUrl(key, family.group).then(u => live && setPhoto(u)).catch(() => {});
+    return () => { live = false; };
+  }, [family, key]);
+  if (!family) return null;
+  const totalStations = WORLDS.reduce((a, w) => a + stationCount(w.id), 0);
+  return (
+    <section className="our-home" aria-label="بيتنا">
+      <div className="our-banner" aria-hidden>{photo && <img src={photo} alt="" />}</div>
+      <div className="our-kids">
+        {family.members.map(m => {
+          const me = learners[m.id];
+          const stations = WORLDS.reduce((a, w) => a + Math.min(masteredIn(me, w.id), stationCount(w.id)), 0);
+          const stars = WORLDS.reduce((a, w) => a + worldSkills(w.id).filter(k => isMastered(me?.skills[k.id])).length, 0);
+          const today = me?.days[dayKey()]?.lit ?? 0;
+          const pct = totalStations ? Math.round(stations / totalStations * 100) : 0;
+          return (
+            <article key={m.id} className="our-kid card" style={{ ['--ring' as string]: m.ring }}>
+              <Avatar profile={{ id: m.id, kind: 'family', gender: m.gender, name: m.name, avatar: '' } as Profile} size={76} />
+              <b className="t-h2">{m.name}</b>
+              <span className="our-bar" role="progressbar" aria-label={`تقدّم ${m.name}`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${Math.max(pct, 2)}%` }} /></span>
+              <span className="t-small">{num(stations)} من {num(totalStations)} محطة</span>
+              <span className="t-small soft"><IconStar size={18} style={{ color: 'var(--c-gold)', verticalAlign: '-3px' }} /> {num(stars)} · دروس اليوم {num(today)}</span>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

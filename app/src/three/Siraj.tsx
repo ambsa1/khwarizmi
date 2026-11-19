@@ -1,10 +1,10 @@
 // Siraj in 3D, built from rounded primitives. ~6k triangles, no external model file.
 // Lantern head with a bulb whose glow follows the child's progress, a face screen with 8 expressions,
-// copper capsule body with a Sudanese pattern band, floating hands, and the woven palm-frond passport satchel.
+// copper capsule body with a Sudanese pattern band, two jointed arms (shoulder -> hand, sleeves follow the outfit), and the woven palm-frond passport satchel.
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { COVERS_BODY, Outfit, type OutfitId } from './outfits';
+import { COVERS_BODY, Outfit, SLEEVE, type OutfitId } from './outfits';
 import { bandTexture, blobTexture, faceTexture, glowTexture, wovenTexture, type Face } from './textures';
 
 export type SirajAction = 'idle' | 'hop' | 'wave' | 'cheer' | 'think' | 'point' | 'sad' | 'sleepy' | 'celebrate' | 'look';
@@ -26,6 +26,7 @@ type Props = {
   outfit?: OutfitId;
 } & JSX.IntrinsicElements['group'];
 
+const SHOULDER_X = 0.4, SHOULDER_Y = 0.86;
 const COPPER = '#C9783F', COPPER_DARK = '#9C5A2C', CREAM = '#FFF4DE', BRASS = '#E2A43C';
 const STAMP_COLORS = ['#C98B7A', '#1F4E8C', '#E89A4B', '#2EC4C4', '#2E7D4F', '#C46A3C'];
 
@@ -34,8 +35,10 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
   const root = useRef<THREE.Group>(null!);
   const body = useRef<THREE.Group>(null!);
   const head = useRef<THREE.Group>(null!);
-  const handL = useRef<THREE.Mesh>(null!);
-  const handR = useRef<THREE.Mesh>(null!);
+  const armL = useRef<THREE.Group>(null!), armR = useRef<THREE.Group>(null!);
+  const upperL = useRef<THREE.Mesh>(null!), upperR = useRef<THREE.Mesh>(null!);
+  const handL = useRef<THREE.Mesh>(null!), handR = useRef<THREE.Mesh>(null!);
+  const hand = useRef({ lx: -0.5, ly: 0.42, rx: 0.5, ry: 0.42 });
   const bulb = useRef<THREE.MeshStandardMaterial>(null!);
   const halo = useRef<THREE.Sprite>(null!);
   const faceMat = useRef<THREE.MeshBasicMaterial>(null!);
@@ -53,6 +56,7 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
     woven: new THREE.MeshStandardMaterial({ map: wovenTexture(), roughness: 0.85 }),
     strap: new THREE.MeshStandardMaterial({ color: '#B07A3A', roughness: 0.8 }),
   }), []);
+  const sleeve = useMemo(() => { const c = SLEEVE[outfit]; return c ? new THREE.MeshStandardMaterial({ color: c, roughness: 0.8 }) : mats.copper; }, [outfit, mats]);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
@@ -60,9 +64,10 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
     if (since.current.action !== action || since.current.t < 0) since.current = { action, t };
     const held = t - since.current.t;
     // breathing + per-action body language
-    // a soft, continuous float (he hovers a little and drifts side to side), with his breathing on top
-    let bodyY = 0.06 + Math.sin(t * 1.4) * 0.06 + Math.sin(t * 2.2) * 0.015, bodyRotZ = Math.sin(t * 0.9) * 0.03, headRotZ = Math.sin(t * 1.1) * 0.04, headRotX = 0, headRotY = 0;
-    let lx = -0.62, ly = 0.55 + Math.sin(t * 2.2 + 1) * 0.04, rx = 0.62, ry = 0.55 + Math.sin(t * 2.2) * 0.04;
+    // calm breathing: a slow rise and fall of the chest, a faint sway, arms resting at his sides
+    const br = Math.sin(t * 1.5);
+    let bodyY = 0.015 + br * 0.012, bodyRotZ = Math.sin(t * 0.55) * 0.012, headRotZ = Math.sin(t * 0.7) * 0.025, headRotX = -br * 0.015, headRotY = 0;
+    let lx = -0.55, ly = 0.42 + br * 0.012, rx = 0.55, ry = 0.42 + br * 0.012;
     let face: Face = FACE_OF[action];
     switch (action) {
       case 'wave': ry = 1.35 + Math.sin(t * 10) * 0.08; rx = 0.72 + Math.sin(t * 10) * 0.12; headRotZ = -0.1; break;
@@ -86,10 +91,18 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
     head.current.rotation.z = THREE.MathUtils.damp(head.current.rotation.z, headRotZ, 8, dt);
     head.current.rotation.x = THREE.MathUtils.damp(head.current.rotation.x, headRotX, 8, dt);
     head.current.rotation.y = THREE.MathUtils.damp(head.current.rotation.y, headRotY, 6, dt);
-    handL.current.position.x = THREE.MathUtils.damp(handL.current.position.x, lx, 12, dt);
-    handL.current.position.y = THREE.MathUtils.damp(handL.current.position.y, ly, 12, dt);
-    handR.current.position.x = THREE.MathUtils.damp(handR.current.position.x, rx, 12, dt);
-    handR.current.position.y = THREE.MathUtils.damp(handR.current.position.y, ry, 12, dt);
+    body.current.scale.set(1 + br * 0.008, 1 + br * 0.012, 1 + br * 0.008);
+    // arms: each hand eases to its target, the arm hangs from the shoulder to the hand (never longer than its reach)
+    const H = hand.current;
+    H.lx = THREE.MathUtils.damp(H.lx, lx, 9, dt); H.ly = THREE.MathUtils.damp(H.ly, ly, 9, dt);
+    H.rx = THREE.MathUtils.damp(H.rx, rx, 9, dt); H.ry = THREE.MathUtils.damp(H.ry, ry, 9, dt);
+    const reach = (arm: THREE.Group, upper: THREE.Mesh, hnd: THREE.Mesh, sx: number, hx: number, hy: number) => {
+      const dx = hx - sx, dy = hy - SHOULDER_Y, len = THREE.MathUtils.clamp(Math.hypot(dx, dy), 0.28, 0.72);
+      arm.rotation.z = Math.atan2(dx, -dy);
+      upper.scale.y = len; upper.position.y = -len / 2; hnd.position.y = -len - 0.02;
+    };
+    reach(armL.current, upperL.current, handL.current, -SHOULDER_X, H.lx, H.ly);
+    reach(armR.current, upperR.current, handR.current, SHOULDER_X, H.rx, H.ry);
     // blink every few seconds
     let blink = false;
     if (t > blinkAt.current) { blink = true; if (t > blinkAt.current + 0.12) blinkAt.current = t + 2.5 + Math.random() * 3; }
@@ -114,8 +127,8 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
       )}
       <group ref={body}>
         {/* feet */}
-        <mesh material={mats.copperDark} position={[-0.2, 0.09, 0.05]} scale={[1, 0.6, 1.25]}><sphereGeometry args={[0.15, 16, 12]} /></mesh>
-        <mesh material={mats.copperDark} position={[0.2, 0.09, 0.05]} scale={[1, 0.6, 1.25]}><sphereGeometry args={[0.15, 16, 12]} /></mesh>
+        <mesh material={mats.copperDark} position={[-0.2, 0.09, 0.05]} scale={[1, 0.6, 1.25]}><sphereGeometry args={[0.15, 12, 8]} /></mesh>
+        <mesh material={mats.copperDark} position={[0.2, 0.09, 0.05]} scale={[1, 0.6, 1.25]}><sphereGeometry args={[0.15, 12, 8]} /></mesh>
         {/* body */}
         <mesh material={mats.copper} position-y={0.62}><capsuleGeometry args={[0.38, 0.3, 8, 20]} /></mesh>
         {!covered && <mesh material={mats.band} position-y={0.6}><cylinderGeometry args={[0.395, 0.395, 0.13, 28, 1, true]} /></mesh>}
@@ -133,9 +146,14 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
             </mesh>
           ))}
         </group>
-        {/* floating hands */}
-        <mesh ref={handL} material={mats.cream} position={[-0.62, 0.55, 0.05]}><sphereGeometry args={[0.12, 16, 12]} /></mesh>
-        <mesh ref={handR} material={mats.cream} position={[0.62, 0.55, 0.05]}><sphereGeometry args={[0.12, 16, 12]} /></mesh>
+        {/* arms: a rounded shoulder, a sleeve from the shoulder down to the hand, and the hand */}
+        {([[-1, armL, upperL, handL], [1, armR, upperR, handR]] as const).map(([sd, a, up, h]) => (
+          <group key={sd} ref={a} position={[sd * SHOULDER_X, SHOULDER_Y, 0.02]}>
+            <mesh material={sleeve}><sphereGeometry args={[0.095, 10, 8]} /></mesh>
+            <mesh ref={up} material={sleeve}><cylinderGeometry args={[0.07, 0.082, 1, 10, 1, true]} /></mesh>
+            <mesh ref={h} material={mats.cream}><sphereGeometry args={[0.105, 12, 10]} /></mesh>
+          </group>
+        ))}
         {/* head: rounded lantern housing with face screen, glass cap and bulb */}
         <group ref={head} position-y={1.25}>
           <mesh material={mats.cream} scale={[1.15, 0.92, 0.95]}><sphereGeometry args={[0.42, 28, 20]} /></mesh>
@@ -144,17 +162,17 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
             <meshBasicMaterial ref={faceMat} map={faceTexture('idle')} toneMapped={false} />
           </mesh>
           {/* brass bezel framing the face screen */}
-          <mesh material={mats.brass} position={[0, -0.01, 0.4]} scale={[1, 0.82, 1]}><torusGeometry args={[0.305, 0.03, 8, 36]} /></mesh>
+          <mesh material={mats.brass} position={[0, -0.01, 0.4]} scale={[1, 0.82, 1]}><torusGeometry args={[0.305, 0.03, 6, 28]} /></mesh>
           {/* ears = little brass bolts */}
           <mesh material={mats.brass} position={[-0.48, 0, 0]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.07, 0.07, 0.06, 14]} /></mesh>
           <mesh material={mats.brass} position={[0.48, 0, 0]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.07, 0.07, 0.06, 14]} /></mesh>
           {/* lantern cap */}
           <mesh material={mats.brass} position-y={0.37}><cylinderGeometry args={[0.16, 0.2, 0.06, 20]} /></mesh>
           <mesh position-y={0.52}>
-            <sphereGeometry args={[0.11, 20, 16]} />
+            <sphereGeometry args={[0.11, 14, 10]} />
             <meshStandardMaterial ref={bulb} color="#FFE7A0" emissive="#FFB627" emissiveIntensity={1.5} toneMapped={false} />
           </mesh>
-          <mesh material={mats.glass} position-y={0.53}><sphereGeometry args={[0.17, 20, 16]} /></mesh>
+          <mesh material={mats.glass} position-y={0.53}><sphereGeometry args={[0.17, 14, 10]} /></mesh>
           <mesh material={mats.brass} position-y={0.71}><coneGeometry args={[0.1, 0.1, 16]} /></mesh>
           <mesh material={mats.brass} position-y={0.79}><torusGeometry args={[0.04, 0.012, 6, 16]} /></mesh>
           <sprite ref={halo} position-y={0.53} scale={1.2}>

@@ -114,6 +114,63 @@ function LegacyLink() {
 }
 
 // ---------- developer ----------
+type ErrItem = { at: string; device: string; place: string; msg: string; version: string; src: string };
+type ErrGroup = { key: string; place: string; msg: string; count: number; at: string; version: string; devices: string[] };
+/** "1.10.2" vs "1.9.0" (numbers, part by part) */
+export function cmpVersion(a: string, b: string) {
+  const x = String(a).split(/[.-]/).map(n => parseInt(n, 10) || 0), y = String(b).split(/[.-]/).map(n => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? 0) - (y[i] ?? 0); if (d) return Math.sign(d); }
+  return 0;
+}
+/** identical reports become one card: how many times, the latest time and version, and which devices */
+function groupErrors(list: ErrItem[]): ErrGroup[] {
+  const m = new Map<string, ErrGroup>();
+  for (const e of list) {
+    const key = `${e.place}|${e.msg.replace(/\d+x\d+$/, '')}`;
+    const g = m.get(key);
+    if (!g) { m.set(key, { key, place: e.place, msg: e.msg, count: 1, at: e.at, version: e.version, devices: [e.device] }); continue; }
+    g.count++;
+    if (e.at > g.at) { g.at = e.at; g.msg = e.msg; }
+    if (cmpVersion(e.version, g.version) > 0) g.version = e.version;
+    if (!g.devices.includes(e.device)) g.devices.push(e.device);
+  }
+  return [...m.values()].sort((a, b) => b.at.localeCompare(a.at));
+}
+/** a ready-to-paste English prompt for Claude Code with every active issue (updates live with the list) */
+function claudePrompt(groups: ErrGroup[]) {
+  if (!groups.length) return `Khwarizmi app v${__APP_VERSION__}: no active issues reported. Nothing to fix.`;
+  const lines = groups.map((g, i) => `${i + 1}. [${g.place}] ${g.msg}\n   - seen ${g.count}x, last ${g.at}, version ${g.version}\n   - devices: ${g.devices.join('; ')}`);
+  return [
+    `Fix the following active issues reported by devices running the Khwarizmi app (current version ${__APP_VERSION__}).`,
+    `Identical reports are merged; issues from older versions are excluded.`,
+    ``,
+    ...lines,
+    ``,
+    `For each issue: find the root cause in the code, fix it, and add or update a check in tools/check.mjs so it cannot come back.`,
+    `Layout issues include the screen name, the element (tag.class) and the viewport size: reproduce at that size.`,
+    `Then run npm run release and deploy only if every check passes.`,
+  ].join('\n');
+}
+function ClaudePrompt({ groups }: { groups: ErrGroup[] }) {
+  const text = claudePrompt(groups);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => setCopied(false), [text]);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(text); } catch {
+      const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+    }
+    setCopied(true);
+  };
+  return (
+    <section className="card dev-prompt">
+      <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <b>طلب جاهز لـ Claude Code</b>
+        <button className="btn" onClick={() => void copy()}>{copied ? 'اتنسخ ✓' : 'انسخ الطلب'}</button>
+      </div>
+      <textarea className="ltr" dir="ltr" readOnly value={text} rows={Math.min(18, text.split('\n').length + 1)} aria-label="Claude Code prompt" onFocus={e => e.currentTarget.select()} />
+    </section>
+  );
+}
 const fmtTime = (iso: string | number | null) => (iso ? new Date(iso).toLocaleString('ar-SD', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 
 export function DevPage() {
@@ -147,7 +204,7 @@ export function DevPage() {
 }
 
 function DevPanel({ token, note, onExit }: { token: string | null; note: string | null; onExit: () => void }) {
-  const [tab, setTab] = useState<'kids' | 'errors'>('kids');
+  const [tab, setTab] = useState<'kids' | 'errors' | 'archive'>('kids');
   const [cloud, setCloud] = useState<{ progress: ProgressRow[]; errors: CloudError[] } | null>(null);
   const [local, setLocal] = useState<ErrorEntry[]>([]);
   const family = useApp(s => s.family), learners = useLearning(s => s.learners);
@@ -161,10 +218,12 @@ function DevPanel({ token, note, onExit }: { token: string | null; note: string 
       : Object.keys(learners).filter(id => /^m\d$/.test(id)).map(id => ({ id, device: 'هذا الجهاز', at: null as string | null, s: summarize(learners[id]) }));
     return rows.map(r => ({ ...r, name: names.get(r.id) ?? `الطفل ${r.id.slice(1)}` })).sort((a, b) => a.name.localeCompare(b.name, 'ar'));
   }, [cloud, family, learners]);
-  const errors = [
+  const all = [
     ...(cloud?.errors ?? []).map(e => ({ at: e.at, device: e.device, place: e.place, msg: e.message, version: e.version, src: 'سحابة' })),
     ...local.map(e => ({ at: new Date(e.t).toISOString(), device: 'هذا الجهاز', place: e.where, msg: e.msg, version: __APP_VERSION__, src: 'محلي' })),
-  ].sort((a, b) => b.at.localeCompare(a.at));
+  ];
+  const groups = groupErrors(all);
+  const active = groups.filter(g => cmpVersion(g.version, __APP_VERSION__) >= 0), archived = groups.filter(g => cmpVersion(g.version, __APP_VERSION__) < 0);
   return (
     <div className="screen sand gate dev">
       <header className="topbar">
@@ -174,7 +233,8 @@ function DevPanel({ token, note, onExit }: { token: string | null; note: string 
       </header>
       <div className="seg dev-tabs" role="tablist">
         <button role="tab" aria-selected={tab === 'kids'} className={tab === 'kids' ? 'on' : ''} onClick={() => setTab('kids')}>متابعة الأبناء</button>
-        <button role="tab" aria-selected={tab === 'errors'} className={tab === 'errors' ? 'on' : ''} onClick={() => setTab('errors')}>أخطاء الأجهزة ({num(errors.length)})</button>
+        <button role="tab" aria-selected={tab === 'errors'} className={tab === 'errors' ? 'on' : ''} onClick={() => setTab('errors')}>الأخطاء الحالية ({num(active.length)})</button>
+        <button role="tab" aria-selected={tab === 'archive'} className={tab === 'archive' ? 'on' : ''} onClick={() => setTab('archive')}>المحلولة والأرشيف ({num(archived.length)})</button>
       </div>
       <div className="scroll grow dev-body">
         <p className="t-small soft">{cloudOn() ? (token ? 'متصل بالسحابة كمطوّر.' : note ?? 'غير متصل بالسحابة.') : 'السحابة لسه ما اتربطت: البيانات من هذا الجهاز فقط.'}{!family && ' افتح وضع الأسرة في هذا الجهاز لتظهر الأسماء.'}</p>
@@ -193,15 +253,20 @@ function DevPanel({ token, note, onExit }: { token: string | null; note: string 
               <ul className="t-small">{k.s.stumbles.map((t, i) => <li key={i}>{t.skill}: {num(t.misses)} مرة ما زبطت من {num(t.attempts)} محاولة</li>)}</ul>
             </>}
           </section>
-        )) : errors.map((e, i) => (
-          <section key={i} className="card dev-err">
-            <b>{explainError(e.msg)}</b>
-            <span className="t-small soft">{fmtTime(e.at)} · {e.device} · الإصدار <span className="ltr">{e.version}</span> · {e.src}</span>
-            <code className="ltr t-small">{e.place}: {e.msg}</code>
+        )) : (tab === 'errors' ? active : archived).map(g => (
+          <section key={g.key} className={'card dev-err' + (tab === 'archive' ? ' old' : '')}>
+            <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <b>{explainError(g.msg)}</b>
+              <span className="chip dev-count">تكرّر {num(g.count)} {g.count === 1 ? 'مرة' : 'مرات'}</span>
+            </div>
+            <span className="t-small soft">آخر مرة: {fmtTime(g.at)} · الإصدار <span className="ltr">{g.version}</span> · {g.devices.join('، ')}</span>
+            <code className="ltr t-small">{g.place}: {g.msg}</code>
           </section>
         ))}
         {tab === 'kids' && !kids.length && <p>لا توجد بيانات للأبناء بعد.</p>}
-        {tab === 'errors' && !errors.length && <p>لا توجد أخطاء مسجّلة. ممتاز!</p>}
+        {tab === 'errors' && !active.length && <p>لا توجد أخطاء في هذا الإصدار. ممتاز!</p>}
+        {tab === 'archive' && !archived.length && <p>الأرشيف فاضي.</p>}
+        {tab === 'errors' && <ClaudePrompt groups={active} />}
         <p className="t-small soft">{CLOUD.url ? <span className="ltr">{CLOUD.url}</span> : null}</p>
       </div>
     </div>

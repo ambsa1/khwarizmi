@@ -285,6 +285,12 @@ if (existsSync(devFile)) {
   await page.locator('#dev-code').fill(readFileSync(devFile, 'utf8').trim()); await page.getByRole('button', { name: 'ادخل' }).click();
   const opened = await page.waitForSelector('.dev .dev-tabs', { timeout: 15000 }).then(() => true).catch(() => false);
   ok('developer gate: hidden gesture, wrong code refused, right code opens the panel', refused.includes('ما اتطابق') && opened, refused);
+  // active issues: grouped cards, an archive tab for older versions, and the copyable Claude Code prompt
+  await page.getByRole('tab', { name: /الأخطاء الحالية/ }).click(); await page.waitForTimeout(800);
+  const prompt = await page.locator('.dev-prompt textarea').inputValue().catch(() => '');
+  const archiveTab = await page.getByRole('tab', { name: /الأرشيف/ }).count();
+  const devWide = await page.locator('.dev-body').evaluate(e => e.getBoundingClientRect().width);
+  ok('developer panel: active / archive tabs, live Claude Code prompt, desktop width', prompt.includes('Khwarizmi') && archiveTab === 1 && devWide > 800, `prompt ${prompt.length} chars, body ${Math.round(devWide)}px`);
   await page.setViewportSize({ width: 360, height: 800 });
 }
 
@@ -346,6 +352,15 @@ if (existsSync(codeFile)) {
   ok('reopened app: family closed, asks the personal code directly, then shows the four', closed && asksPin && back && await again.locator('.who-card').count() === 4);
   const stored = await again.evaluate(() => JSON.stringify(localStorage));
   ok('neither the activation word, the personal code nor the open key is stored', !stored.includes(word) && !stored.includes('2468') && !stored.includes('familyKey'));
+  // inside family mode the parents' corner becomes «بيتنا»: the sealed family picture and a card for each of the four
+  const lk = await again.locator('[aria-label^="ركن الأهل"]').first().boundingBox();
+  await again.mouse.move(lk.x + lk.width / 2, lk.y + lk.height / 2); await again.mouse.down(); await again.waitForTimeout(2400); await again.mouse.up();
+  await again.waitForSelector('.our-kid', { timeout: 10000 }).catch(() => null); await again.waitForTimeout(1500);
+  const homeTitle = await again.locator('.parents h1').innerText().catch(() => '');
+  const kidCards = await again.locator('.our-kid').count();
+  const banner = await again.locator('.our-banner img').evaluateAll(els => els.filter(e => e.complete && e.naturalWidth > 0).length);
+  const homeOverflow = await again.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  ok('family mode: the parents corner is «بيتنا» with the family picture and four children cards', homeTitle === 'بيتنا' && kidCards === 4 && banner === 1 && homeOverflow <= 0, `title ${homeTitle}, cards ${kidCards}, picture ${banner}, overflow ${homeOverflow}`);
   await again.close();
   const ctx4 = await browser.newContext({ viewport: { width: 360, height: 800 }, locale: 'ar' });
   await ctx4.addInitScript(lv => { if (!localStorage.getItem('khwarizmi.v1')) localStorage.setItem('khwarizmi.v1', JSON.stringify({ v: 2, players: [{ id: 'old1', name: 'لاعب قديم', age: 9, gender: 'b', progress: Object.fromEntries(lv.map(k => [k, 3])) }] })); }, levels);

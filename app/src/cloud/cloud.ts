@@ -117,6 +117,8 @@ export async function devFetch(token: string) {
 /** a technical error explained in simple Arabic */
 export function explainError(msg: string): string {
   const m = msg.toLowerCase();
+  if (m.startsWith('layout: horizontal')) return 'مشكلة تنسيق: الصفحة أعرض من الشاشة في هذا المقاس، فيظهر تمرير جانبي.';
+  if (m.startsWith('layout: clipped')) return 'مشكلة تنسيق: نص مقصوص داخل صندوقه في هذا المقاس.';
   if (m.includes('webgl') && m.includes('lost')) return 'الرسم ثلاثي الأبعاد توقّف مؤقتًا (ذاكرة الرسوميات امتلأت أو التطبيق رجع من الخلفية). التطبيق يعيد الرسم تلقائيًا.';
   if (m.includes('webgl')) return 'الجهاز ما قدر يشغّل الرسم ثلاثي الأبعاد (متصفح قديم أو رسوميات ضعيفة). يظهر للطفل صورة بدل العالم.';
   if (m.includes('failed to fetch') || m.includes('network') || m.includes('load failed')) return 'انقطع الإنترنت أثناء تحميل ملف. يُعاد المحاولة لما يرجع الاتصال.';

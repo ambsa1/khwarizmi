@@ -12,17 +12,19 @@ import type { World } from './world';
 export type ReviveUniforms = {
   uField: { value: THREE.DataTexture }; uBox: { value: THREE.Vector4 };
   uProg: { value: number }; uAll: { value: number }; uTime: { value: number };
+  /** the clear corridor around Siraj: segment from Siraj (xy) toward the camera (zw), and its radius */
+  uClear: { value: THREE.Vector4 }; uClearR: { value: number };
 };
 
 export function makeReviveUniforms(w: World): ReviveUniforms {
   const { x0, x1, z0, z1 } = w.bounds;
   const tex = new THREE.DataTexture(w.fieldData, w.field.w, w.field.h, THREE.RGFormat, THREE.FloatType);
   tex.minFilter = tex.magFilter = THREE.NearestFilter; tex.needsUpdate = true;
-  return { uField: { value: tex }, uBox: { value: new THREE.Vector4(x0, z0, x1, z1) }, uProg: { value: -50 }, uAll: { value: 0 }, uTime: { value: 0 } };
+  return { uField: { value: tex }, uBox: { value: new THREE.Vector4(x0, z0, x1, z1) }, uProg: { value: -50 }, uAll: { value: 0 }, uTime: { value: 0 }, uClear: { value: new THREE.Vector4(1e5, 1e5, 1e5, 1e5) }, uClearR: { value: 7 } };
 }
 
 export const REVIVE_GLSL = /* glsl */ `
-uniform sampler2D uField; uniform vec4 uBox; uniform float uProg; uniform float uAll; uniform float uTime;
+uniform sampler2D uField; uniform vec4 uBox; uniform float uProg; uniform float uAll; uniform float uTime; uniform vec4 uClear; uniform float uClearR;
 vec2 rvField(vec2 xz) { return texture2D(uField, (xz - uBox.xy) / (uBox.zw - uBox.xy)).rg; }
 // 0 = desert, 1 = alive. Near the street: alive once the front has passed (soft band). The living corridor fades out
 // sideways; at the end of the world (uAll) the whole town comes alive.
@@ -30,10 +32,12 @@ float revive(vec2 xz) {
   vec2 f = rvField(xz);
   return max(smoothstep(-22.0, 0.0, uProg - f.r) * (1.0 - smoothstep(55.0, 120.0, f.g)), uAll);
 }
+// distance from the corridor between Siraj and the camera (trees there step aside so he is never hidden)
+float rvSeg(vec2 p) { vec2 a = uClear.xy, ab = uClear.zw - uClear.xy; float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); return length(p - a - ab * h); }
 float rvHash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 `;
 
-export type ReviveOpts = { grow?: boolean; build?: boolean; sway?: number; spin?: number; green?: boolean | 'soft'; appear?: boolean; detail?: THREE.Texture; detailBox?: THREE.Vector4 };
+export type ReviveOpts = { clear?: boolean; grow?: boolean; build?: boolean; sway?: number; spin?: number; green?: boolean | 'soft'; appear?: boolean; detail?: THREE.Texture; detailBox?: THREE.Vector4 };
 
 /** Adds the revival behaviour to a material (Lambert meshes, instanced meshes and lines). */
 export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o: ReviveOpts = {}): M {
@@ -56,7 +60,10 @@ export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o
         ${o.spin ? `float rvSp = uTime * ${o.spin.toFixed(3)} * smoothstep(0.5, 1.0, revive(rvO.xz)); float rvC = cos(rvSp), rvS = sin(rvSp);
           transformed.yz = vec2(rvC * transformed.y - rvS * transformed.z, rvS * transformed.y + rvC * transformed.z);` : ''}
         ${o.sway ? `transformed.x += sin(uTime * 1.6 + rvO.x * 0.7 + rvO.z * 0.3) * ${o.sway.toFixed(3)} * max(transformed.y, 0.0);
-          transformed.z += cos(uTime * 1.3 + rvO.z * 0.6) * ${(o.sway * 0.6).toFixed(3)} * max(transformed.y, 0.0);` : ''}`)
+          transformed.z += cos(uTime * 1.3 + rvO.z * 0.6) * ${(o.sway * 0.6).toFixed(3)} * max(transformed.y, 0.0);` : ''}
+        ${o.clear ? `#ifdef USE_INSTANCING
+          transformed *= max(smoothstep(uClearR * 0.45, uClearR, rvSeg(rvO.xz)), 0.0005);
+        #endif` : ''}`)
       .replace('#include <project_vertex>', `#include <project_vertex>
         vec4 rvP = vec4(transformed, 1.0);
         #ifdef USE_INSTANCING
@@ -76,7 +83,7 @@ export function revivable<M extends THREE.Material>(mat: M, u: ReviveUniforms, o
         vec3 rvDust = mix(vec3(rvL) * vec3(1.02, 0.95, 0.82), vec3(0.88, 0.78, 0.60), 0.62);   // warm golden-sand mist
         diffuseColor.rgb = mix(rvDust, diffuseColor.rgb, rvA);`);
   };
-  mat.customProgramCacheKey = () => `revive-${o.grow ? 1 : 0}${o.build ? 1 : 0}${o.appear ? 1 : 0}${o.green === 'soft' ? 2 : o.green ? 1 : 0}${o.detail ? 1 : 0}-${o.sway ?? 0}-${o.spin ?? 0}`;
+  mat.customProgramCacheKey = () => `revive-${o.clear ? 'c' : ''}${o.grow ? 1 : 0}${o.build ? 1 : 0}${o.appear ? 1 : 0}${o.green === 'soft' ? 2 : o.green ? 1 : 0}${o.detail ? 1 : 0}-${o.sway ?? 0}-${o.spin ?? 0}`;
   return mat;
 }
 

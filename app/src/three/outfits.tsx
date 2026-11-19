@@ -23,6 +23,8 @@ export const outfitFor = (world?: string): OutfitId => (world && OUTFIT_OF_WORLD
 
 /** Does the outfit hide the copper body (so the body band and chest plate are not drawn)? */
 export const COVERS_BODY: Record<OutfitId, boolean> = { none: false, east: true, nile: true };
+/** sleeve colour for his arms in each outfit (null = his own copper) */
+export const SLEEVE: Record<OutfitId, string | null> = { none: null, east: '#2E2925', nile: '#F4F1E8' };
 
 // ---------- textures ----------
 let sideiriTex: THREE.CanvasTexture | null = null;

@@ -18,7 +18,7 @@ import {
   scaffoldGeometry, shadeTreeGeometry, shopGeometry, shrubGeometry, terrainGeometry, treeGeometry, usePalette, WALLS, waterGeometry, wireGeometry,
 } from './geom';
 import { BG, bridgeGeometry, KITS, steppedPyramid } from './kits';
-import { glowMaterial, lifeWaterMaterial, makeReviveUniforms, revivable, waterMaterial, type ReviveOpts, type ReviveUniforms } from './revive';
+import { glowMaterial, lifeWaterMaterial, makeReviveUniforms, revivable, REVIVE_GLSL, waterMaterial, type ReviveOpts, type ReviveUniforms } from './revive';
 import { useWorld, type World } from './world';
 
 export const TOWN_FOG: [string, number, number] = [PAL.fog, 280, 1300];
@@ -40,7 +40,7 @@ function useMat(u: ReviveUniforms, o: MatOpts = {}) {
   return useMemo(() => revivable(new THREE.MeshLambertMaterial({
     vertexColors: true, side: o.double ? THREE.DoubleSide : THREE.FrontSide,
     ...(o.offset ? { polygonOffset: true, polygonOffsetFactor: -o.offset, polygonOffsetUnits: -o.offset } : {}),
-  }), u, o), [u, o.grow, o.build, o.appear, o.sway, o.green, o.offset, o.double, o.detail]);
+  }), u, o), [u, o.grow, o.build, o.appear, o.sway, o.green, o.offset, o.double, o.detail, o.clear]);
 }
 const glowTex = () => {
   const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d')!;
@@ -81,8 +81,8 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
   const M = {
     ground: useMat(u, { green: w.tint ? 'soft' : true }), plain: useMat(u), river: useMat(u, { offset: 1 }), roads: useMat(u, { offset: 2 }),
     curb: useMat(u, { offset: 3 }), street: useMat(u, { offset: 4 }), rock: useMat(u),
-    tree: useMat(u, { grow: true, sway: 0.03 }), palm: useMat(u, { grow: true, sway: 0.05 }), grass: useMat(u, { grow: true, sway: 0.12, double: true }),
-    build: useMat(u, { build: true }), shrub: useMat(u, { grow: true, sway: 0.05 }), side: useMat(u, { offset: 2 }), alley: useMat(u, { offset: 3, appear: true }),
+    tree: useMat(u, { grow: true, sway: 0.03, clear: true }), palm: useMat(u, { grow: true, sway: 0.05, clear: true }), grass: useMat(u, { grow: true, sway: 0.12, double: true, clear: true }),
+    build: useMat(u, { build: true }), shrub: useMat(u, { grow: true, sway: 0.05, clear: true }), side: useMat(u, { offset: 2 }), alley: useMat(u, { offset: 3, appear: true }),
     rock0: useMat(u, { detail: details[0]?.t, detailBox: details[0]?.box }), rock1: useMat(u, { detail: details[1]?.t, detailBox: details[1]?.box }),
   };
   const wireMat = useMemo(() => revivable(new THREE.LineBasicMaterial({ color: '#2E2620' }), u, { appear: true }), [u]);
@@ -251,21 +251,27 @@ type Celebrate = { t: number; houseS: number };
 function DroneRig({ w, s, zoom, finale, riverUntil, cel }: { w: World; s: React.MutableRefObject<number>; zoom: React.MutableRefObject<number>; finale: boolean; riverUntil: number; cel: React.MutableRefObject<Celebrate> }) {
   const cam = useThree(st => st.camera) as THREE.PerspectiveCamera;
   const size = useThree(st => st.size);
-  const look = useMemo(() => new THREE.Vector3(), []), pos = useMemo(() => new THREE.Vector3(), []), first = useRef(true), lift = useRef(1);
+  const look = useMemo(() => new THREE.Vector3(), []), want = useMemo(() => new THREE.Vector3(), []), pos = useMemo(() => new THREE.Vector3(), []);
+  const first = useRef(true), lift = useRef(1), zCur = useRef(zoom.current), pitchCur = useRef(0);
   useFrame((_, dt) => {
+    dt = Math.min(dt, 0.05);                                  // a slow frame never turns into a jump
     const portrait = size.width / size.height < 0.9;
     const fov = portrait ? 60 : 44, half = THREE.MathUtils.degToRad(fov / 2);
     if (Math.abs(cam.fov - fov) > 0.1) { cam.fov = fov; cam.updateProjectionMatrix(); }
-    const p = w.at(s.current), py = w.ground(p.x, p.z) + 1.4;
+    const p = w.at(s.current), py = w.ground(p.x, p.z) + 2.6;   // Siraj's chest (he is drawn about twice as big)
     let dx = w.beacon.x - p.x, dz = w.beacon.z - p.z; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
     // along the Gash bank: turn ~30 degrees south so the river (filling from upstream) is in view with the summit
     const turn = (portrait ? 0.2 : 0.52) * (1 - THREE.MathUtils.smoothstep(s.current, riverUntil - 10, riverUntil + 50));
     if (turn > 0.001) { const c = Math.cos(turn), sn = Math.sin(turn); [dx, dz] = [dx * c - dz * sn, dx * sn + dz * c]; }
-    // world complete: the drone climbs high over the middle of the street to show the whole lit town under Taka
+    // world complete: the drone climbs high over the middle of the path to show the whole living world
     lift.current = THREE.MathUtils.damp(lift.current, finale ? 3.4 : 1, 0.9, dt);
-    const z = zoom.current * lift.current, climb = Math.max(py - 2, 0) * 0.5;
-    let back = (portrait ? 30 : 36) * z, up = (portrait ? 19 : 15) * z + climb;
-    // never inside or behind a granite tower: pull in and rise until the view is clear
+    // a finished station: the drone eases back and up a little to show it rising beside Siraj, then settles again
+    const c = cel.current; let bell = 0;
+    if (c.t >= 0) { c.t += dt; bell = THREE.MathUtils.smoothstep(c.t, 0, 1.4) * (1 - THREE.MathUtils.smoothstep(c.t, 3.6, 5.6)); if (c.t > 5.6) c.t = -1; }
+    zCur.current = THREE.MathUtils.damp(zCur.current, zoom.current, 4, dt);
+    const z = zCur.current * lift.current * (1 + 0.16 * bell), climb = Math.max(py - 2, 0) * 0.5;
+    let back = (portrait ? 30 : 36) * z, up = (portrait ? 19 : 15) * z + climb + bell * 3;
+    // never inside or behind a rock: pull in and rise until the view is clear
     for (let k = 0; k < 8; k++) {
       pos.set(p.x - dx * back, py + up, p.z - dz * back);
       let hit = pos.y < w.ground(pos.x, pos.z) + 5;
@@ -279,27 +285,39 @@ function DroneRig({ w, s, zoom, finale, riverUntil, cel }: { w: World; s: React.
     pos.y = Math.max(pos.y, w.ground(pos.x, pos.z) + 6);
     const hs = Math.hypot(w.beacon.x - pos.x, w.beacon.z - pos.z), angS = Math.atan2(w.beacon.y + 4 - pos.y, hs);
     const angP = Math.atan2(py - pos.y, Math.hypot(p.x - pos.x, p.z - pos.z));
-    let pitch = angS - 0.72 * half;                     // summit near the top edge
-    if ((angP - pitch) / half < -0.78) pitch = angP + 0.62 * half;   // never lose Siraj
-    if (first.current) { cam.position.copy(pos); first.current = false; } else cam.position.lerp(pos, 1 - Math.exp(-dt * 3.2));
-    look.set(cam.position.x + dx * Math.cos(pitch) * 50, cam.position.y + Math.sin(pitch) * 50, cam.position.z + dz * Math.cos(pitch) * 50);
-    // after a finished lesson: swing round from just ahead of the new house and look BACK along the street while the
-    // houses rise and the palms grow behind Siraj, then return to face the summit and the grey road ahead
-    const c = cel.current;
-    if (c.t >= 0) {
-      c.t += dt;
-      const k = THREE.MathUtils.smoothstep(c.t, 0, 1.1) * (1 - THREE.MathUtils.smoothstep(c.t, 4.6, 6.0));
-      if (c.t > 6) c.t = -1;
-      const a = w.at(c.houseS + 24), b = w.at(Math.max(c.houseS - 26, 0));
-      const side = (portrait ? 9 : 14);
-      const cp = new THREE.Vector3(a.x - a.tz * side, w.ground(a.x, a.z) + (portrait ? 26 : 22), a.z + a.tx * side);
-      const ct = new THREE.Vector3(b.x, w.ground(b.x, b.z) + 1, b.z);
-      cam.position.lerp(cp, k);
-      look.lerp(ct, k);
-      cam.lookAt(look);
-    } else cam.lookAt(look);
+    let pitch = angS - 0.72 * half;                     // finish landmark near the top edge
+    if ((angP - pitch) / half < -0.62) pitch = angP + 0.5 * half;    // Siraj always well inside the lower half
+    if (first.current) { cam.position.copy(pos); pitchCur.current = pitch; } else cam.position.lerp(pos, 1 - Math.exp(-dt * 2.2));
+    pitchCur.current = THREE.MathUtils.damp(pitchCur.current, pitch, 2.5, dt);
+    want.set(pos.x + dx * Math.cos(pitchCur.current) * 50, pos.y + Math.sin(pitchCur.current) * 50, pos.z + dz * Math.cos(pitchCur.current) * 50);
+    if (first.current) { look.copy(want); first.current = false; } else look.lerp(want, 1 - Math.exp(-dt * 2.8));
+    cam.lookAt(look);
   });
   return null;
+}
+
+/** The path from the start to Siraj glows warm gold and green, lighting up one station at a time as the front moves;
+ *  ahead of him it is a faint dotted guide. */
+function PathGlow({ w, u, at }: { w: World; u: ReviveUniforms; at: React.MutableRefObject<number> }) {
+  const uLit = useMemo(() => ({ value: at.current }), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useFrame(() => { uLit.value = at.current + 1.5; });
+  const geo = useMemo(() => ribbons(w.route.map(r => ({ w: Math.max(1.4, (w.path?.w ?? 5) * 0.42), points: r.points })), w.ground, 0.52, '#ffffff', 4), [w]);
+  const mat = useMemo(() => new THREE.ShaderMaterial({
+    uniforms: { ...(u as unknown as Record<string, THREE.IUniform>), uLit }, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6,
+    // the distance along the path is read per vertex (the ribbon is finely divided), so it interpolates smoothly
+    vertexShader: `${REVIVE_GLSL}
+      varying float vS; void main(){ vS = rvField(position.xz).r; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `${REVIVE_GLSL}
+      uniform float uLit; varying float vS;
+      void main(){
+        float lit = max(1.0 - smoothstep(uLit - 2.5, uLit + 0.5, vS), uAll);   // lit up to Siraj's feet
+        float wave = 0.85 + 0.15 * sin(vS * 0.2 - uTime * 2.2);
+        vec3 col = mix(vec3(0.50, 0.82, 0.28), vec3(1.0, 0.80, 0.30), 0.5 + 0.5 * sin(vS * 0.04)) * wave;
+        gl_FragColor = vec4(mix(vec3(1.0, 0.97, 0.9), col, lit), mix(0.2, 0.9, lit));
+      }`,
+  }), [u, uLit]);
+  return <mesh geometry={geo} material={mat} renderOrder={3} />;
 }
 
 /**
@@ -332,7 +350,7 @@ function ReviewRig({ w, cam: c }: { w: World; cam: number[] }) {
 /** Generic worlds: extra instanced layers (vegetation, buildings, boats), water cells, landmark models. */
 function Generic({ w, u, life, density }: { w: World; u: ReviveUniforms; life: THREE.ShaderMaterial; density: number }) {
   const mats = {
-    static: useMat(u), grow: useMat(u, { grow: true, sway: 0.03 }), build: useMat(u, { build: true }),
+    static: useMat(u, { clear: true }), grow: useMat(u, { grow: true, sway: 0.03, clear: true }), build: useMat(u, { build: true, clear: true }),
   };
   const layers = useMemo(() => (w.layers ?? []).map(L => {
     const items = L.items.filter((_, i) => density >= 1 || i % 2 === 0);
@@ -399,7 +417,7 @@ function KitStations({ w, u, mastered, pop }: { w: World; u: ReviveUniforms; mas
 }
 function KitSet({ w, u, mastered, kitId, pop }: { w: World; u: ReviveUniforms; mastered: number; kitId: string; pop: Pop }) {
   const kit = useMemo(() => KITS[kitId]?.(), [kitId]);
-  const mat = useMat(u), grow = useMat(u, { grow: true, sway: 0.03 }), spin = useMat(u, { spin: 0.9 });
+  const mat = useMat(u), grow = useMat(u, { grow: true, sway: 0.03, clear: true }), spin = useMat(u, { spin: 0.9 });
   const sets = useMemo(() => {
     const o = { plot: [] as THREE.Matrix4[], scaffold: [] as THREE.Matrix4[], built: [] as THREE.Matrix4[], extra: [] as THREE.Matrix4[], spin: [] as THREE.Matrix4[], popBase: null as THREE.Matrix4 | null };
     w.plots.forEach((p, i) => {
@@ -521,7 +539,7 @@ function Town({ w, mastered, partial, density, interactive, sirajAction, onSiraj
   const front = mastered > 0 ? w.plotS[mastered - 1] + 12 : -40;
   const gashLessons = w.plots.filter(p => p.zone === w.plots[0].zone).length;
   const fill = Math.min(mastered / gashLessons, 1);
-  const { scene } = useThree();
+  const { scene, camera } = useThree();
   useEffect(() => {
     if (!(scene.fog instanceof THREE.Fog)) return;
     const f = scene.fog, keep = [f.near, f.far, f.color.getHex()] as const;
@@ -550,6 +568,7 @@ function Town({ w, mastered, partial, density, interactive, sirajAction, onSiraj
     lastM.current = mastered;
   }, [mastered, done, focus, w]);
   useEffect(() => { Sound.ambient(w.id); return () => Sound.ambient(null); }, [w.id]);
+  const groundGlow = useMemo(() => new THREE.MeshBasicMaterial({ map: glowTex(), transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), []);
   // a lesson done inside the current station (not its last one): sparkles there, so every press shows on the land
   const [step, setStep] = useState<{ at: number; t0: number } | null>(null);
   const lastP = useRef(partial);
@@ -575,10 +594,13 @@ function Town({ w, mastered, partial, density, interactive, sirajAction, onSiraj
     life.uniforms.uLife.value = THREE.MathUtils.damp(life.uniforms.uLife.value, done || w.water?.kind === 'lake' ? 1 : Math.min(1, 0.15 + 0.85 * mastered / Math.max(total, 1)), 0.8, dt);
 
     const prev = sCur.current;
-    sCur.current = THREE.MathUtils.damp(sCur.current, target, 1.6, dt);
+    // he stays on his station; after a new station he steps forward at an even walking pace (eased at both ends)
+    const gap = target - sCur.current, step = Math.sign(gap) * Math.min(Math.abs(gap) * 1.6, 9) * Math.min(dt, 0.05);
+    sCur.current = Math.abs(step) >= Math.abs(gap) ? target : sCur.current + step;
     moving.current = Math.abs(sCur.current - target) > 0.5;
     const p = w.at(sCur.current);
     siraj.current.position.set(p.x, w.ground(p.x, p.z) + 0.45, p.z);
+    u.uClear.value.set(p.x, p.z, p.x + (camera.position.x - p.x) * 0.55, p.z + (camera.position.z - p.z) * 0.55);
     // walking: face along the street; waiting: turn toward the camera (which sits behind him, away from the summit)
     const face = moving.current && sCur.current !== prev ? Math.atan2(p.tx, p.tz) : Math.atan2(-(w.beacon.x - p.x), -(w.beacon.z - p.z));
     const r = siraj.current.rotation, diff = Math.atan2(Math.sin(face - r.y), Math.cos(face - r.y));
@@ -627,8 +649,10 @@ function Town({ w, mastered, partial, density, interactive, sirajAction, onSiraj
       <StationMarks w={w} mastered={mastered} partial={partial} />
       <Birds w={w} mastered={mastered} />
       {w.id === 'kassala' && <Beacon w={w} lit={done} />}
+      <PathGlow w={w} u={u} at={sCur} />
       <group ref={siraj} onClick={onSirajTap}>
-        <Siraj action={sirajAction} movingRef={moving} glow={total ? mastered / total : 0} stamps={0} scale={1.35} outfit={outfitFor(w.id)} />
+        <mesh rotation-x={-Math.PI / 2} position-y={-0.3} renderOrder={4} material={groundGlow}><planeGeometry args={[7.5, 7.5]} /></mesh>
+        <Siraj action={sirajAction} movingRef={moving} glow={total ? mastered / total : 0} stamps={0} scale={2.6} outfit={outfitFor(w.id)} />
       </group>
       {review ? <ReviewRig w={w} cam={review} /> : <DroneRig w={w} s={sCam} zoom={zoom} finale={done && focus == null} riverUntil={w.riverUntil ?? (w.id === 'kassala' ? w.plotSRoute[gashLessons - 1] ?? 0 : -999)} cel={cel} />}
     </group>
