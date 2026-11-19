@@ -17,7 +17,7 @@ import {
   lessonHouseGeometry, massifGeometry, mosqueGeometry, PAL, palmGeometry, plotGeometry, postGeometry, ribbons, riverGeometry,
   scaffoldGeometry, shadeTreeGeometry, shopGeometry, shrubGeometry, terrainGeometry, treeGeometry, usePalette, WALLS, waterGeometry, wireGeometry,
 } from './geom';
-import { BG, bridgeGeometry, KITS, steppedPyramid } from './kits';
+import { BG, bridgeGeometry, CIVIC, CIVIC_LIGHTS, CIVIC_OF_WORLD, KITS, steppedPyramid } from './kits';
 import { glowMaterial, lifeWaterMaterial, makeReviveUniforms, revivable, REVIVE_GLSL, waterMaterial, type ReviveOpts, type ReviveUniforms } from './revive';
 import { useWorld, type World } from './world';
 
@@ -61,6 +61,72 @@ function Instanced({ geo, mats, mat, colors }: { geo: THREE.BufferGeometry; mats
   return <instancedMesh ref={ref} args={[geo, mat, Math.max(mats.length, 1)]} frustumCulled={false} />;
 }
 
+/** Civic landmarks: one beside the last station of a district, on the far side of the path from the station, on dry
+ *  flat ground clear of every station and of the path. The small houses under each one are left out of the scene. */
+type Site = { kit: string; x: number; z: number; rot: number; s: number; r: number };
+/** landmark size per world (Suakin's island is small and its stations close together) */
+const CIVIC_SIZE: Record<string, { s: number; r: number; d: number[] }> = { kassala: { s: 1, r: 12, d: [19, 24] }, suakin: { s: 0.5, r: 6, d: [9, 11, 14, 18] } };
+const siteCache = new WeakMap<World, Site[]>();
+function civicSites(w: World): Site[] {
+  if (siteCache.has(w)) return siteCache.get(w)!;
+  const out: Site[] = [];
+  const level = w.water?.level ?? -1e9, end = w.streetLen[w.streetLen.length - 1];
+  const Z = CIVIC_SIZE[w.id] ?? CIVIC_SIZE.kassala, SITE_R = Z.r;
+  for (const c of CIVIC_OF_WORLD[w.id] ?? []) {
+    const idx = c.station ?? w.plots.reduce((a, p, i) => (p.zone === c.zone ? i : a), -1);
+    if (idx < 0 || idx >= w.plots.length) continue;
+    const pl = w.plots[idx], s0 = w.plotSRoute[idx];
+    let best: Site | null = null;
+    for (const off of [0, -8, 8, -16, 16, -24, 24, -32, 32]) {
+      const at = w.at(THREE.MathUtils.clamp(s0 + off, 0, end)), nx = -at.tz, nz = at.tx;
+      const plotSide = Math.sign((pl.x - at.x) * nx + (pl.z - at.z) * nz) || 1;
+      for (const side of [-plotSide, plotSide]) for (const D of Z.d) {
+        const x = at.x + nx * side * D, z = at.z + nz * side * D, g = w.ground(x, z);
+        if (g < level + 0.08 || Math.abs(g - w.ground(at.x, at.z)) > 3.5 * Z.s) continue;
+        // the whole footprint on dry land (a ring of points around the centre)
+        if ([0, 1, 2, 3, 4, 5, 6, 7].some(k => w.ground(x + Math.cos(k * 0.785) * SITE_R * 0.7, z + Math.sin(k * 0.785) * SITE_R * 0.7) < level + 0.05)) continue;
+        if (w.plots.some(q => Math.hypot(q.x - x, q.z - z) < SITE_R + 1)) continue;
+        if (out.some(o => Math.hypot(o.x - x, o.z - z) < SITE_R * 2.2)) continue;
+        let clear = true;
+        for (let k = -70; k <= 70 && clear; k += 4) { const r = w.at(THREE.MathUtils.clamp(s0 + off + k, 0, end)); if (Math.hypot(r.x - x, r.z - z) < SITE_R - 1) clear = false; }
+        if (!clear) continue;
+        best = { kit: c.kit, x, z, rot: Math.atan2(at.x - x, at.z - z), s: Z.s, r: SITE_R };
+        break;
+      }
+      if (best) break;
+    }
+    if (best) out.push(best);
+  }
+  siteCache.set(w, out);
+  return out;
+}
+const freeOfSites = (w: World) => { const S = civicSites(w); return S.length ? (x: number, z: number) => S.every(o => Math.hypot(o.x - x, o.z - z) > o.r) : () => true; };
+
+/** the landmarks themselves: they rise with the revival as their district is completed, then their lights come on */
+function Civic({ w, u }: { w: World; u: ReviveUniforms }) {
+  const mat = useMat(u, { build: true });
+  const sets = useMemo(() => {
+    const by = new Map<string, THREE.Matrix4[]>(), pts: number[] = [];
+    for (const o of civicSites(w)) {
+      const m = m4(o.x, w.ground(o.x, o.z), o.z, o.rot, o.s, o.s, o.s);
+      if (!by.has(o.kit)) by.set(o.kit, []);
+      by.get(o.kit)!.push(m);
+      for (const [lx, ly, lz] of CIVIC_LIGHTS[o.kit] ?? []) { const v = new THREE.Vector3(lx, ly, lz).applyMatrix4(m); pts.push(v.x, v.y, v.z); }
+    }
+    const lights = new THREE.BufferGeometry(); lights.setAttribute('position', new THREE.Float32BufferAttribute(pts.length ? pts : [0, -999, 0], 3));
+    return { kits: [...by.entries()].map(([k, ms]) => ({ geo: CIVIC[k](), ms })), lights };
+  }, [w]);
+  const glow = useMemo(() => glowMaterial(u, glowTex(), 3.4), [u]);
+  if (import.meta.env.DEV) (window as unknown as { __sites: unknown }).__sites = civicSites(w);
+  if (!sets.kits.length) return null;
+  return (
+    <group>
+      {sets.kits.map(k => <Instanced key={k.geo.uuid} geo={k.geo} mats={k.ms} mat={mat} />)}
+      <points geometry={sets.lights} material={glow} />
+    </group>
+  );
+}
+
 function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: THREE.ShaderMaterial; density: number }) {
   const g = useMemo(() => {
     usePalette(w.palette);
@@ -90,7 +156,8 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
   const lanterns = useMemo(() => { const b = new THREE.BufferGeometry(); const pts: number[] = [];
     for (const side of w.posts) for (const [x, z, r] of side) pts.push(x + Math.sin(r) * 0.9, w.ground(x, z) + 3.75, z + Math.cos(r) * 0.9);
     b.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)); return b; }, [w]);
-  const compounds = useMemo(() => w.compounds.filter((_, i) => density >= 1 || i % 2 === 0), [w, density]);
+  const free = useMemo(() => freeOfSites(w), [w]);
+  const compounds = useMemo(() => w.compounds.filter((c, i) => (density >= 1 || i % 2 === 0) && free(c[0], c[1])), [w, density, free]);
   const compoundMats = useMemo(() => compounds.map(([x, z, r, a, b, h]) => m4(x, w.ground(x, z), z, r, a, h * 1.6, b)), [compounds, w]);
   const windows = useMemo(() => { const b = new THREE.BufferGeometry(); const pts: number[] = [];
     compounds.forEach(([x, z, r, a, bb, h], i) => { if (i % 5 > 1) return;
@@ -98,11 +165,11 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
     b.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)); return b; }, [compounds, w]);
   const winGlow = useMemo(() => glowMaterial(u, glowTex(), 0.9), [u]);
   const compoundCols = useMemo(() => compounds.map((_, i) => new THREE.Color(WALLS[(i * 5 + 2) % WALLS.length])), [compounds]);
-  const shops = useMemo(() => w.shops.map(([x, z, r]) => m4(x, w.ground(x, z), z, r)), [w]);
-  const awnCols = useMemo(() => w.shops.map(s => new THREE.Color(AWNINGS[s[3] % AWNINGS.length])), [w]);
+  const shops = useMemo(() => w.shops.filter(([x, z]) => free(x, z)).map(([x, z, r]) => m4(x, w.ground(x, z), z, r)), [w, free]);
+  const awnCols = useMemo(() => w.shops.filter(([x, z]) => free(x, z)).map(s => new THREE.Color(AWNINGS[s[3] % AWNINGS.length])), [w, free]);
   const posts = useMemo(() => w.posts.flat().map(([x, z, r]) => m4(x, w.ground(x, z), z, r)), [w]);
   const jars = useMemo(() => w.jars.map(([x, z, r]) => m4(x, w.ground(x, z), z, r)), [w]);
-  const shade = useMemo(() => w.shadeTrees.filter((_, i) => density >= 1 || i % 3 === 0).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i * 1.7, s, s, s)), [w, density]);
+  const shade = useMemo(() => w.shadeTrees.filter((t, i) => (density >= 1 || i % 3 === 0) && free(t[0], t[1])).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i * 1.7, s, s, s)), [w, density]);
   const shrubList = useMemo(() => w.shrubs.filter((_, i) => density >= 1 || i % 3 === 0), [w, density]);
   const shrubMats = useMemo(() => shrubList.map(([x, z, s], i) => m4(x, w.ground(x, z), z, i, s, s, s)), [shrubList, w]);
   const shrubCols = useMemo(() => shrubList.map(([, , , b], i) => new THREE.Color(b ? BOUGAIN[i % 3] : (i % 2 ? '#4E8A3A' : '#6A9A45'))), [shrubList]);
@@ -111,13 +178,13 @@ function Static({ w, u, water, density }: { w: World; u: ReviveUniforms; water: 
     const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(i * 1.3, i * 2.1, i * 0.7));
     return new THREE.Matrix4().compose(new THREE.Vector3(x, w.ground(x, z) + s * 0.25, z), q, new THREE.Vector3(s, s * 0.7, s * 0.9));
   }), [w, density]);
-  const houses = useMemo(() => w.houses.filter((_, i) => keep(i)), [w, density]);
+  const houses = useMemo(() => w.houses.filter((h, i) => keep(i) && free(h[0], h[1])), [w, density, free]);
   const houseMats = useMemo(() => houses.map(([x, z, r, a, b, h]) => m4(x, w.ground(x, z), z, r, a, h, b)), [houses, w]);
   const houseCols = useMemo(() => houses.map((_, i) => new THREE.Color(WALLS[(i * 7) % WALLS.length])), [houses]);
   const trees = useMemo(() => w.trees.filter((_, i) => density >= 1 || i % 4 === 0).map(([x, z, s]) => m4(x, w.ground(x, z), z, s * 3, s, s, s)), [w, density]);
   const palms = useMemo(() => w.palms.map(([x, z, s, r]) => m4(x, w.ground(x, z), z, r, s, s, s)), [w]);
-  const yard = useMemo(() => w.yardTrees.filter((_, i) => density >= 1 || i % 3 === 0).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i * 2.3, s, s, s)), [w, density]);
-  const grass = useMemo(() => w.grass.filter((_, i) => (density >= 1 ? i % 2 === 0 : i % 8 === 0)).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i, s, s, s)), [w, density]);
+  const yard = useMemo(() => w.yardTrees.filter((t, i) => (density >= 1 || i % 3 === 0) && free(t[0], t[1])).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i * 2.3, s, s, s)), [w, density]);
+  const grass = useMemo(() => w.grass.filter((_, i) => (density >= 1 ? i % 2 === 0 : i % 12 === 0)).map(([x, z, s], i) => m4(x, w.ground(x, z), z, i, s, s, s)), [w, density]);
   const mq = w.landmarks.mosque;
   return (
     <group>
@@ -258,7 +325,7 @@ function DroneRig({ w, s, zoom, finale, riverUntil, cel }: { w: World; s: React.
     const portrait = size.width / size.height < 0.9;
     const fov = portrait ? 60 : 44, half = THREE.MathUtils.degToRad(fov / 2);
     if (Math.abs(cam.fov - fov) > 0.1) { cam.fov = fov; cam.updateProjectionMatrix(); }
-    const p = w.at(s.current), py = w.ground(p.x, p.z) + 2.6;   // Siraj's chest (he is drawn about twice as big)
+    const p = w.at(s.current), py = w.ground(p.x, p.z) + 3.2;   // Siraj's chest (he is drawn about 2.4 times as big)
     let dx = w.beacon.x - p.x, dz = w.beacon.z - p.z; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
     // along the Gash bank: turn ~30 degrees south so the river (filling from upstream) is in view with the summit
     const turn = (portrait ? 0.2 : 0.52) * (1 - THREE.MathUtils.smoothstep(s.current, riverUntil - 10, riverUntil + 50));
@@ -352,12 +419,13 @@ function Generic({ w, u, life, density }: { w: World; u: ReviveUniforms; life: T
   const mats = {
     static: useMat(u, { clear: true }), grow: useMat(u, { grow: true, sway: 0.03, clear: true }), build: useMat(u, { build: true, clear: true }),
   };
+  const free = useMemo(() => freeOfSites(w), [w]);
   const layers = useMemo(() => (w.layers ?? []).map(L => {
-    const items = L.items.filter((_, i) => density >= 1 || i % 2 === 0);
+    const items = L.items.filter((it, i) => (density >= 1 || i % 2 === 0) && free(it[0], it[1]));
     const geo = BG[L.kit]?.() ?? null;
     return { L, geo, mats: items.map(([x, z, r, s, sy]) => m4(x, w.ground(x, z), z, r ?? 0, s ?? 1, sy ?? s ?? 1, s ?? 1)),
       colors: L.colors ? items.map((_, i) => new THREE.Color(L.colors![i % L.colors!.length])) : undefined };
-  }), [w, density]);
+  }), [w, density, free]);
   // one water surface at the real water level; the real ground rises out of it, so the shore follows the land
   const waterGeo = useMemo(() => {
     const W = w.water; if (!W) return null;
@@ -649,10 +717,11 @@ function Town({ w, mastered, partial, density, interactive, sirajAction, onSiraj
       <StationMarks w={w} mastered={mastered} partial={partial} />
       <Birds w={w} mastered={mastered} />
       {w.id === 'kassala' && <Beacon w={w} lit={done} />}
+      <Civic w={w} u={u} />
       <PathGlow w={w} u={u} at={sCur} />
       <group ref={siraj} onClick={onSirajTap}>
-        <mesh rotation-x={-Math.PI / 2} position-y={-0.3} renderOrder={4} material={groundGlow}><planeGeometry args={[7.5, 7.5]} /></mesh>
-        <Siraj action={sirajAction} movingRef={moving} glow={total ? mastered / total : 0} stamps={0} scale={2.6} outfit={outfitFor(w.id)} />
+        <mesh rotation-x={-Math.PI / 2} position-y={-0.3} renderOrder={4} material={groundGlow}><planeGeometry args={[9.5, 9.5]} /></mesh>
+        <Siraj action={sirajAction} movingRef={moving} glow={total ? mastered / total : 0} stamps={0} scale={3.3} outfit={outfitFor(w.id)} />
       </group>
       {review ? <ReviewRig w={w} cam={review} /> : <DroneRig w={w} s={sCam} zoom={zoom} finale={done && focus == null} riverUntil={w.riverUntil ?? (w.id === 'kassala' ? w.plotSRoute[gashLessons - 1] ?? 0 : -999)} cel={cel} />}
     </group>

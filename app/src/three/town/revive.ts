@@ -20,7 +20,7 @@ export function makeReviveUniforms(w: World): ReviveUniforms {
   const { x0, x1, z0, z1 } = w.bounds;
   const tex = new THREE.DataTexture(w.fieldData, w.field.w, w.field.h, THREE.RGFormat, THREE.FloatType);
   tex.minFilter = tex.magFilter = THREE.NearestFilter; tex.needsUpdate = true;
-  return { uField: { value: tex }, uBox: { value: new THREE.Vector4(x0, z0, x1, z1) }, uProg: { value: -50 }, uAll: { value: 0 }, uTime: { value: 0 }, uClear: { value: new THREE.Vector4(1e5, 1e5, 1e5, 1e5) }, uClearR: { value: 7 } };
+  return { uField: { value: tex }, uBox: { value: new THREE.Vector4(x0, z0, x1, z1) }, uProg: { value: -50 }, uAll: { value: 0 }, uTime: { value: 0 }, uClear: { value: new THREE.Vector4(1e5, 1e5, 1e5, 1e5) }, uClearR: { value: 8.5 } };
 }
 
 export const REVIVE_GLSL = /* glsl */ `

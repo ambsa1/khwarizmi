@@ -200,3 +200,98 @@ export const BG: Record<string, () => THREE.BufferGeometry> = {
   boat: () => merge([paint(put(new THREE.CylinderGeometry(0.5, 0.25, 3.4, 8, 1, false, 0, Math.PI), 0, 0.15, 0, Math.PI / 2, 0, Math.PI), '#7A5A3C'),
     cyl(0.04, 0.05, 3.2, 0, 1.7, 0, '#6B4A2E', 5), (() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 3.2, 0, 0, 0.6, -1.6, 0, 0.6, 1.4], 3)); g.computeVertexNormals(); return paint(g, '#F4EFE4'); })()]),
 };
+
+// ---------- civic landmarks of the two cities (one per district, they rise when the district is completed) ----------
+// Low-poly on purpose (a few hundred triangles each): they replace whole clusters of small background houses, so the
+// scene stays inside the phone budget. Front faces +z (toward the path). Footprint about 14 x 14 units.
+const hemi = (r: number, x: number, y: number, z: number, c: string, seg = 10) => paint(put(new THREE.SphereGeometry(r, seg, 4, 0, Math.PI * 2, 0, Math.PI / 2), x, y, z), c);
+const cone = (r: number, h: number, x: number, y: number, z: number, c: string, seg = 8) => paint(put(new THREE.ConeGeometry(r, h, seg), x, y + h / 2, z), c);
+const crescent = (r: number, x: number, y: number, z: number, c: string) => paint(put(new THREE.TorusGeometry(r, r * 0.22, 4, 9, Math.PI * 1.25), x, y, z, 0, 0, Math.PI * 0.62), c);
+const tree = (x: number, z: number, s = 1, c = '#4F8A3A') => [cyl(0.18 * s, 0.24 * s, 1.6 * s, x, 0.8 * s, z, '#6B4A2E', 5), paint(put(new THREE.IcosahedronGeometry(1.3 * s, 0), x, 2.2 * s, z), c)];
+/** a minaret: square base, octagonal shaft, balcony, top stage, pointed cap */
+const minaretAt = (x: number, z: number, h: number, wall: string, cap: string) => [
+  box(1.8, 2.2, 1.8, x, 0, z, wall), cyl(0.6, 0.72, h, x, 2.2 + h / 2, z, wall, 8), cyl(1.0, 1.0, 0.3, x, 2.2 + h, z, cap, 8),
+  cyl(0.42, 0.5, 1.6, x, 3.2 + h, z, wall, 8), cone(0.5, 1.2, x, 4.0 + h, z, cap)];
+
+export const CIVIC: Record<string, () => THREE.BufferGeometry> = {
+  /** Kassala mosque: walled courtyard, prayer hall with a green dome, a tall minaret */
+  mosque: () => merge([
+    box(14, 1.4, 0.4, 0, 0, 6.8, '#EFE6D2'), box(0.4, 1.4, 13.6, -6.8, 0, 0, '#EFE6D2'), box(0.4, 1.4, 13.6, 6.8, 0, 0, '#EFE6D2'),
+    box(2.6, 2.4, 0.6, 0, 0, 6.8, '#D9C9A6'), box(1.4, 1.8, 0.1, 0, 0, 7.15, '#2E7D4F'),                // gate
+    box(10, 4.2, 6.5, 0, 0, -3.2, '#F6F0E2'), box(10.4, 0.4, 6.9, 0, 4.2, -3.2, '#E2D4B4'),           // prayer hall
+    ...[-3.5, -1.2, 1.2, 3.5].map(x => box(1.2, 2.2, 0.1, x, 0.6, 0.08, '#6B8FA8')),                    // arched windows
+    cyl(2.5, 2.7, 0.8, 0, 4.9, -3.2, '#E2D4B4', 10), hemi(2.5, 0, 5.3, -3.2, '#2E8B57'), cone(0.25, 1.0, 0, 7.8, -3.2, '#E2A43C', 6),
+    ...minaretAt(5.6, 4.6, 10, '#F6F0E2', '#2E8B57'),
+  ]),
+  /** Kassala hospital: a long white block with blue bands, a red crescent over the entrance canopy, an ambulance bay */
+  hospital: () => merge([
+    box(14, 6.0, 6.0, 0, 0, -2.5, '#F8F6F0'), box(5, 3.4, 4, -4.5, 0, 2.5, '#F1EEE6'),
+    ...[1.6, 3.8].map(y => box(14.1, 0.45, 6.1, 0, y, -2.5, '#3E7FC1')),                                 // window bands
+    box(4.4, 0.35, 3.0, 2.6, 2.8, 1.8, '#E9E4D8'), box(0.3, 2.8, 0.3, 1.0, 0, 3.1, '#D7D1C2'), box(0.3, 2.8, 0.3, 4.2, 0, 3.1, '#D7D1C2'),
+    box(2.2, 2.4, 0.1, 2.6, 0, 0.55, '#7FA9C9'),                                                           // glass doors
+    box(3.2, 3.2, 0.2, 2.6, 6.2, 0.5, '#FFFFFF'), crescent(1.05, 2.6, 7.8, 0.7, '#D32F2F'),                // emblem sign
+    box(3.6, 0.15, 3.6, -4.5, 3.4, 2.5, '#C9C2B4'), box(1.4, 0.15, 0.4, -4.5, 3.55, 2.5, '#D32F2F'),      // roof pad
+  ]),
+  /** Kassala market and school: a souq arcade with coloured awnings, and a school block with the flag */
+  market: () => merge([
+    box(13, 3.2, 4.0, 0, 0, -4.2, '#E8C9A0'), box(13.2, 0.3, 4.2, 0, 3.2, -4.2, '#C9A577'),
+    ...[-5, -2.5, 0, 2.5, 5].map((x, i) => paint(put(new THREE.BoxGeometry(2.2, 0.12, 1.8), x, 2.4, -1.4, 0.35, 0, 0), ['#C2416E', '#2F7FD8', '#1A7F50', '#E2A43C', '#D9643A'][i])),
+    ...[-5, -2.5, 0, 2.5, 5].map(x => box(1.6, 0.9, 1.0, x, 0, -1.2, '#B5895A')),                       // stalls
+    box(8, 3.6, 4.5, -2.5, 0, 4.5, '#F2E6CC'), box(8.2, 0.3, 4.7, -2.5, 3.6, 4.5, '#B5643A'),           // school block
+    ...[-5, -3.3, -1.6, 0.1].map(x => box(1.1, 1.2, 0.1, x, 1.4, 6.8, '#4E7FA8')),
+    cyl(0.08, 0.08, 7, 4.6, 3.5, 5.6, '#8A8A8A', 5),
+    box(2.4, 0.5, 0.06, 5.8, 6.4, 5.6, '#D21034'), box(2.4, 0.5, 0.06, 5.8, 5.9, 5.6, '#FFFFFF'), box(2.4, 0.5, 0.06, 5.8, 5.4, 5.6, '#111111'),
+    box(0.8, 1.5, 0.08, 4.95, 5.4, 5.62, '#007229'),                                                       // flag of Sudan
+  ]),
+  /** Kassala children's park: paved plaza, fountain, swings, a slide, benches and shade trees */
+  park: () => merge([
+    cyl(6.6, 6.6, 0.2, 0, 0.1, 0, '#D9C29A', 14), cyl(5.6, 5.6, 0.22, 0, 0.12, 0, '#6FA84A', 14),
+    cyl(1.8, 2.0, 0.6, 0, 0.4, 0, '#C9B48E', 10), cyl(1.5, 1.5, 0.1, 0, 0.72, 0, '#3E9AD0', 10), cyl(0.25, 0.3, 1.6, 0, 1.2, 0, '#C9B48E', 6),
+    box(0.15, 2.4, 0.15, 2.8, 0, -3.2, '#D9643A'), box(0.15, 2.4, 0.15, 5.0, 0, -3.2, '#D9643A'), box(2.4, 0.15, 0.15, 3.9, 2.4, -3.2, '#D9643A'),
+    box(0.5, 0.1, 0.4, 3.4, 0.7, -3.2, '#2F7FD8'), box(0.5, 0.1, 0.4, 4.4, 0.7, -3.2, '#E2A43C'),       // swings
+    paint(put(new THREE.BoxGeometry(0.9, 0.12, 3.6), -3.6, 1.2, -2.6, -0.6, 0, 0), '#E2A43C'), box(1.0, 2.2, 1.0, -3.6, 0, -4.4, '#C2416E'),  // slide
+    box(2.2, 0.5, 0.6, -3.8, 0, 3.6, '#8A5A3A'), box(2.2, 0.5, 0.6, 3.8, 0, 3.6, '#8A5A3A'),
+    ...tree(-5.2, 0.4), ...tree(5.4, 0.8, 1.1), ...tree(0.3, -5.4, 0.9),
+  ]),
+
+  /** Suakin: the coral-stone mosque, with its slim white minaret and small dome */
+  coralMosque: () => merge([
+    box(11, 4.0, 7.5, 0, 0, -2.0, '#EDE6D6'), box(11.3, 0.35, 7.8, 0, 4.0, -2.0, '#D8CDB6'),
+    ...[-3.6, -1.2, 1.2, 3.6].map(x => box(1.3, 2.6, 0.1, x, 0.2, 1.8, '#5C4632')),                    // arches
+    hemi(2.0, -1.5, 4.3, -2.5, '#F4F0E6'), ...minaretAt(4.3, 1.6, 9, '#F6F2EA', '#CDBF9F'),
+    box(12, 1.2, 0.35, 0, 0, 3.6, '#D8CDB6'),
+  ]),
+  /** Suakin port market: an arcade along the quay, wooden rawshans above, sacks and crates out front */
+  portMarket: () => merge([
+    box(14, 5.2, 5.0, 0, 0, -3.0, '#E8E0CC'), box(14.2, 0.3, 5.2, 0, 5.2, -3.0, '#CFC3A8'),
+    ...[-5.4, -2.7, 0, 2.7, 5.4].map(x => box(1.9, 2.8, 0.1, x, 0, -0.45, '#4E3A2A')),                // arcade arches
+    ...[-4, 0, 4].map(x => box(2.0, 1.4, 0.6, x, 3.2, -0.2, '#6B4A32')),                                // rawshans
+    box(13, 0.4, 3.0, 0, 0, 1.9, '#BDB3A0'),                                                               // quay paving
+    ...[-4.5, -3.6, 3.2, 4.4].map((x, i) => box(0.9, 0.7, 0.9, x, 0.4, 2.4, i % 2 ? '#B08A5A' : '#D9C49A')),
+  ]),
+  /** Suakin clinic: coral house with a green door, a red crescent sign and a shaded bench */
+  clinic: () => merge([
+    box(9, 4.2, 6.0, 0, 0, -2.0, '#F2ECDF'), box(9.3, 0.3, 6.3, 0, 4.2, -2.0, '#D8CDB6'),
+    box(1.6, 2.4, 0.1, 0, 0, 1.05, '#2E7D4F'), box(2.6, 2.6, 0.15, 0, 4.6, 0.9, '#FFFFFF'), crescent(0.85, 0, 5.9, 1.05, '#D32F2F'),
+    box(1.8, 1.2, 0.5, -3.0, 1.8, 1.25, '#6B4A32'), box(1.8, 1.2, 0.5, 3.0, 1.8, 1.25, '#6B4A32'),
+    box(4.6, 0.2, 2.0, 0, 2.7, 2.0, '#B08A5A'), box(3.2, 0.5, 0.6, 0, 0, 2.4, '#8A6A4A'),
+  ]),
+  /** Suakin arched coral building: two storeys of round arches (the restored merchants' houses) */
+  arches: () => merge([
+    box(13, 7.4, 5.5, 0, 0, -2.5, '#EDE6D6'), box(13.3, 0.35, 5.8, 0, 7.4, -2.5, '#D8CDB6'),
+    ...[-4.8, -2.4, 0, 2.4, 4.8].flatMap(x => [box(1.5, 2.6, 0.1, x, 0.2, 0.3, '#5C4632'), box(1.3, 2.2, 0.1, x, 4.2, 0.3, '#3E6E8E')]),
+    box(13, 0.25, 1.2, 0, 3.6, 0.8, '#CFC3A8'), box(2.4, 1.5, 0.7, 0, 4.4, 0.75, '#6B4A32'),
+  ]),
+};
+/** which landmark stands at which district (Kassala: zone name; Suakin: station index) */
+export const CIVIC_OF_WORLD: Record<string, { kit: string; zone?: string; station?: number }[]> = {
+  kassala: [{ kit: 'park', zone: 'kassala.orchards' }, { kit: 'mosque', zone: 'kassala.houses' }, { kit: 'market', zone: 'kassala.souq' }, { kit: 'hospital', zone: 'kassala.crafts' }],
+  suakin: [{ kit: 'portMarket', station: 3 }, { kit: 'clinic', station: 7 }, { kit: 'arches', station: 11 }, { kit: 'coralMosque', station: 9 }],
+};
+/** the lit windows and lamps of each landmark (local points, they glow once the landmark is built) */
+export const CIVIC_LIGHTS: Record<string, [number, number, number][]> = {
+  mosque: [[0, 8.4, -3.2], [5.6, 13.4, 4.6], [-3.5, 2, 0.3], [3.5, 2, 0.3]], hospital: [[2.6, 7.8, 0.9], [2.6, 2.6, 1.8], [-5, 2.1, 0.6]],
+  market: [[-5, 2.2, -1], [0, 2.2, -1], [5, 2.2, -1], [-2.5, 2.4, 7]], park: [[0, 1.6, 0], [3.9, 2.6, -3.2], [-3.8, 1.2, 3.6]],
+  coralMosque: [[4.3, 12.4, 1.6], [-1.2, 1.6, 1.9], [1.2, 1.6, 1.9]], portMarket: [[-2.7, 1.6, -0.3], [2.7, 1.6, -0.3], [0, 3.8, 0]],
+  clinic: [[0, 5.9, 1.2], [0, 1.4, 1.2]], arches: [[-2.4, 5.2, 0.4], [2.4, 5.2, 0.4], [0, 1.4, 0.4]],
+};

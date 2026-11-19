@@ -11,7 +11,8 @@ import { CONTENT } from '../lib/content';
 import { useApp, useProfile, type Profile } from '../state/store';
 import { KassalaTown, TOWN_FAR, TOWN_FOG } from '../three/town/KassalaTown';
 import { Stage, stats, useTier } from '../three/Stage';
-import { IconBack, IconClose, IconStar } from '../ui/Icons';
+import { IconBack, IconStar } from '../ui/Icons';
+import { back, useModalBack } from '../ui/nav';
 import { Avatar, playerName, TabBar } from '../ui/kit';
 import { TopBar } from '../ui/TopBar';
 import { SHORT_NAME, SUBJECT_COLOR } from './Map';
@@ -81,14 +82,15 @@ function StampSheet({ world, name, onClose }: { world: WorldId; name: string; on
   const me = p ? learners[p.id] : undefined;
   const skills = worldSkills(world).filter(k => isMastered(me?.skills[k.id]));
   const total = stationCount(world), done = total > 0 && masteredIn(me, world) >= total;
+  useModalBack(true, onClose);
   return (
     <>
       <div className="sheet-scrim" onClick={onClose} />
       <div className="sheet page" role="dialog" aria-modal="true" aria-label={subjectName(world)}>
         <div className="sheet-grip" />
-        <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div className="sheet-head">
+          <button className="icon-btn back-btn" aria-label="رجوع" onClick={onClose}><IconBack /></button>
           <h2 className="t-h2">{subjectName(world)} • {placeName(world)}</h2>
-          <button className="btn paper" style={{ minHeight: 52 }} onClick={onClose}>رجوع</button>
         </div>
         {done && (
           <div className="certificate">
@@ -116,7 +118,7 @@ export function Parents() {
   return (
     <div className="screen sand parents">
       <header className="guest-top">
-        <button className="icon-btn" aria-label="رجوع" onClick={() => s.go('entry')}><IconBack /></button>
+        <button className="icon-btn back-btn" aria-label="رجوع" onClick={() => back('entry')}><IconBack /></button>
         <h1 className="t-h1" style={{ margin: 0 }}>{s.family ? 'بيتنا' : 'ركن الأهل'}</h1>
         <span style={{ width: 56 }} />
       </header>
@@ -154,7 +156,6 @@ export function Parents() {
 /** Live performance page: frames per second, frame time, draw calls, triangles, resolution and device tier,
  *  measured on the real Kassala scene. Low-tier budget: 30 fps, 80 calls, 150k triangles. */
 export function Perf() {
-  const go = useApp(s => s.go);
   const tier = useTier();
   const zones = useMemo(() => worldSkills('kassala').map(s => s.zone), []);
   const [, tick] = useState(0);
@@ -184,7 +185,7 @@ export function Perf() {
       <div className="perf-panel ltr-nums">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <b className="t-h2">قياس الأداء</b>
-          <button className="icon-btn" aria-label="إغلاق" onClick={() => go('parents')}><IconClose /></button>
+          <button className="icon-btn back-btn" aria-label="رجوع" onClick={() => back('parents')}><IconBack /></button>
         </div>
         <table><tbody>{rows.map(([k, v, ok]) => (
           <tr key={k}><th>{k}</th><td className="ltr">{v}</td><td aria-hidden>{ok === null ? '' : ok ? '✓' : '!'}</td></tr>
@@ -243,8 +244,10 @@ function OurHome() {
  *  waiting to be linked to a child. Names of old players are shown here only, to the parent. */
 function LearnerData() {
   const L = useLearning();
-  const guests = useApp(st => st.profiles);
+  const guests = useApp(st => st.profiles), removeGuest = useApp(st => st.removeGuest);
   const [msg, setMsg] = useState<string | null>(null);
+  const [ask, setAsk] = useState<string | null>(null);
+  useModalBack(ask != null, () => setAsk(null));
   // the public parents' corner shows only this device's guests; family children and the v2 archive live behind the family code
   const download = () => {
     const blob = new Blob([JSON.stringify(L.exportBackup())], { type: 'application/json' });
@@ -270,7 +273,18 @@ function LearnerData() {
       </div>
       {guests.length > 0 && (
         <ul className="guest-progress">
-          {guests.map(g => <li key={g.id}><b>{playerName(g)}</b> · {WORLDS.reduce((a, w) => a + masteredIn(L.learners[g.id], w.id), 0)} محطة معمورة</li>)}
+          {guests.map(g => (
+            <li key={g.id} className="guest-row">
+              <span><b>{playerName(g)}</b> · {WORLDS.reduce((a, w) => a + masteredIn(L.learners[g.id], w.id), 0)} محطة معمورة</span>
+              {ask === g.id ? (
+                <span className="row" style={{ gap: 8 }}>
+                  <span className="t-small">نمسحه؟</span>
+                  <button className="btn danger" onClick={() => { removeGuest(g.id); L.forget(g.id); setAsk(null); setMsg('اتمسح الضيف وتقدّمه.'); }}>امسح</button>
+                  <button className="btn paper" onClick={() => setAsk(null)}>لا</button>
+                </span>
+              ) : <button className="btn paper" aria-label={`امسح ${playerName(g)}`} onClick={() => setAsk(g.id)}>امسح</button>}
+            </li>
+          ))}
         </ul>
       )}
       {msg && <p className="t-small" role="status">{msg}</p>}

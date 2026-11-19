@@ -15,12 +15,13 @@ import { subjectName, WORLDS } from '../lib/content';
 import { useApp } from '../state/store';
 import { readErrors, type ErrorEntry } from '../ui/ErrorBoundary';
 import { IconBack } from '../ui/Icons';
+import { back } from '../ui/nav';
 
 function GateShell({ title, children, onBack }: { title: string; children: React.ReactNode; onBack: () => void }) {
   return (
     <div className="screen sand gate">
       <header className="topbar">
-        <button className="icon-btn" aria-label="رجوع" onClick={onBack}><IconBack /></button>
+        <button className="icon-btn back-btn" aria-label="رجوع" onClick={onBack}><IconBack /></button>
         <div className="topbar-title">{title}</div>
         <span style={{ width: 52 }} />
       </header>
@@ -58,7 +59,7 @@ export function FamilyPage() {
   const lock = () => { s.setFamilyKey(null); s.setFamily(null); if (s.current?.startsWith('m')) s.setCurrent(null); s.go('entry'); };
   const label = stage === 'word' ? 'كلمة تفعيل الأسرة' : stage === 'create' ? 'اعملوا كودكم الشخصي (للأب أو الأم)' : 'الكود الشخصي';
   return (
-    <GateShell title="وضع الأسرة" onBack={() => s.go('entry')}>
+    <GateShell title="وضع الأسرة" onBack={() => back('entry')}>
       <section className="card gate-card family-gate">
         {s.family ? (
           <>
@@ -174,7 +175,6 @@ function ClaudePrompt({ groups }: { groups: ErrGroup[] }) {
 const fmtTime = (iso: string | number | null) => (iso ? new Date(iso).toLocaleString('ar-SD', { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 
 export function DevPage() {
-  const go = useApp(s => s.go);
   const [code, setCode] = useState(''), [ok, setOk] = useState(false), [busy, setBusy] = useState(false), [msg, setMsg] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const enter = async () => {
@@ -189,7 +189,7 @@ export function DevPage() {
     }
   };
   if (!ok) return (
-    <GateShell title="وضع المطوّر" onBack={() => go('entry')}>
+    <GateShell title="وضع المطوّر" onBack={() => back('entry')}>
       <section className="card gate-card">
         <form className="col" style={{ gap: 14 }} onSubmit={e => { e.preventDefault(); if (code.trim()) void enter(); }}>
           <label htmlFor="dev-code" className="t-h2">رمز المطوّر</label>
@@ -200,7 +200,7 @@ export function DevPage() {
       </section>
     </GateShell>
   );
-  return <DevPanel token={token} note={msg} onExit={() => go('entry')} />;
+  return <DevPanel token={token} note={msg} onExit={() => back('entry')} />;
 }
 
 function DevPanel({ token, note, onExit }: { token: string | null; note: string | null; onExit: () => void }) {
@@ -227,7 +227,7 @@ function DevPanel({ token, note, onExit }: { token: string | null; note: string 
   return (
     <div className="screen sand gate dev">
       <header className="topbar">
-        <button className="icon-btn" aria-label="خروج" onClick={onExit}><IconBack /></button>
+        <button className="icon-btn back-btn" aria-label="رجوع" onClick={onExit}><IconBack /></button>
         <div className="topbar-title">لوحة المطوّر</div>
         <span style={{ width: 52 }} />
       </header>

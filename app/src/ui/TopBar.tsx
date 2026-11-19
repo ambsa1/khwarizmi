@@ -4,7 +4,9 @@
 //   end (left in RTL): the menu (bottom sheet on phones, popover on wide screens): about, guide, sound, privacy
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState, type ReactNode } from 'react';
-import { HoldRing, useHold } from './Hold';
+import { useHold } from './Hold';
+import { back, useModalBack } from './nav';
+import { IconBack } from './Icons';
 import { createPortal } from 'react-dom';
 import { Sound, useSoundSettings } from '../audio/SoundManager';
 import { useApp, useProfile } from '../state/store';
@@ -41,12 +43,11 @@ function SoundPage() {
   );
 }
 
-/** the version line; holding it four seconds opens the developer gate */
+/** the version line; holding it 2.5 seconds (silently, nothing shows) opens the developer gate */
 function Version() {
   const go = useApp(s => s.go);
-  const hold = useHold(4000, () => go('dev'));
-  return <p className="soft version" {...hold.handlers}>الإصدار <span className="ltr">{__APP_VERSION__}</span>
-    <HoldRing p={hold.p} size={30} style={{ verticalAlign: 'middle', marginInlineStart: 8 }} /></p>;
+  const hold = useHold(2500, () => go('dev'));
+  return <p className="soft version" {...hold.handlers}>الإصدار <span className="ltr">{__APP_VERSION__}</span></p>;
 }
 
 function PageBody({ page }: { page: Page }) {
@@ -67,7 +68,7 @@ function PageBody({ page }: { page: Page }) {
       <li>في «رحلتي» اضغط الزر الذهبي عشان تبدأ الدرس الجاي.</li>
       <li>كل ما تكمّل دروس محطة، تتبني ويحيا العالم وراء سراج.</li>
       <li>«الخريطة» بتنقّلك بين العوالم، و«جوازي» بيوريك أختامك.</li>
-      <li>ركن الأهل في القفل أعلى الشاشة الأولى: اضغط عليه مطوّلًا ثانيتين.</li>
+      <li>ركن الأهل في القفل أعلى الشاشة الأولى: اضغط عليه مرة واحدة.</li>
     </ol>
   );
   return (
@@ -84,6 +85,9 @@ export function AppMenu() {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState<Page | null>(null);
   const close = () => { setOpen(false); setPage(null); Sound.play('close'); };
+  // the device back button: a page goes back to the list, the list closes the menu
+  useModalBack(open, close);
+  useModalBack(open && page != null, () => setPage(null));
   useEffect(() => { if (!open) return; const k = (e: KeyboardEvent) => e.key === 'Escape' && close(); addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, [open]);
   const title = page ? ITEMS.find(i => i[0] === page)![1] : null;
   return (
@@ -97,15 +101,21 @@ export function AppMenu() {
             <div className="sheet-grip" />
             {page ? (
               <>
-                <div className="row" style={{ justifyContent: 'space-between' }}>
+                <div className="sheet-head">
+                  <button className="icon-btn back-btn" aria-label="رجوع" onClick={() => setPage(null)}><IconBack /></button>
                   <h2 className="t-h2">{title}</h2>
-                  <button className="btn paper" style={{ minHeight: 52 }} onClick={() => setPage(null)}>رجوع</button>
                 </div>
                 <PageBody page={page} />
               </>
-            ) : ITEMS.map(([id, label, Icon]) => (
-              <button key={id} className="menu-item" onClick={() => setPage(id)}><Icon />{label}</button>
-            ))}
+            ) : <>
+              <div className="sheet-head">
+                <button className="icon-btn back-btn" aria-label="رجوع" onClick={close}><IconBack /></button>
+                <h2 className="t-h2">القائمة</h2>
+              </div>
+              {ITEMS.map(([id, label, Icon]) => (
+                <button key={id} className="menu-item" onClick={() => setPage(id)}><Icon />{label}</button>
+              ))}
+            </>}
           </motion.div>
         </>}
       </AnimatePresence>, document.body)}
@@ -115,15 +125,18 @@ export function AppMenu() {
 
 /** Top bar of the inner screens. */
 export function TopBar({ title }: { title: ReactNode }) {
-  const p = useProfile(), go = useApp(s => s.go);
+  const p = useProfile(), go = useApp(s => s.go), screen = useApp(s => s.screen);
   if (!p) return null;
   const name = playerName(p);
   return (
     <header className="topbar">
-      <button className="glass player-pill" aria-label={`${name}: غيّر اللاعب`} onClick={() => go('entry')}>
-        <Avatar profile={p} size={44} />
-        <span>{name}</span>
-      </button>
+      <div className="topbar-start">
+        <button className="icon-btn back-btn" aria-label="رجوع" onClick={() => back(screen === 'path' ? 'entry' : 'path')}><IconBack /></button>
+        <button className="glass player-pill" aria-label={`${name}: غيّر اللاعب`} onClick={() => go('entry')}>
+          <Avatar profile={p} size={44} />
+          <span>{name}</span>
+        </button>
+      </div>
       <div className="topbar-title">{title}</div>
       <AppMenu />
     </header>

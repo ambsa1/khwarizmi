@@ -6,6 +6,7 @@ import { useNum } from '../lib/num';
 import { useApp } from '../state/store';
 import { GUEST_AVATARS, GuestAvatar } from '../ui/GuestAvatars';
 import { IconBack } from '../ui/Icons';
+import { back as navBack } from '../ui/nav';
 import { Bubble, say, useGuard } from '../ui/kit';
 import { SirajLive } from './Entry';
 
@@ -22,7 +23,7 @@ export function Guest() {
   const [grade, setGrade] = useState<number | null>(null);
   const [name, setName] = useState('');
   const who = { gender };
-  const back = () => setStep(s => (s === 'gender' ? (go('entry'), s) : s === 'age' ? 'gender' : s === 'grade' ? 'age' : age <= 4 ? 'age' : 'grade'));
+  const back = () => setStep(s => (s === 'gender' ? (navBack('entry'), s) : s === 'age' ? 'gender' : s === 'grade' ? 'age' : age <= 4 ? 'age' : 'grade'));
   const question: Record<Step, string> = {
     gender: 'إنت ولد ولا بنت؟',
     age: say(who, 'عمرك كم سنة؟', 'عمرك كم سنة؟'),
@@ -36,7 +37,7 @@ export function Guest() {
   return (
     <div className="screen sand guest">
       <header className="guest-top">
-        <button className="icon-btn" aria-label="رجوع" onClick={guard(back)}><IconBack /></button>
+        <button className="icon-btn back-btn" aria-label="رجوع" onClick={guard(back)}><IconBack /></button>
         <div className="dots" aria-label={`الخطوة ${stepIndex + 1} من ٤`}>{[0, 1, 2, 3].map(i => <i key={i} className={i <= stepIndex ? 'on' : ''} />)}</div>
         <span style={{ width: 56 }} />
       </header>

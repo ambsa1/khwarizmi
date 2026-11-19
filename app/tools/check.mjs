@@ -122,7 +122,7 @@ const builtFrom = t => { const m = String(t).match(/:\s*([٠-٩0-9]+)/); return 
 // the installed app always opens on "who's playing?": reopen, then tap the (only) player card, as a child would
 const openPath = async pg => { await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.who-card:not(.who-new)', { timeout: 10000 }).catch(async e => { await pg.screenshot({ path: process.env.TEMP + '/openpath-fail.png' }); console.log('openPath stalled; storage:', await pg.evaluate(() => localStorage.getItem('khawarizmi.v2'))); console.log('app error log:', await pg.evaluate(() => new Promise(res => { const r = indexedDB.open('khawarizmi'); r.onsuccess = () => { const q = r.result.transaction('meta').objectStore('meta').get('errors'); q.onsuccess = () => res(JSON.stringify(q.result)); }; r.onerror = () => res('no db'); }))); throw e; }); await pg.locator('.who-card:not(.who-new)').last().click(); await pg.waitForSelector('.path', { timeout: 10000 }); };
 const toPath = () => openPath(page);
-const openParents = async pg => { await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.entry', { timeout: 10000 }); await pg.locator('.entry-corner button').dispatchEvent('keydown', { key: 'Enter' }); await pg.waitForSelector('.learner-data', { timeout: 10000 }); };
+const openParents = async pg => { await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.entry', { timeout: 10000 }); await pg.locator('.entry-corner button').click(); await pg.waitForSelector('.learner-data', { timeout: 10000 }); };
 const guestId = () => page.evaluate(() => JSON.parse(localStorage.getItem('khawarizmi.v2')).state.current);
 const idb = (fn, ...args) => page.evaluate(([src, a]) => new Promise((res, rej) => {
   const r = indexedDB.open('khawarizmi'); r.onerror = () => rej(r.error);
@@ -188,6 +188,39 @@ const idbRead = (store, key) => p3.evaluate(([st, k]) => new Promise(res => { co
 const translated = ((await idbRead('meta', 'legacyPlayers')) ?? []).length, archived = ((await idbRead('legacy')) ?? []).length;
 ok('v2 progress is archived and translated, never shown in the public parents corner', translated === 1 && archived === 1 && !parentsText.includes('لاعب قديم') && !parentsText.includes('اربطه'), `translated ${translated}, raw copies ${archived}`);
 await ctx3.close();
+
+// desktop guest session: the secret holds show nothing, the lock opens with one tap, pages use the full width, every
+// page has a back button that matches the browser back button, and a guest can be removed (after a confirmation)
+{
+  const cx = await browser.newContext({ viewport: { width: 1366, height: 768 }, locale: 'ar' });
+  const pg = await cx.newPage();
+  await pg.goto(base + '?demo=guest', { waitUntil: 'load' }); await pg.waitForSelector('.entry');
+  const sj = await pg.locator('.entry-siraj').boundingBox();
+  await pg.mouse.move(sj.x + sj.width / 2, sj.y + sj.height / 2); await pg.mouse.down(); await pg.waitForTimeout(1200);
+  const ringShown = await pg.locator('.entry-siraj svg, .hold-ring').count();
+  await pg.mouse.up(); await pg.waitForTimeout(400);
+  const stillEntry = await pg.locator('.entry').count();
+  ok('secret gates are silent: no ring while holding, a short hold does nothing', ringShown === 0 && stillEntry === 1, `ring ${ringShown}`);
+  await pg.locator('.entry-corner button').click();
+  const opened = await pg.waitForSelector('.parents', { timeout: 5000 }).then(() => true).catch(() => false);
+  const body = await pg.locator('.parents-body').boundingBox();
+  const backBtn = await pg.locator('.parents .back-btn').boundingBox();
+  ok('desktop: one tap on the lock opens the parents corner across the full width', opened && body && body.width >= 1300, `width ${Math.round(body?.width ?? 0)}px`);
+  await pg.goBack(); const backToEntry = await pg.waitForSelector('.entry', { timeout: 5000 }).then(() => true).catch(() => false);
+  await pg.locator('.who-wrap .who-card').first().click(); await pg.waitForSelector('.path', { timeout: 8000 });
+  await pg.getByRole('button', { name: 'جوازي' }).click(); await pg.waitForSelector('.stamps');
+  await pg.locator('.stamp').first().click(); await pg.waitForSelector('.sheet.page');
+  await pg.goBack(); await pg.waitForTimeout(500);
+  const sheetClosed = await pg.locator('.sheet.page').count() === 0 && await pg.locator('.stamps').count() === 1;
+  await pg.locator('.topbar .back-btn').click(); const toPathBack = await pg.waitForSelector('.path', { timeout: 5000 }).then(() => true).catch(() => false);
+  ok('back buttons sit top right and match the browser back (pages and modals)', backBtn && backBtn.x > 683 && backToEntry && sheetClosed && toPathBack, `right edge ${Math.round((backBtn?.x ?? 0) + (backBtn?.width ?? 0))}, entry ${backToEntry}, sheet closed ${sheetClosed}, path ${toPathBack}`);
+  await pg.goto(base, { waitUntil: 'load' }); await pg.waitForSelector('.entry');
+  const before = await pg.locator('.who-wrap').count();
+  await pg.locator('.who-del').first().click(); await pg.getByRole('button', { name: 'امسح' }).click(); await pg.waitForTimeout(400);
+  const after = await pg.locator('.who-wrap').count();
+  ok('a guest can be removed from "who is playing?" after a confirmation', before === 1 && after === 0, `${before} -> ${after}`);
+  await cx.close();
+}
 await page.setViewportSize({ width: 360, height: 800 });
 await toPath(); await page.waitForTimeout(800);
 
@@ -278,7 +311,7 @@ if (existsSync(devFile)) {
     `version bottom ${Math.round((vb?.y ?? 0) + (vb?.height ?? 0))}, modal centre ${Math.round((sb?.x ?? 0) + (sb?.width ?? 0) / 2)},${Math.round((sb?.y ?? 0) + (sb?.height ?? 0) / 2)}`);
   await page.locator('.version').scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
   const v = await page.locator('.version').boundingBox();
-  await page.mouse.move(v.x + v.width / 2, v.y + v.height / 2); await page.mouse.down(); await page.waitForTimeout(4400); await page.mouse.up();
+  await page.mouse.move(v.x + v.width / 2, v.y + v.height / 2); await page.mouse.down(); await page.waitForTimeout(2800); await page.mouse.up();
   await page.waitForSelector('.gate #dev-code');
   await page.locator('#dev-code').fill('wrong-code'); await page.getByRole('button', { name: 'ادخل' }).click(); await page.waitForTimeout(2500);
   const refused = await page.locator('.gate [role=status]').innerText().catch(() => '');
@@ -303,10 +336,10 @@ if (existsSync(codeFile)) {
   ok('family hidden before the code', await page.locator('.who-card:not(.who-new)').count() === 0);
   // the secret gesture: hold Siraj for four seconds -> the full-screen family page
   const sj = await page.locator('.entry-siraj').boundingBox();
-  await page.mouse.move(sj.x + sj.width / 2, sj.y + sj.height / 2); await page.mouse.down(); await page.waitForTimeout(4400); await page.mouse.up();
+  await page.mouse.move(sj.x + sj.width / 2, sj.y + sj.height / 2); await page.mouse.down(); await page.waitForTimeout(2800); await page.mouse.up();
   await page.waitForSelector('.gate .family-gate');
   const fieldTop = await page.locator('.gate .code').boundingBox();
-  ok('family page opens by holding Siraj 4 s; the code field sits in the top half', fieldTop && fieldTop.y < page.viewportSize().height / 2, `field at ${Math.round(fieldTop?.y ?? -1)}px`);
+  ok('family page opens by holding Siraj 2.5 s; the code field sits in the top half', fieldTop && fieldTop.y < page.viewportSize().height / 2, `field at ${Math.round(fieldTop?.y ?? -1)}px`);
   await page.locator('input.code').fill('wrong-code');
   await page.getByRole('button', { name: 'افتح' }).click();
   await page.waitForTimeout(2500);
@@ -344,7 +377,7 @@ if (existsSync(codeFile)) {
   await again.goto(base, { waitUntil: 'load' }); await again.waitForSelector('.entry'); await again.waitForTimeout(1500);
   const closed = await again.locator('.who-card:not(.who-new)').count() === 0;
   const sj2 = await again.locator('.entry-siraj').boundingBox();
-  await again.mouse.move(sj2.x + sj2.width / 2, sj2.y + sj2.height / 2); await again.mouse.down(); await again.waitForTimeout(4400); await again.mouse.up();
+  await again.mouse.move(sj2.x + sj2.width / 2, sj2.y + sj2.height / 2); await again.mouse.down(); await again.waitForTimeout(2800); await again.mouse.up();
   await again.waitForSelector('#fam-code');
   const asksPin = (await again.locator('label[for=fam-code]').innerText()).includes('الشخصي');
   await again.locator('#fam-code').fill('2468'); await again.getByRole('button', { name: 'افتح' }).click();
@@ -353,19 +386,20 @@ if (existsSync(codeFile)) {
   const stored = await again.evaluate(() => JSON.stringify(localStorage));
   ok('neither the activation word, the personal code nor the open key is stored', !stored.includes(word) && !stored.includes('2468') && !stored.includes('familyKey'));
   // inside family mode the parents' corner becomes «بيتنا»: the sealed family picture and a card for each of the four
-  const lk = await again.locator('[aria-label^="ركن الأهل"]').first().boundingBox();
-  await again.mouse.move(lk.x + lk.width / 2, lk.y + lk.height / 2); await again.mouse.down(); await again.waitForTimeout(2400); await again.mouse.up();
+  await again.locator('[aria-label^="ركن الأهل"]').first().click();
   await again.waitForSelector('.our-kid', { timeout: 10000 }).catch(() => null); await again.waitForTimeout(1500);
   const homeTitle = await again.locator('.parents h1').innerText().catch(() => '');
   const kidCards = await again.locator('.our-kid').count();
   const banner = await again.locator('.our-banner img').evaluateAll(els => els.filter(e => e.complete && e.naturalWidth > 0).length);
   const homeOverflow = await again.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   ok('family mode: the parents corner is «بيتنا» with the family picture and four children cards', homeTitle === 'بيتنا' && kidCards === 4 && banner === 1 && homeOverflow <= 0, `title ${homeTitle}, cards ${kidCards}, picture ${banner}, overflow ${homeOverflow}`);
+  const warm = await again.evaluate(() => ({ card: getComputedStyle(document.querySelector('.our-kid')).backgroundColor, page: getComputedStyle(document.querySelector('.parents')).backgroundImage }));
+  ok('«بيتنا» uses the warm sand and gold palette (cream cards, sand page)', warm.card === 'rgb(250, 242, 225)' && warm.page.includes('244, 232, 209'), JSON.stringify(warm));
   await again.close();
   const ctx4 = await browser.newContext({ viewport: { width: 360, height: 800 }, locale: 'ar' });
   await ctx4.addInitScript(lv => { if (!localStorage.getItem('khwarizmi.v1')) localStorage.setItem('khwarizmi.v1', JSON.stringify({ v: 2, players: [{ id: 'old1', name: 'لاعب قديم', age: 9, gender: 'b', progress: Object.fromEntries(lv.map(k => [k, 3])) }] })); }, levels);
   const p4 = await ctx4.newPage(); await p4.goto(base, { waitUntil: 'load' }); await p4.waitForSelector('.entry');
-  const holdSiraj = async pg => { const b = await pg.locator('.entry-siraj').boundingBox(); await pg.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await pg.mouse.down(); await pg.waitForTimeout(4400); await pg.mouse.up(); };
+  const holdSiraj = async pg => { const b = await pg.locator('.entry-siraj').boundingBox(); await pg.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await pg.mouse.down(); await pg.waitForTimeout(2800); await pg.mouse.up(); };
   await holdSiraj(p4); await p4.waitForSelector('#fam-code'); await p4.locator('#fam-code').fill(word); await p4.getByRole('button', { name: 'افتح' }).click();
   await p4.waitForSelector('#fam-code2', { timeout: 15000 }); await p4.locator('#fam-code').fill('2468'); await p4.locator('#fam-code2').fill('2468'); await p4.getByRole('button', { name: 'احفظ وادخل' }).click();
   await p4.waitForSelector('.who-card', { timeout: 15000 }); await p4.waitForTimeout(1200); await holdSiraj(p4);

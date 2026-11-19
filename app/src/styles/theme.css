@@ -229,3 +229,52 @@ input[type=range].vol { width: 100%; accent-color: var(--c-gold); height: 36px; 
 .our-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--ring, #8E7CC3), #F2B53A); }
 /* phones: the whole family picture at full width (all four children in view), still melting into the page */
 @media (max-width: 767px) { .our-banner { height: auto; } .our-banner img { height: auto; display: block; } }
+
+/* ===== full-viewport desktop (>= 768px): no narrow centred columns; content spreads across the whole width ===== */
+:root { --side: clamp(20px, 3vw, 48px); }
+@media (min-width: 768px) {
+  .parents-body, .dev-body, .stamps, .explorer-id { max-width: none; width: 100%; margin: 0; padding-inline: var(--side); }
+  .explorer-id { width: calc(100% - 2 * var(--side)); margin: 4px var(--side) 12px; }
+  .parents-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); align-content: start; gap: 16px; }
+  .parents-body > .our-home, .parents-body > .learner-data, .parents-body > .device { grid-column: 1 / -1; }
+  .dev-tabs { max-width: none; }
+  .dev .dev-body { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+  .stamps { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .sheet.page { width: calc(100% - 2 * var(--side)); max-width: none; }
+  .gate-body { padding-inline: var(--side); }
+  .gate-body .gate-card { width: min(720px, 100%); }
+  .our-kids { gap: 16px; }
+  .our-banner { height: clamp(260px, 30vw, 420px); }
+}
+
+/* ===== one warm sand & gold palette for «بيتنا» (no cold white) ===== */
+.parents:has(.our-home) { background: linear-gradient(180deg, #F4E8D1 0%, #F1E2C6 45%, #ECD9B8 100%); }
+.parents:has(.our-home) .card { background: #FAF2E1; border: 1px solid rgba(201, 150, 60, .35); box-shadow: 0 6px 18px rgba(140, 100, 40, .10); }
+.parents:has(.our-home) .seg { background: rgba(236, 217, 184, .7); }
+.parents:has(.our-home) .guest-top { background: transparent; }
+.our-kid { background: #FAF2E1; border: 1px solid rgba(201, 150, 60, .4); box-shadow: 0 8px 22px rgba(140, 100, 40, .14); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.our-bar { background: rgba(201, 150, 60, .18); }
+/* the purple picture melts into the sand: warm overlay that grows toward the bottom edge, then the mask fades it out */
+.our-banner::after { background: linear-gradient(180deg, rgba(244, 232, 209, 0) 35%, rgba(244, 232, 209, .55) 78%, #F4E8D1 100%), linear-gradient(90deg, #F4E8D1 0, rgba(244, 232, 209, 0) 10%, rgba(244, 232, 209, 0) 90%, #F4E8D1 100%); mix-blend-mode: normal; }
+.our-banner img { filter: saturate(.9) sepia(.12) brightness(1.03); }
+
+/* ===== back buttons: the same icon, top right (start in RTL), on every page, panel and modal ===== */
+.sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.sheet-head .t-h2 { margin: 0; }
+.back-btn { flex: none; }
+.topbar-start { display: flex; align-items: center; gap: 8px; min-width: 0; }
+@media (max-width: 480px) { .topbar-start .player-pill span { display: none; } .topbar-start .player-pill { padding: 3px; } }
+
+/* ===== guest delete ===== */
+.who-wrap { position: relative; display: grid; }
+.who-wrap > .who-card { width: 100%; }
+@media (min-width: 900px) and (orientation: landscape) { .who-grid > .who-wrap { flex: 0 1 190px; } }
+.who-del { position: absolute; top: 6px; inset-inline-end: 6px; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255, 250, 240, .92); border: 1px solid rgba(107, 90, 72, .25); color: var(--c-inkSoft); z-index: 2; }
+.who-confirm { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; gap: 10px; text-align: center; padding: 10px; background: #FAF2E1; }
+.btn.danger { --bg: #C0492F; --sh: #8E3320; --fg: #fff; }
+.guest-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; }
+.guest-progress { list-style: none; padding-inline-start: 0; }
+.who-confirm .row { flex-wrap: wrap; }
+.who-confirm .btn { min-height: 48px; padding: 0 14px; font-size: 18px; flex: 1 1 64px; }
+.who-confirm b { font-size: 18px; }

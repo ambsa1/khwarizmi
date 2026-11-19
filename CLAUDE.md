@@ -5,10 +5,11 @@ Arabic (Sudanese) learning app for children: Vite + React + TypeScript, three.js
 mixed-text rule (no English word or number at the start/end of an Arabic line; commands/paths on their own line).
 
 - Branch: `rebuild/phase1` (pushed). Live: https://ambsa1.github.io/khwarizmi/ (deployed from `main` by `npm run deploy`).
-- Last shipped commit: `a06ff8a` (2026-11-19). Checks 42/42 locally and on the live site.
+- Last shipped: 2026-11-19, seven upgrades (full-width desktop, sand palette, back navigation, guest delete, single-tap
+  lock, silent 2.5 s gates, civic landmarks). Checks 47/47 locally and on the live site.
 
 ## How to work
-- `cd app && npm run release` = validate, packs, build, preview, `tools/check.mjs` (42 checks). Must print `42/42 passed`.
+- `cd app && npm run release` = validate, packs, build, preview, `tools/check.mjs` (47 checks). Must print `47/47 passed`.
 - Commit and deploy ONLY when every check passes: `grep -q "N/N passed" log && git commit ...`, then `npm run deploy`
   (refuses a dirty tree), then `node tools/check.mjs https://ambsa1.github.io/khwarizmi/` on the live site.
 - Dev server: `npx vite --host 127.0.0.1 --port 5186 --strictPort` (in `app/`). Stop background servers at session end.
@@ -25,33 +26,39 @@ mixed-text rule (no English word or number at the start/end of an Arabic line; c
 - Reference images (Google/Esri/Wikimedia) stay in `private/references`; no satellite pixels in the app.
 - Public screenshots/videos use guest mode only; family shots go to `private/shots`.
 - Never send the user's email to external services from scripts.
-- Low-tier phone budget for all 6 worlds: <= 80 draw calls, <= 150,000 triangles, 30 fps. Kassala is at ~149.5k
-  (tight): any addition to Kassala needs a cut elsewhere.
+- Low-tier phone budget for all 6 worlds: <= 80 draw calls, <= 150,000 triangles, 30 fps. Kassala is at ~148.5k and
+  75 calls (tight): any addition to Kassala needs a cut elsewhere.
 - On-screen text >= 18px; the validator forbids words like خطأ / غير صحيح in child-facing text.
 
 ## State of the app (done)
 - Six worlds (kassala, saqiya, mogran, suakin, meroe, marra) from real data; revival shader (`three/town/revive.ts`).
-- World scene (`three/town/KassalaTown.tsx`): Siraj at scale 2.6 with a ground glow; trees in the corridor Siraj->camera
+- World scene (`three/town/KassalaTown.tsx`): Siraj at scale 3.3 with a ground glow; trees in the corridor Siraj->camera
   shrink (`clear` revive option, `uClear` uniform); `PathGlow` lights the path gold/green up to Siraj's feet;
   `DroneRig` eases position, look point, pitch and zoom (no swing-round after a lesson, a gentle pull-back instead).
+- Civic landmarks (`CIVIC`, `CIVIC_OF_WORLD`, `CIVIC_LIGHTS` in `three/town/kits.ts`; `civicSites` + `Civic` in
+  KassalaTown.tsx): Kassala park/mosque/market+school/hospital beside the last station of their district; Suakin port
+  market/clinic/arched house/coral mosque at half size. They rise with the revival, lights come on when built; the small
+  houses and yard trees under them are left out. Placement is computed at runtime (clear of stations, path, water).
 - Siraj (`three/Siraj.tsx`): jointed arms from the shoulders (sleeve colour per outfit, `SLEEVE` in `outfits.tsx`),
   calm breathing idle.
 - Family mode: activation word -> parents create a personal code -> asked every later time; only the four children.
   Inside family mode the parents' corner is «بيتنا» (`OurHome` in `screens/Others.tsx`): sealed group picture as a
-  masked lavender banner + a progress card per child.
-- Developer panel (`screens/Gates.tsx`): hold the version line 4 s; grouped errors with repeat count, archive tab for
+  banner melting into the sand page + a progress card per child.
+- Developer panel (`screens/Gates.tsx`): hold the version line 2.5 s; grouped errors with repeat count, archive tab for
   older versions, live copyable Claude Code prompt. Supabase via REST (`cloud/`), insert-only for visitors.
 - Layout watchdog (`cloud/watchdog.ts`): reports horizontal overflow / clipped text with screen, element, viewport.
-- Desktop (>= 768px): centred menu modals; columns/modals widened to 900px (`styles/theme.css`, end of file).
+- Desktop (>= 768px): every page/panel/modal spans the full width with side padding `--side: clamp(20px, 3vw, 48px)`;
+  cards spread in auto-fill grids (`styles/theme.css`, end of file). «بيتنا» uses the warm sand palette
+  (#F4E8D1/#ECD9B8 page, #FAF2E1 cards, soft gold borders); the purple banner melts into the sand.
+- Navigation (`ui/nav.ts`): every screen change and every open modal is a history entry; device/browser back closes the
+  top modal, then walks back through screens. On-screen back buttons (`.back-btn`, top right) call `back(fallback)`;
+  modals use `useModalBack(open, onClose)`.
+- Entry: one tap on the lock opens the parents' corner («بيتنا» in family mode). Secret gates are silent 2.5 s holds
+  (Siraj -> family, version line -> developer), no ring. Guests can be removed (× then confirm) on "who's playing?" and
+  in the public parents' corner.
 
-## NEXT TASK (pending, not started)
-**Full-width desktop layout + warm-sand colour harmony.**
-- Full-width desktop layout: desktop screens should use the full width instead of narrow centred
-  columns (the current state is 900px max-width columns for parents/«بيتنا»/dev panel/modals).
-- Warm-sand colour harmony: bring colours into one warm-sand palette (e.g. «بيتنا» currently uses a lavender
-  page gradient and banner tint, `.parents:has(.our-home)` and `.our-banner::after` in theme.css).
-- Exact specs were not given yet: confirm the details with the user before building, then run all checks, deploy,
-  and check the live site.
+## NEXT TASK
+None pending. Ask the user for the next request.
 
 ## Waiting on the user
 - Darfur outfit for Marra (Siraj wears the Nile outfit there until the user sends Darfur reference photos).
