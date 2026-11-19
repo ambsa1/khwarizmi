@@ -62,13 +62,13 @@
 .pic-nav:disabled { opacity: .3; }
 
 .pic-strip { display: flex; gap: 10px; width: min(760px, 100%); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
-  padding: 26px calc(50% - 90px); -webkit-overflow-scrolling: touch; }
+  padding: 26px calc(50% - 90px); -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 .pic-strip::-webkit-scrollbar { display: none; }
 .pic { flex: none; width: 180px; height: 180px; border-radius: 50%; padding: 7px; scroll-snap-align: center; background: #F1EBE3;
-  transform: scale(.8); opacity: .75; transition: transform 260ms var(--ease-spring), opacity 200ms, box-shadow 200ms;
+  transform: scale(.8); opacity: .75; transition: box-shadow 200ms, background 200ms; will-change: transform;
   box-shadow: 0 6px 16px -8px rgba(91, 59, 38, .4); }
 .pic img { width: 100% !important; height: 100% !important; }
-.pic.on { transform: scale(1); opacity: 1; background: linear-gradient(160deg, #FFD978, #E8A21B);
+.pic.on { background: linear-gradient(160deg, #FFD978, #E8A21B);
   box-shadow: 0 0 0 6px rgba(255, 182, 39, .22), 0 0 34px 6px rgba(255, 182, 39, .55), 0 12px 24px -10px rgba(91, 59, 38, .5); }
 @media (max-width: 480px) { .pic { width: 150px; height: 150px; } .pic-strip { padding-inline: calc(50% - 75px); } }
 .pick-picture .guest-name { width: min(360px, 100%); margin: 0; text-align: center; }

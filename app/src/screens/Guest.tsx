@@ -34,19 +34,32 @@ function IconBlocks({ size = 64 }: { size?: number }) {
 
 /** the picture strip: snaps one picture to the middle, the middle one is the choice */
 function PictureStrip({ ids, active, setActive }: { ids: string[]; active: number; setActive: (i: number) => void }) {
-  const ref = useRef<HTMLDivElement>(null), last = useRef(active);
+  const ref = useRef<HTMLDivElement>(null), last = useRef(active), raf = useRef(0);
   const center = (i: number, smooth = true) => {
     const el = ref.current?.children[i] as HTMLElement | undefined;
     el?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', inline: 'center', block: 'nearest' });
   };
-  useEffect(() => { center(active, false); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const onScroll = () => {
+  // while the finger moves, every picture follows its distance from the middle: it grows smoothly as it comes to the
+  // centre and shrinks and fades as it leaves (no jump when the scroll stops); the centred one is the choice
+  const paint = () => {
     const box = ref.current; if (!box) return;
     const mid = box.getBoundingClientRect().left + box.clientWidth / 2;
-    let best = 0, d = Infinity;
-    [...box.children].forEach((c, i) => { const r = c.getBoundingClientRect(); const dd = Math.abs(r.left + r.width / 2 - mid); if (dd < d) { d = dd; best = i; } });
-    if (best !== last.current) { last.current = best; setActive(best); Sound.unlock(); Sound.play('pop'); }
+    let best = 0, bd = Infinity;
+    [...box.children].forEach((node, i) => {
+      const c = node as HTMLElement, r = c.getBoundingClientRect(), dx = Math.abs(r.left + r.width / 2 - mid);
+      const d = Math.min(1.6, dx / (c.offsetWidth + 10));
+      c.style.transform = `scale(${(1 - d * 0.2).toFixed(3)})`;
+      c.style.opacity = (1 - d * 0.32).toFixed(3);
+      if (dx < bd) { bd = dx; best = i; }
+    });
+    if (best !== last.current) {
+      last.current = best; setActive(best);
+      Sound.unlock(); Sound.play('pop');
+      try { navigator.vibrate?.(8); } catch { /* no vibration on this device */ }
+    }
   };
+  const onScroll = () => { cancelAnimationFrame(raf.current); raf.current = requestAnimationFrame(paint); };
+  useEffect(() => { center(active, false); paint(); return () => cancelAnimationFrame(raf.current); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const step = (d: number) => center(Math.max(0, Math.min(ids.length - 1, active + d)));
   return (
     <div className="pic-wrap">
