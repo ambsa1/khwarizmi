@@ -50,6 +50,17 @@
 
 /* ---------- step 3: the picture strip (snaps to the middle; the middle picture grows in a glowing gold ring) ---------- */
 .pick-picture { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.pic-wrap { position: relative; width: min(980px, 100%); padding-inline: 64px; }
+@media (hover: none) { .pic-wrap { padding-inline: 0; } .pic-nav { display: none !important; } }
+.pic-wrap .pic-strip { width: 100%; }
+/* soft fade at both ends: more pictures wait on either side */
+.pic-wrap .pic-strip { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%); }
+.pic-nav { position: absolute; top: 50%; width: 52px; height: 52px; margin-top: -26px; border-radius: 50%; display: grid; place-items: center; z-index: 2;
+  background: rgba(255, 251, 243, .96); border: 1px solid rgba(201, 166, 118, .45); box-shadow: 0 8px 18px -10px rgba(91, 59, 38, .5); color: var(--c-ink); }
+.pic-nav.prev { right: 0; }                         /* back toward the first picture (on the right) */
+.pic-nav.next { left: 0; transform: scaleX(-1); }   /* on toward the next picture (on the left) */
+.pic-nav:disabled { opacity: .3; }
+
 .pic-strip { display: flex; gap: 10px; width: min(760px, 100%); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
   padding: 26px calc(50% - 90px); -webkit-overflow-scrolling: touch; }
 .pic-strip::-webkit-scrollbar { display: none; }

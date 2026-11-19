@@ -67,9 +67,10 @@ const kg = await page.locator('.kg-btn').count();
 await page.locator('.grade-card').nth(2).click();        // grade 3
 await page.waitForSelector('.pic-strip .pic');
 await page.waitForTimeout(500);
-const strip = await page.evaluate(() => ({ pics: document.querySelectorAll('.pic-strip .pic').length, srcs: [...document.querySelectorAll('.pic-strip img')].map(i => i.getAttribute('src').split('/').pop()), on: document.querySelectorAll('.pic-strip .pic.on').length }));
+const strip = await page.evaluate(() => { const box = document.querySelector('.pic-strip').getBoundingClientRect(), on = document.querySelector('.pic-strip .pic.on'), r = on?.getBoundingClientRect();
+  return { pics: document.querySelectorAll('.pic-strip .pic').length, on: on?.querySelector('img').getAttribute('src').split('/').pop(), offCentre: r ? Math.round(Math.abs(r.left + r.width / 2 - (box.left + box.width / 2))) : -1, scrolls: document.querySelector('.pic-strip').scrollWidth > box.width }; });
 small = await smallText();
-ok('new player: grade cards with a kindergarten button, then only the matching pictures (boy, grade 3) in a strip', kg === 1 && strip.pics === 3 && strip.on === 1 && strip.srcs.every(s => ['g9.webp', 'g3.webp', 'g10.webp'].includes(s)) && small.length === 0, JSON.stringify(strip) + ' ' + small.join(', '));
+ok('new player: grade cards with a kindergarten button, then all six boy pictures in a scrolling strip that starts on one of his age (grade 3)', kg === 1 && strip.pics === 6 && strip.on === 'g3.webp' && strip.offCentre <= 12 && strip.scrolls && small.length === 0, JSON.stringify(strip) + ' ' + small.join(', '));
 await page.locator('.avatar-go').click();
 await page.waitForSelector('.path', { timeout: 10000 });
 ok('guest wizard reaches today\'s journey', true);

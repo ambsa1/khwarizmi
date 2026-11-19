@@ -1,14 +1,16 @@
 // A new player in three short questions from Siraj, then "who's playing?":
 //   1. boy or girl (two picture cards)     2. which grade (six warm cards, and a big "kindergarten" button with toy
-//   blocks, readable without reading)      3. "pick your picture": only the pictures for that gender and age band, in a
-//   wide swipeable strip (the middle one grows in a glowing gold ring, a soft pop on every step), then the name.
+//   blocks, readable without reading)      3. "pick your picture": every picture for that gender, in a
+//   wide swipeable strip that starts on a picture of the child's own age (the middle one grows in a glowing gold ring,
+//   the side ones are smaller so more choices show at both ends, a soft pop on every step; arrows for a mouse), then
+//   the name.
 // The age is taken from the grade (kindergarten = 5, grade n = n + 6).
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Sound } from '../audio/SoundManager';
 import { useNum } from '../lib/num';
 import { useApp } from '../state/store';
-import { artUrl, avatarsFor, bandOf, GuestAvatar } from '../ui/GuestAvatars';
+import { artUrl, GuestAvatar, picturesFor } from '../ui/GuestAvatars';
 import { IconBack } from '../ui/Icons';
 import { back as navBack } from '../ui/nav';
 import { Bubble, say, useGuard } from '../ui/kit';
@@ -45,13 +47,20 @@ function PictureStrip({ ids, active, setActive }: { ids: string[]; active: numbe
     [...box.children].forEach((c, i) => { const r = c.getBoundingClientRect(); const dd = Math.abs(r.left + r.width / 2 - mid); if (dd < d) { d = dd; best = i; } });
     if (best !== last.current) { last.current = best; setActive(best); Sound.unlock(); Sound.play('pop'); }
   };
+  const step = (d: number) => center(Math.max(0, Math.min(ids.length - 1, active + d)));
   return (
-    <div className="pic-strip" ref={ref} onScroll={onScroll} role="listbox" aria-label="الصور">
-      {ids.map((id, i) => (
-        <button key={id} role="option" aria-selected={i === active} className={'pic' + (i === active ? ' on' : '')} onClick={() => center(i)}>
-          <GuestAvatar id={id} size={150} />
-        </button>
-      ))}
+    <div className="pic-wrap">
+      <div className="pic-strip" ref={ref} onScroll={onScroll} role="listbox" aria-label="الصور"
+        onKeyDown={e => { if (e.key === 'ArrowLeft') step(1); if (e.key === 'ArrowRight') step(-1); }}>
+        {ids.map((id, i) => (
+          <button key={id} role="option" aria-selected={i === active} className={'pic' + (i === active ? ' on' : '')} onClick={() => center(i)}>
+            <GuestAvatar id={id} size={150} />
+          </button>
+        ))}
+      </div>
+      {/* right to left: the next picture is on the left */}
+      <button className="pic-nav prev" aria-label="الصورة القبلها" disabled={active === 0} onClick={() => step(-1)}><IconBack /></button>
+      <button className="pic-nav next" aria-label="الصورة الجاية" disabled={active === ids.length - 1} onClick={() => step(1)}><IconBack /></button>
     </div>
   );
 }
@@ -64,7 +73,7 @@ export function Guest() {
   const [gender, setGender] = useState<'m' | 'f'>('m');
   const [grade, setGrade] = useState<number | null>(null);
   const [name, setName] = useState('');
-  const [active, setActive] = useState(1);
+  const [active, setActive] = useState(0);
   const who = { gender };
   const back = () => setStep(s => (s === 'gender' ? (navBack('entry'), s) : s === 'grade' ? 'gender' : 'grade'));
   const question: Record<Step, string> = {
@@ -72,8 +81,8 @@ export function Guest() {
     grade: say(who, 'في ياتو صف إنت؟', 'في ياتو صف إنتِ؟'),
     avatar: say(who, 'اختار صورتك', 'اختاري صورتك'),
   };
-  const pics = avatarsFor(gender, bandOf(grade)).map(a => a.id);
-  const pickGrade = (g: number | null) => { setGrade(g); setActive(1); setStep('avatar'); };
+  const { ids: pics } = picturesFor(gender, grade);
+  const pickGrade = (g: number | null) => { setGrade(g); setActive(picturesFor(gender, g).start); setStep('avatar'); };
   const finish = () => {
     const avatar = pics[Math.min(active, pics.length - 1)];
     addGuest({ gender, age: grade == null ? 5 : grade + 6, grade, avatar, name: name.trim().slice(0, 16) || undefined });

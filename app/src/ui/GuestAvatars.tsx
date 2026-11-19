@@ -13,6 +13,13 @@ export const GUEST_AVATARS: Look[] = [
 /** kindergarten and grades 1-2 are "young"; grades 3-6 "older" */
 export const bandOf = (grade: number | null): Band => (grade == null || grade <= 2 ? 'young' : 'older');
 export const avatarsFor = (gender: 'm' | 'f', band: Band) => GUEST_AVATARS.filter(a => a.gender === gender && a.band === band);
+/** every picture of that gender (young first, then older), and which one starts in the middle for that grade:
+ *  the middle picture of the child's own age band */
+export function picturesFor(gender: 'm' | 'f', grade: number | null) {
+  const all = GUEST_AVATARS.filter(a => a.gender === gender).sort((a, b) => Number(a.band === 'older') - Number(b.band === 'older'));
+  const own = all.map((a, i) => (a.band === bandOf(grade) ? i : -1)).filter(i => i >= 0);
+  return { ids: all.map(a => a.id), start: own[Math.floor(own.length / 2)] ?? 0 };
+}
 
 export const artUrl = (path: string) => import.meta.env.BASE_URL + 'art/' + path;
 
