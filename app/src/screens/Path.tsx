@@ -128,7 +128,7 @@ export function Path() {
                 ))}
               </ol>
             </div>
-            <ZoneLadder world={world} mastered={mastered} />
+            <ZoneLadder world={world} mastered={mastered} next={next?.title.ar} />
           </section>
         </div>
       </div>
@@ -139,13 +139,14 @@ export function Path() {
 
 /** Wide screens only: the street in its zones, from the start to the summit. Built houses are lit, the current
  *  zone is highlighted, so the child sees how far along the street they are and what is left. */
-function ZoneLadder({ world, mastered }: { world: WorldId; mastered: number }) {
-  const skills = worldSkills(world);
+function ZoneLadder({ world, mastered, next }: { world: WorldId; mastered: number; next?: string }) {
+  const skills = worldSkills(world), num = useNum(), total = stationCount(world);
   const titles = new Map((worldById(world).zones ?? []).map((z: { id: string; title: { ar: string } }) => [z.id, z.title.ar]));
   const zones: { id: string; from: number; n: number }[] = [];
   skills.forEach((s, i) => { const last = zones[zones.length - 1]; if (last && last.id === s.zone) last.n++; else zones.push({ id: s.zone, from: i, n: 1 }); });
   return (
-    <ol className="zones card" aria-label="مناطق الشارع">
+    <div className="zones-wrap card">
+    <ol className="zones" aria-label="مناطق الشارع">
       {zones.map(z => {
         const built = Math.max(0, Math.min(z.n, mastered - z.from)), here = mastered >= z.from && mastered < z.from + z.n;
         return (
@@ -158,5 +159,11 @@ function ZoneLadder({ world, mastered }: { world: WorldId; mastered: number }) {
         );
       })}
     </ol>
+    <div className="zones-summary">
+      <span className="zs-count"><b>{num(Math.min(mastered, total))}</b> من {num(total)} محطة في العالم دا</span>
+      <span className="explorer-bar" aria-hidden><i style={{ width: `${Math.round(Math.min(mastered, total) / Math.max(1, total) * 100)}%` }} /></span>
+      {next && <span className="zs-next">الدرس الجاي: <b>{next}</b></span>}
+    </div>
+    </div>
   );
 }

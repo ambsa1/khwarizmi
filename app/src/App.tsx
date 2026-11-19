@@ -84,7 +84,7 @@ export function App() {
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={shown} style={{ position: 'fixed', inset: 0 }}
           initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: reduced ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}>
+          transition={{ duration: reduced ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}>
           {body}
         </motion.div>
       </AnimatePresence>

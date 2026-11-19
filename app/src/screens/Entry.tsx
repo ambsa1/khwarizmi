@@ -60,10 +60,12 @@ export function Entry() {
   const [askDel, setAskDel] = useState<string | null>(null);
   useModalBack(askDel != null, () => setAskDel(null));
   const del = (id: string) => { removeGuest(id); forget(id); setAskDel(null); };
-  const portrait = window.innerWidth >= 700 || window.innerHeight >= 860 ? 132 : window.innerHeight >= 740 ? 112 : 96;
+  // picture size: big when there are few cards, smaller as the list grows (three a row on phones from five cards)
+  const cards = players.length + (family ? 0 : 1), phone = window.innerWidth < 700;
+  const portrait = phone ? (cards >= 5 ? 76 : cards >= 3 ? 96 : cards === 1 ? 150 : 112) : (cards >= 7 ? 104 : 132);
   const label = (p: Profile) => playerName(p);
   return (
-    <div className={'screen entry' + (players.length ? ' has-players' : '')}>
+    <div className={'screen entry' + (players.length ? ' has-players' : ' first-visit') + (cards >= 5 ? ' crowd' : '')}>
       <div className="entry-corner">
         <button className="icon-btn lock-btn" aria-label={family ? 'ركن الأهل: بيتنا' : 'ركن الأهل'} onClick={() => go('parents')}><IconLock /></button>
       </div>
@@ -74,6 +76,17 @@ export function Entry() {
       </div>
       <div className="entry-who">
         <div className={'who-grid' + (players.length + 1 > 4 ? ' many' : '')}>
+          {!family && (
+          <motion.button className="who-card card lift who-new" onClick={guard(() => go('guest'))}
+              initial={{ opacity: 0, y: 24, scale: 0.92 }} animate={{ opacity: picked ? 0.4 : 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 24 }}>
+              {/* the open courtyard door (public/art/avatars/new.webp) with a small gold "+"; first, so it is always in view */}
+              <span className="who-door" style={{ width: portrait, height: portrait }}>
+                <img src={artUrl('avatars/new.webp')} alt="" draggable={false} />
+                <span className="who-door-plus" aria-hidden><IconPlus size={Math.round(portrait * 0.2)} /></span>
+              </span>
+              <span className="who-name">ضيف جديد</span>
+            </motion.button>
+          )}
           {players.map((p, i) => (
             <div key={p.id} className="who-wrap">
             <motion.button className="who-card card lift" onClick={guard(() => pick(p.id))}
@@ -96,17 +109,6 @@ export function Entry() {
             ) : <button className="who-del" aria-label={`امسح ${label(p)}`} onClick={() => setAskDel(p.id)}><IconClose size={20} /></button>)}
             </div>
           ))}
-          {!family && (
-          <motion.button className="who-card card lift who-new" onClick={guard(() => go('guest'))}
-              initial={{ opacity: 0, y: 24, scale: 0.92 }} animate={{ opacity: picked ? 0.4 : 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 24, delay: 0.05 * players.length }}>
-              {/* the open courtyard door (public/art/avatars/new.webp) with a small gold "+" */}
-              <span className="who-door" style={{ width: portrait, height: portrait }}>
-                <img src={artUrl('avatars/new.webp')} alt="" draggable={false} />
-                <span className="who-door-plus" aria-hidden><IconPlus size={Math.round(portrait * 0.2)} /></span>
-              </span>
-              <span className="who-name">ضيف جديد</span>
-            </motion.button>
-          )}
         </div>
       </div>
     </div>

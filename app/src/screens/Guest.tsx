@@ -142,11 +142,11 @@ export function Guest() {
           {step === 'avatar' && (
             <div className="pick-picture">
               <PictureStrip ids={pics} active={active} setActive={setActive} />
-              <div className="guest-name">
-                <label htmlFor="guest-name">{say(who, 'اسمك (لو داير):', 'اسمك (لو دايرة):')}</label>
+              <button className="btn big avatar-go" onClick={guard(finish)}>يلا نبدأ</button>
+              <div className="guest-name quiet">
+                <label htmlFor="guest-name">{say(who, 'اسمك (لو داير، ممكن تخلّيه):', 'اسمك (لو دايرة، ممكن تخلّيه):')}</label>
                 <input id="guest-name" className="code" maxLength={16} autoComplete="off" dir="rtl" placeholder={gender === 'f' ? 'ضيفة' : 'ضيف'} value={name} onChange={e => setName(e.target.value)} />
               </div>
-              <button className="btn big avatar-go" onClick={guard(finish)}>يلا نبدأ</button>
             </div>
           )}
         </motion.div>

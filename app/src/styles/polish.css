@@ -290,3 +290,85 @@
 .pp-fields.more .pp-no-row { grid-column: 1 / -1; }
 /* phones: two visa boxes per row (three were too narrow for the place and subject names) */
 @media (max-width: 560px) { .pp-visas .stamps { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } .visa-mark { width: min(130px, 80%); } }
+
+/* ============================================================================================================
+   Design audit fixes (2026-11-20)
+   ============================================================================================================ */
+/* 1. many players: three cards a row on phones from five cards, tighter cards; "new guest" sits first */
+@media (orientation: portrait) {
+  .entry.crowd .who-grid, .entry.crowd .who-grid.many { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .entry.crowd .who-card { padding: 10px 4px 10px; gap: 6px; }
+  .entry.crowd .who-name { font-size: 18px; line-height: 1.3; }
+  /* the remove button keeps a 44px touch area; only the drawn circle is smaller */
+  .entry.crowd .who-del { top: 0; inset-inline-end: 0; border: 0; box-shadow: none; background: radial-gradient(circle, rgba(255, 250, 240, .96) 0 15px, rgba(107, 90, 72, .3) 15.5px 16.5px, transparent 17px); }
+  .entry.crowd .who-del svg { width: 16px; height: 16px; }
+  .entry.crowd .who-grid > :last-child:nth-child(odd) { grid-column: auto; width: auto; justify-self: stretch; }
+}
+/* long names never push a card out of line: at most two lines, the rest trimmed */
+.who-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; text-align: center; max-width: 100%; }
+/* 4. first visit (no players yet): a big "new guest" card right under the title */
+@media (orientation: portrait) {
+  .entry.first-visit .entry-who { justify-content: flex-start; padding-top: 8px; }
+  .entry.first-visit .who-grid { grid-template-columns: minmax(0, 1fr); max-width: 300px; }
+  .entry.first-visit .who-grid > :last-child:nth-child(odd) { width: 100%; }
+  .entry.first-visit .who-new { padding: 22px 12px 20px; }
+  .entry.first-visit .who-new .who-name { font-size: 28px; }
+}
+
+/* 2. top bar: the title and the player picture each keep their own room; the title shrinks before it is cut */
+.topbar-start { flex: none; }
+.topbar-title { min-width: 0; max-width: 100%; }
+@media (max-width: 480px) {
+  .topbar { grid-template-columns: auto minmax(0, 1fr) auto !important; column-gap: 8px; }
+  .topbar-title { font-size: 18px; padding: 6px 14px; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+  .topbar-start .player-pill { width: 52px; height: 52px; min-height: 52px; padding: 2px; flex: none; }
+  .path .topbar .world-pill { padding: 0 10px; gap: 6px; max-width: 100%; }
+  .path .topbar .world-pill-name { font-size: 18px; overflow: hidden; text-overflow: clip; }
+  .path .topbar .world-pill-bar { width: 32px; }
+}
+@media (max-width: 380px) { .topbar-title, .path .topbar .world-pill-name { font-size: 18px; letter-spacing: -.2px; } .path .topbar .world-pill-bar { display: none; } }
+
+/* 3. the journey column (wide screens): districts stacked at the top, a summary box under them */
+.zones-wrap { display: none; flex: 1; min-height: 0; flex-direction: column; gap: 12px; padding: 12px; overflow-y: auto; }
+@media (orientation: landscape) { .path .zones-wrap { display: flex; } }
+.zones-wrap .zones { display: flex; flex: none; justify-content: flex-start; gap: 6px; padding: 0; overflow: visible; }
+.zones-wrap .zones li { min-height: 46px; }
+.zones-summary { display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; background: rgba(250, 239, 218, .75); border: 1px solid rgba(201, 166, 118, .4); }
+.zs-count { font-size: 18px; font-weight: 700; } .zs-count b { font: 400 26px/1 var(--f-display); color: #BA7C03; }
+.zs-next { font-size: 18px; color: var(--c-inkSoft); font-weight: 600; } .zs-next b { color: var(--c-ink); }
+
+/* 5. the picture step: "start" is the main button under the pictures; the optional name is quieter below */
+.pick-picture .avatar-go { order: 0; }
+.guest-name.quiet { opacity: .9; }
+.guest-name.quiet label { font-size: 18px; font-weight: 600; color: var(--c-inkSoft); }
+.guest-name.quiet .code { min-height: 50px; font-size: 18px; background: rgba(255, 255, 255, .7); }
+
+/* 6. passport on phones: the name gets a full row under the photo */
+@media (max-width: 480px) {
+  .pp-body { grid-template-areas: "photo lead" "more more"; }
+  .pp-fields.lead dd { font-size: 20px; line-height: 1.3; }
+  .pp-fields.lead > div:first-child dd { overflow-wrap: normal; word-break: keep-all; }
+}
+
+/* 7. map: the open world stands out (gold card, play badge); locked worlds step back but stay readable */
+.world-card { position: relative; }
+.world-card:not(.locked) { background: linear-gradient(180deg, #FFF6E2, #FCE7B8) !important; border: 1.5px solid #E7B54A !important; }
+.world-card.locked { opacity: .72; filter: saturate(.55); }
+.world-card.locked b { color: #4A3A2A; }
+.world-play { position: absolute; top: 8px; inset-inline-start: 8px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: #FFB627; color: #2B2118; box-shadow: 0 3px 0 #BA7C03; }
+
+/* 8. touch feedback: cards press in under a finger */
+@media (hover: none) {
+  .who-card:active, .world-card:active, .stamp.visa:active, .gender-card:active { transform: scale(.96); transition: transform 90ms; }
+}
+/* 6 (phones): a smaller photo so a two-word name fits on one line beside it */
+@media (max-width: 480px) {
+  .pp-body { grid-template-columns: 84px minmax(0, 1fr); }
+  .pp-photo { width: 84px; }
+  .pp-fields.lead > div:first-child dd { white-space: nowrap; font-size: clamp(18px, 5.2vw, 22px); overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 380px) { .topbar-title { padding: 6px 10px; } }
+@media (max-width: 380px) { .topbar-start { gap: 4px; } .topbar-start .player-pill { width: 48px; height: 48px; min-height: 48px; } .topbar { column-gap: 6px; } }
+/* phone landscape (short screens): no room for the districts column, as before */
+@media (orientation: landscape) and (max-height: 500px) { .path .zones-wrap { display: none; } }

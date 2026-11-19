@@ -63,6 +63,7 @@ export function MapScreen() {
             return (
               <button key={s.id} className={'world-card card' + (s.current ? ' current' : '') + (s.locked ? ' locked' : '') + ((picked ?? cur) === s.id ? ' picked' : '')} onClick={guard(() => pick(s.id))}>
                 <span className="subject-icon" style={{ background: col }}>{s.locked ? <IconLock size={24} /> : <Icon size={26} />}</span>
+                {!s.locked && <span className="world-play" aria-hidden><svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>}
                 <span className="world-card-text">
                   <b>{s.name}</b>
                   <span className="world-bar" aria-label={s.locked ? 'مقفول' : `${num(Math.round(s.value * 100))} بالمية`}><i style={{ width: `${Math.round(s.value * 100)}%`, background: col }} /></span>
