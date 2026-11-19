@@ -124,9 +124,12 @@ export function DevPage() {
     setBusy(true); setMsg(null);
     const good = await checkDevCode(code);
     if (!good) { setBusy(false); setMsg('الرمز ما اتطابق.'); return; }
-    const t = cloudOn() ? await devSignIn(code).catch(() => null) : null;
-    setBusy(false); setOk(true); setToken(t);
-    if (cloudOn() && !t) setMsg('ما قدرنا نسجّل الدخول للسحابة (الإنترنت أو حساب المطوّر). المعروض الآن بيانات هذا الجهاز فقط.');
+    // the panel opens at once with this device's data; the cloud sign-in finishes in the background
+    setBusy(false); setOk(true);
+    if (cloudOn()) {
+      setMsg('جاري الاتصال بالسحابة…');
+      void devSignIn(code).catch(() => null).then(t => { setToken(t); setMsg(t ? null : 'ما قدرنا نسجّل الدخول للسحابة (الإنترنت أو حساب المطوّر). المعروض الآن بيانات هذا الجهاز فقط.'); });
+    }
   };
   if (!ok) return (
     <GateShell title="وضع المطوّر" onBack={() => go('entry')}>
