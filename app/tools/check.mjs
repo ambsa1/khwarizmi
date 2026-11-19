@@ -71,9 +71,11 @@ const strip = await page.evaluate(() => { const box = document.querySelector('.p
   return { pics: document.querySelectorAll('.pic-strip .pic').length, on: on?.querySelector('img').getAttribute('src').split('/').pop(), offCentre: r ? Math.round(Math.abs(r.left + r.width / 2 - (box.left + box.width / 2))) : -1, scrolls: document.querySelector('.pic-strip').scrollWidth > box.width }; });
 small = await smallText();
 ok('new player: grade cards with a kindergarten button, then all six boy pictures in a scrolling strip that starts on one of his age (grade 3)', kg === 1 && strip.pics === 6 && strip.on === 'g3.webp' && strip.offCentre <= 12 && strip.scrolls && small.length === 0, JSON.stringify(strip) + ' ' + small.join(', '));
+await page.locator('#guest-name').fill('سامي');
 await page.locator('.avatar-go').click();
 await page.waitForSelector('.path', { timeout: 10000 });
 ok('guest wizard reaches today\'s journey', true);
+const guestPill = await page.evaluate(() => { const b = document.querySelector('.player-pill'); const i = b?.querySelector('img'); return { label: b?.getAttribute('aria-label') ?? '', img: i?.getAttribute('src')?.split('/').pop(), loaded: !!i && i.complete && i.naturalWidth > 0 }; });
 await page.waitForTimeout(2500);
 small = await smallText(); ok('path: no text under 18px', small.length === 0, small.join(', '));
 const before = await page.locator('.today-bar li.done').count();
@@ -201,6 +203,8 @@ await ctx3.close();
   await pg.goto(base + '?demo=guest', { waitUntil: 'load' }); await pg.waitForSelector('.entry');
   const bdOf = () => pg.evaluate(() => { const b = document.querySelector('.backdrop'); const ic = [...document.querySelectorAll('.backdrop .heritage i')]; const cut = ic.filter(e => { const r = e.getBoundingClientRect(); return r.left < 0 || r.top < 0 || r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5; }).length; return { region: b?.dataset.region, tile: ic[0] ? getComputedStyle(ic[0]).backgroundImage : '', icons: ic.length, cut }; });
   const entryBd = await bdOf();
+  const door = await pg.evaluate(() => { const i = document.querySelector('.who-new img'); return { src: i?.getAttribute('src')?.split('/').pop(), loaded: !!i && i.complete && i.naturalWidth > 0, plus: !!document.querySelector('.who-new .who-plus') }; });
+  ok('"new guest" shows the open courtyard door picture (not a plain plus)', door.src === 'new.webp' && door.loaded && !door.plus, JSON.stringify(door));
   const sj = await pg.locator('.entry-siraj').boundingBox();
   await pg.mouse.move(sj.x + sj.width / 2, sj.y + sj.height / 2); await pg.mouse.down(); await pg.waitForTimeout(1200);
   const ringShown = await pg.locator('.entry-siraj svg, .hold-ring').count();
@@ -227,6 +231,15 @@ await ctx3.close();
   await pg.locator('.who-del').first().click(); await pg.getByRole('button', { name: 'امسح' }).click(); await pg.waitForTimeout(400);
   const after = await pg.locator('.who-wrap').count();
   ok('a guest can be removed from "who is playing?" after a confirmation', before === 1 && after === 0, `${before} -> ${after}`);
+  // a finished world: its stamp is the full ink stamp with a date, and the certificate carries the child's picture and name
+  await pg.goto(base + '?demo=guest&done=kassala&screen=passport', { waitUntil: 'load' }); await pg.waitForSelector('.stamps'); await pg.waitForTimeout(600);
+  const doneStamp = await pg.evaluate(() => { const b = [...document.querySelectorAll('.stamp.visa')].find(x => x.querySelector('img')?.getAttribute('src')?.includes('kassala')); return { done: b?.classList.contains('done'), status: b?.querySelector('.visa-status')?.textContent ?? '' }; });
+  await pg.locator('.stamp.visa.done').first().click(); await pg.waitForSelector('.certificate', { timeout: 5000 }).catch(() => {});
+  await pg.waitForTimeout(500);
+  const cert = await pg.evaluate(() => { const c = document.querySelector('.certificate'); const imgs = c ? [...c.querySelectorAll('img')] : []; return { has: !!c, name: c?.querySelector('.cert-name')?.textContent ?? '', imgs: imgs.map(i => i.getAttribute('src')?.split('/').pop()), loaded: imgs.filter(i => i.complete && i.naturalWidth > 0).length }; });
+  ok('a finished world: full ink stamp with its date, and a certificate with the child picture, name and the stamp',
+    doneStamp.done && doneStamp.status.includes('مكتمل') && cert.has && cert.name.length > 0 && cert.imgs.includes('g3.webp') && cert.imgs.includes('kassala.webp') && cert.loaded === 2,
+    JSON.stringify({ doneStamp, cert }));
   await cx.close();
 }
 await page.setViewportSize({ width: 360, height: 800 });
@@ -248,6 +261,20 @@ ok('open world travels to its path (subject in the top bar)', title.includes('أ
 await page.getByRole('button', { name: 'جوازي' }).first().click();
 await page.waitForSelector('.stamps');
 small = await smallText(); ok('passport: no text under 18px', small.length === 0, small.join(', '));
+{ // the new guest's own picture, name and grade on the passport data page and in the top bar; six real stamps; the last
+  // stamp clears the bottom bar when the page is scrolled to its end (phone)
+  await page.waitForTimeout(800);
+  const pp = await page.evaluate(async () => {
+    const id = document.querySelector('.pp-id'), photo = id?.querySelector('.pp-photo img');
+    const stamps = [...document.querySelectorAll('.visa-stamp')];
+    const sc = document.querySelector('.passport-main'); sc.scrollTop = sc.scrollHeight; await new Promise(r => setTimeout(r, 300));
+    const last = document.querySelectorAll('.stamp.visa'); const lr = last[last.length - 1].getBoundingClientRect(), bar = document.querySelector('.tabbar').getBoundingClientRect();
+    return { text: id?.innerText ?? '', photo: photo?.getAttribute('src')?.split('/').pop(), stamps: stamps.length, loaded: stamps.filter(i => i.complete && i.naturalWidth > 0).length, clear: Math.round(bar.top - lr.bottom) };
+  });
+  ok('the new guest picture, name and grade carry into the top bar and the passport; six stamps; nothing under the bottom bar',
+    guestPill.label.includes('سامي') && guestPill.img === 'g3.webp' && guestPill.loaded && pp.text.includes('سامي') && pp.text.includes('الصف') && pp.photo === 'g3.webp' && pp.stamps === 6 && pp.loaded === 6 && pp.clear >= 8,
+    JSON.stringify({ guestPill, pp: { ...pp, text: pp.text.slice(0, 60) } }));
+}
 
 // 5b. a downloaded world works with no internet; a deleted one explains that it needs internet once
 {

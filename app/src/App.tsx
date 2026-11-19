@@ -2,12 +2,13 @@
 // Query parameters exist only for design review and automated screenshots:
 //   ?view=siraj | world&w=kassala&m=14 | perf      isolated views
 //   ?demo=guest&screen=path|map|passport           seeds a demo guest and opens that screen
+//   &done=<world>                                   (with demo) the demo guest has finished that world (stamp, certificate)
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { unlockWithKey } from './lib/family';
 import type { WorldId } from './lib/tokens';
 import { useLearning } from './data/learning';
-import { loadContent } from './lib/content';
+import { loadContent, worldSkills } from './lib/content';
 import { logError } from './ui/ErrorBoundary';
 import { useApp, type Screen } from './state/store';
 import { WorldWindow } from './three/WorldWindow';
@@ -29,7 +30,9 @@ function bootDemo() {
   const s = useApp.getState();
   if (q.get('demo') === 'guest') {
     const gender = q.get('g') === 'f' ? 'f' : 'm';
-    s.addGuest({ gender, age: +(q.get('age') ?? 8), grade: 3, avatar: gender === 'f' ? 'g7' : 'g3' });
+    const id = s.addGuest({ gender, age: +(q.get('age') ?? 8), grade: 3, avatar: gender === 'f' ? 'g7' : 'g3' });
+    const done = q.get('done');
+    if (done) for (const k of worldSkills(done)) useLearning.getState().complete(id, k.id);
   }
   const screen = q.get('screen') as Screen | null;
   if (screen) s.go(screen);

@@ -15,19 +15,19 @@ import { IconBack, IconStar } from '../ui/Icons';
 import { back, useModalBack } from '../ui/nav';
 import { Avatar, gradeLabel, playerName, TabBar } from '../ui/kit';
 import { TopBar } from '../ui/TopBar';
-import { SHORT_NAME, SUBJECT_COLOR } from './Map';
+import { SHORT_NAME } from './Map';
 
-/** line drawings of each world's landmark: engraved watermark while in progress, inked stamp when complete */
-const LANDMARK_ART: Record<WorldId, JSX.Element> = {
-  kassala: <path d="M8 46c4-10 7-22 12-24s5 10 9 6 5-18 11-18 7 16 10 18 6 2 8 18M4 46h56" />,
-  saqiya: <g><circle cx="26" cy="26" r="14" /><path d="M26 12v28M12 26h28M16 16l20 20M36 16 16 36M40 26h16v20M4 46h56" /></g>,
-  mogran: <g><path d="M6 10c10 8 16 14 26 18M58 10c-10 8-16 14-26 18M32 28v20" /><path d="M14 40l8-12 2 12zM4 48h56" /></g>,
-  suakin: <g><path d="M34 46V12l2-4 2 4v34M30 20h10" /><path d="M8 46V26h18v20M12 30h10v8H12zM4 48h56" /></g>,
-  meroe: <g><path d="M6 46l10-28 10 28M22 46l12-34 12 34M40 46l8-22 8 22M4 46h56" /><path d="M13 30h6M29 26h10" /></g>,
-  marra: <g><path d="M4 44c8-4 12-16 20-22 6 4 10 4 16 0 8 6 12 18 20 22" /><ellipse cx="32" cy="26" rx="6" ry="2.5" /><path d="M10 50h44M14 46h36" /></g>,
-};
 const RANKS: [number, string][] = [[0, 'مستكشف صغير'], [5, 'رحّال'], [20, 'مستكشف ماهر'], [50, 'حارس الخريطة'], [100, 'خوارزمي']];
+/** each world's stamp (public/art/stamps, tools/stamps-render.mjs) is turned a little differently, like real stamps */
+const TILT: Record<string, number> = { kassala: -7, saqiya: 5, mogran: -4, suakin: 8, meroe: -9, marra: 4 };
+const stampUrl = (id: string) => import.meta.env.BASE_URL + `art/stamps/${id}.webp`;
+/** the day a world was finished: the last day any of its skills was practised */
+const doneOn = (me: ReturnType<typeof useLearning.getState>['learners'][string] | undefined, id: string) =>
+  Math.max(0, ...worldSkills(id).map(k => me?.skills[k.id]?.last ?? 0));
+const dateAr = (t: number) => new Date(t || Date.now()).toLocaleDateString('ar-SD', { day: 'numeric', month: 'long', year: 'numeric' });
 
+/** The explorer's passport: a data page (photo, name, grade, title, stamps and overall progress) and a stamps page
+ *  with the six worlds: a soft watermark-coloured stamp until a world is finished, then the full ink stamp with its date. */
 export function Passport() {
   const p = useProfile();
   const learners = useLearning(s => s.learners);
@@ -43,38 +43,50 @@ export function Passport() {
   const sealed = WORLDS.filter(w => { const t = stationCount(w.id as WorldId); return t > 0 && masteredIn(me, w.id) >= t; }).length;
   return (
     <div className="screen sand has-rail">
-      <div className="main col grow scroll">
+      <div className="main col grow scroll passport-main">
         <TopBar title="جوازي" />
-        <section className="explorer-id glass" aria-label="بطاقة المستكشف">
-          <Avatar profile={p} size={84} />
-          <div className="explorer-text">
-            <b className="t-h2">{name}</b>
-            <span className="explorer-rank">{rank}{grade && <span className="explorer-grade"> · {grade}</span>}</span>
-            <span className="explorer-stats">
-              <span><IconStar size={22} style={{ color: 'var(--c-gold)' }} /> {num(stars)} {stars === 1 ? 'نجمة' : 'نجوم'}</span>
-              <span>{num(stations)} {stations === 1 ? 'محطة' : 'محطات'} معمورة</span>
-            </span>
-          </div>
-          <div className="explorer-progress" aria-label={`أختامك ${num(sealed)} من ${num(WORLDS.length)}`}>
-            <span className="explorer-seals"><b>{num(sealed)}</b> من {num(WORLDS.length)} أختام</span>
-            <span className="explorer-bar" aria-hidden><i style={{ width: `${Math.round(stations / Math.max(1, allStations) * 100)}%` }} /></span>
-            <span className="soft">{num(stations)} من {num(allStations)} محطة في كل السودان</span>
-          </div>
-        </section>
-        <div className="stamps">
-          {WORLDS.map(w => {
-            const id = w.id as WorldId, total = stationCount(id), got = Math.min(masteredIn(me, id), total), done = total > 0 && got >= total;
-            const col = SUBJECT_COLOR[id];
-            return (
-              <button key={id} className={'stamp card' + (done ? ' done' : '')} onClick={() => setOpen(id)} aria-label={`${subjectName(id)} في ${placeName(id)}`}>
-                <span className="stamp-art" style={{ ['--ink' as string]: col }}>
-                  <svg viewBox="0 0 64 56" width="96" height="84" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{LANDMARK_ART[id]}</svg>
-                </span>
-                <b className="stamp-title">{subjectName(id)}<span className="stamp-place">{placeName(id)}</span></b>
-                <span className="soft">{total ? `${num(got)} من أصل ${num(total)} ${total > 10 ? 'محطة' : 'محطات'}` : 'قريبًا'}</span>
-              </button>
-            );
-          })}
+        <div className="passport-book">
+          <section className="pp-id explorer-id" aria-label="بطاقة المستكشف">
+            <header className="pp-head">
+              <svg className="pp-emblem" viewBox="0 0 48 48" width="40" height="40" aria-hidden>
+                <path d="M24 4l3 5h-6zM16 12h16l-3 5H19z" fill="#BA7C03" /><circle cx="24" cy="28" r="11" fill="#FFB627" stroke="#BA7C03" strokeWidth="2.5" />
+                <circle cx="24" cy="28" r="5" fill="#FFF3D6" /><path d="M14 42h20" stroke="#BA7C03" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+              <div className="pp-title"><b>جواز المستكشف</b><span>رحلة خوارزمي في السودان</span></div>
+            </header>
+            <div className="pp-body">
+              <div className="pp-photo"><Avatar profile={p} size={124} /></div>
+              <dl className="pp-fields">
+                <div><dt>الاسم</dt><dd>{name}</dd></div>
+                <div><dt>الصف</dt><dd>{grade || '—'}</dd></div>
+                <div><dt>اللقب</dt><dd className="explorer-rank">{rank}</dd></div>
+                <div><dt>الأختام</dt><dd><b className="pp-big">{num(sealed)}</b> من {num(WORLDS.length)}</dd></div>
+                <div><dt>النجوم</dt><dd><IconStar size={20} style={{ color: 'var(--c-gold)', verticalAlign: '-3px' }} /> {num(stars)}</dd></div>
+              </dl>
+            </div>
+            <div className="pp-progress" aria-label={`${num(stations)} من ${num(allStations)} محطة`}>
+              <span className="pp-progress-label">رحلتك في كل السودان</span>
+              <span className="explorer-bar" aria-hidden><i style={{ width: `${Math.round(stations / Math.max(1, allStations) * 100)}%` }} /></span>
+              <span className="soft">{num(stations)} من {num(allStations)} محطة معمورة</span>
+            </div>
+          </section>
+          <section className="pp-visas" aria-label="صفحة الأختام">
+            <h2 className="pp-page-title">صفحة الأختام</h2>
+            <div className="stamps">
+              {WORLDS.map(w => {
+                const id = w.id as WorldId, total = stationCount(id), got = Math.min(masteredIn(me, id), total), done = total > 0 && got >= total;
+                return (
+                  <button key={id} className={'stamp visa' + (done ? ' done' : '')} onClick={() => setOpen(id)} aria-label={`${subjectName(id)} في ${placeName(id)}${done ? ': مكتمل' : ''}`}>
+                    <img className="visa-stamp" src={stampUrl(id)} alt="" draggable={false} style={{ ['--tilt' as string]: `${TILT[id] ?? 0}deg` }} />
+                    <b className="stamp-title">{placeName(id)}<span className="stamp-place">{subjectName(id)}</span></b>
+                    <span className={'visa-status' + (done ? ' ok' : '')}>
+                      {done ? `مكتمل · ${dateAr(doneOn(me, id))}` : total ? `${num(got)} من ${num(total)} ${total > 10 ? 'محطة' : 'محطات'}` : 'قريبًا'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         </div>
       </div>
       <TabBar current="passport" />
@@ -105,7 +117,8 @@ function StampSheet({ world, name, onClose }: { world: WorldId; name: string; on
             <b>شهادة إتمام</b>
             <b className="cert-name">{name}</b>
             <span>{p.gender === 'f' ? 'عمّرت' : 'عمّر'} كل محطات عالم {placeName(world)}{gradeLabel(p, num) && ` · ${gradeLabel(p, num)}`}</span>
-            <span className="soft">{new Date().toLocaleDateString('ar-SD')}</span>
+            <span className="soft">{dateAr(doneOn(me, world))}</span>
+            <img className="cert-stamp" src={stampUrl(world)} alt="" draggable={false} />
           </div>
         )}
         {skills.length ? (

@@ -16,6 +16,7 @@ import { IconLock, IconPlus, IconStar } from '../ui/Icons';
 import { AppMenu } from '../ui/TopBar';
 import { Avatar, Bubble, playerName, useGuard } from '../ui/kit';
 import { useHold } from '../ui/Hold';
+import { artUrl } from '../ui/GuestAvatars';
 import { useModalBack } from '../ui/nav';
 import { IconClose } from '../ui/Icons';
 
@@ -98,7 +99,11 @@ export function Entry() {
           {!family && (
           <motion.button className="who-card card lift who-new" onClick={guard(() => go('guest'))}
               initial={{ opacity: 0, y: 24, scale: 0.92 }} animate={{ opacity: picked ? 0.4 : 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 24, delay: 0.05 * players.length }}>
-              <span className="who-plus" style={{ width: portrait, height: portrait }}><IconPlus size={Math.round(portrait * 0.4)} /></span>
+              {/* the open courtyard door (public/art/avatars/new.webp) with a small gold "+" */}
+              <span className="who-door" style={{ width: portrait, height: portrait }}>
+                <img src={artUrl('avatars/new.webp')} alt="" draggable={false} />
+                <span className="who-door-plus" aria-hidden><IconPlus size={Math.round(portrait * 0.2)} /></span>
+              </span>
               <span className="who-name">ضيف جديد</span>
             </motion.button>
           )}
