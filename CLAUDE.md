@@ -5,11 +5,11 @@ Arabic (Sudanese) learning app for children: Vite + React + TypeScript, three.js
 mixed-text rule (no English word or number at the start/end of an Arabic line; commands/paths on their own line).
 
 - Branch: `rebuild/phase1` (pushed). Live: https://ambsa1.github.io/khwarizmi/ (deployed from `main` by `npm run deploy`).
-- Last shipped: 2026-11-20, layered heritage backgrounds on every screen (see "Backgrounds" below) + clock-based long
-  press. Checks 48/48 locally and on the live site.
+- Last shipped: 2026-11-20, guest pictures + 3-step new player + layout polish (see below). Checks 49/49 locally and
+  on the live site.
 
 ## How to work
-- `cd app && npm run release` = validate, packs, build, preview, `tools/check.mjs` (48 checks). Must print `48/48 passed`.
+- `cd app && npm run release` = validate, packs, build, preview, `tools/check.mjs` (49 checks). Must print `49/49 passed`.
 - Commit and deploy ONLY when every check passes: `grep -q "N/N passed" log && git commit ...`, then `npm run deploy`
   (refuses a dirty tree), then `node tools/check.mjs https://ambsa1.github.io/khwarizmi/` on the live site.
 - Dev server: `npx vite --host 127.0.0.1 --port 5186 --strictPort` (in `app/`). Stop background servers at session end.
@@ -60,18 +60,22 @@ mixed-text rule (no English word or number at the start/end of an Arabic line; c
 - Backgrounds (`ui/Backdrop.tsx`, `styles/backdrop.css`): one fixed layer behind every screen: 3-tone base gradient +
   light pools + embossed Sudanese ink icons (tiles `public/art/heritage/*.webp`) + paper grain. General screens show all
   four regions (`all`); journey/lesson show the world's region (east: kassala/suakin, north: saqiya/meroe, centre:
-  mogran, west: marra) with per-world colours (`data-world`). «بيتنا» = sand (`data-home`); rest time = night tile.
+  mogran, west: marra) with per-world colours (`data-world`). «بيتنا» = sand (`data-home`); rest time = night sheet.
+  Icons come from sprite sheets and are laid out per screen size (whole icons, none cut at an edge), opacity ~.3.
   Geometric bands (`--band-thin`, `--band-rich`): crown key cards, frame the certificate, run along the entry foot.
   Rebuild tiles: `node tools/heritage-render.mjs ../identity/_build/masks` then
   `python tools/heritage-tiles.py ../identity/_build/masks` (each tile must stay < 250 KB).
-- Design folder `identity/` (rules, colour network, icons, prompts) is local only: excluded via `.git/info/exclude`.
+- Design folder `identity/` and the original pictures `all photo/` are local only (excluded via `.git/info/exclude`).
+- Guest pictures (`public/art/avatars/g1..g12, new, boy, girl.webp`, imported by `tools/import-avatars.py`): 6 boys + 6
+  girls in two bands (young = kindergarten-grade 2, older = grade 3-6), `ui/GuestAvatars.tsx`. New player
+  (`screens/Guest.tsx`): boy/girl cards -> grade cards + kindergarten button (age = grade + 6, kindergarten = 5) ->
+  all six pictures of that gender in a snap strip starting on the child's band (continuous scale with the finger,
+  pop sound, light vibration; arrows on desktop) + optional name. Grade label shows in the top bar, passport,
+  certificate (`gradeLabel` in `ui/kit.tsx`). Layout polish: `styles/polish.css` (loaded last).
 
 ## NEXT TASK
-Phase 2 of the visual identity: the user is generating images with an outside tool (backgrounds spec given on
-2026-11-20: 12 guest avatars + new-guest, boy/girl cards, 6 map world cards, 6 world entry paintings, 6 passport stamps,
-certificate frame, 2 reward cards). When they arrive: crop to size/safe zone, harmonise colours to the network, same
-grain, compress (<250 KB backgrounds, <40 KB avatars), place under `app/public/art/<section>/`, wire into the screens.
-Never send «بيتنا» material to an outside tool.
+None pending. Still to come from the user's generated images: map world cards, world entry paintings, passport
+stamps, certificate frame, reward cards (spec given 2026-11-20). Never send «بيتنا» material to an outside tool.
 
 ## Waiting on the user
 - Darfur outfit for Marra (Siraj wears the Nile outfit there until the user sends Darfur reference photos).
