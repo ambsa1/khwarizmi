@@ -10,7 +10,8 @@ import { IconBack } from './Icons';
 import { createPortal } from 'react-dom';
 import { Sound, useSoundSettings } from '../audio/SoundManager';
 import { useApp, useProfile } from '../state/store';
-import { Avatar, playerName } from './kit';
+import { Avatar, gradeLabel, playerName } from './kit';
+import { useNum } from '../lib/num';
 
 const P = { width: 26, height: 26, viewBox: '0 0 32 32', fill: 'none', stroke: 'currentColor', strokeWidth: 2.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
 const IconDots = () => <svg {...P}><circle cx="16" cy="7" r="2.4" fill="currentColor" /><circle cx="16" cy="16" r="2.4" fill="currentColor" /><circle cx="16" cy="25" r="2.4" fill="currentColor" /></svg>;
@@ -126,15 +127,16 @@ export function AppMenu() {
 /** Top bar of the inner screens. */
 export function TopBar({ title }: { title: ReactNode }) {
   const p = useProfile(), go = useApp(s => s.go), screen = useApp(s => s.screen);
+  const num = useNum();
   if (!p) return null;
-  const name = playerName(p);
+  const name = playerName(p), grade = gradeLabel(p, num);
   return (
     <header className="topbar">
       <div className="topbar-start">
         <button className="icon-btn back-btn" aria-label="رجوع" onClick={() => back(screen === 'path' ? 'entry' : 'path')}><IconBack /></button>
         <button className="glass player-pill" aria-label={`${name}: غيّر اللاعب`} onClick={() => go('entry')}>
           <Avatar profile={p} size={44} />
-          <span>{name}</span>
+          <span className="pill-text"><span>{name}</span>{grade && <small>{grade}</small>}</span>
         </button>
       </div>
       <div className="topbar-title">{title}</div>

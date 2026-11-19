@@ -7,9 +7,7 @@
   position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
   --b0: #FFF8EC; --b1: #F7E7CB; --b2: #E9D2B0;
   --warm: rgba(255, 182, 39, .38); --cool: rgba(31, 95, 173, .13); --deep: rgba(217, 100, 58, .20);
-  --tw: 2050px; --pat: .62;
-  /* the icons stay crisp at the edges and step back (not away) where the content sits */
-  --fade: radial-gradient(ellipse 58% 52% at 50% 55%, rgba(0, 0, 0, .62) 30%, #000 90%);
+  --pat: .3;
   background:
     radial-gradient(circle at 82% 22%, var(--warm), transparent 36%),
     radial-gradient(circle at 6% 92%, var(--cool), transparent 40%),
@@ -18,26 +16,14 @@
   transition: background-color 600ms;
 }
 .backdrop.inside { position: absolute; z-index: -1; }
-.backdrop::before {
-  content: ''; position: absolute; inset: 0;
-  background-image: var(--tile); background-size: var(--tw) auto; background-position: 50% 0; background-repeat: repeat;
-  opacity: var(--pat);
-  -webkit-mask-image: var(--fade); mask-image: var(--fade);
-}
+/* the ink icons: whole icons on a grid fitted to the screen (positions from ui/Backdrop.tsx), calm enough to sit
+   behind text, still clearly there; headers, titles and corner buttons sit in their own capsules above them */
+.heritage { position: absolute; inset: 0; opacity: var(--pat); }
+.heritage i { position: absolute; width: var(--s); height: var(--s); background-image: var(--sheet); background-repeat: no-repeat; }
 .backdrop::after { content: ''; position: absolute; inset: 0; background-image: var(--grain); background-size: 256px; opacity: .16; }
-/* phones: smaller icons, the content column runs down the middle */
-@media (max-width: 767px) {
-  .backdrop { --tw: 1330px; --fade: radial-gradient(ellipse 78% 46% at 50% 56%, rgba(0, 0, 0, .6) 30%, #000 90%); }
-}
-@media (min-width: 1800px) { .backdrop { --tw: 2300px; } }
 
 /* inside a world: the base, light pools and icon colour follow the world (tokens.worlds) */
-.backdrop[data-region='east'], .backdrop[data-region='north'], .backdrop[data-region='center'], .backdrop[data-region='west'] { --pat: .58; --tw: 1025px; }
-@media (max-width: 767px) { .backdrop[data-region='east'], .backdrop[data-region='north'], .backdrop[data-region='center'], .backdrop[data-region='west'] { --tw: 665px; } }
-@media (min-width: 1800px) { .backdrop[data-region='east'], .backdrop[data-region='north'], .backdrop[data-region='center'], .backdrop[data-region='west'] { --tw: 1150px; } }
-/* the night tile has the same layout as the all-Sudan one */
-.backdrop[data-tone='night'] { --tw: 2050px; }
-@media (max-width: 767px) { .backdrop[data-tone='night'] { --tw: 1330px; } }
+.backdrop[data-region='east'], .backdrop[data-region='north'], .backdrop[data-region='center'], .backdrop[data-region='west'] { --pat: .28; }
 .backdrop[data-world='kassala'] { --b0: #FFF6EE; --b1: #F8E4D4; --b2: #E6C3AC; --warm: rgba(247, 162, 107, .36); --cool: rgba(92, 184, 214, .16); --deep: rgba(201, 139, 122, .32); }
 .backdrop[data-world='suakin']  { --b0: #F5FBFA; --b1: #E4F1EE; --b2: #E2D6BE; --warm: rgba(255, 182, 39, .26); --cool: rgba(31, 163, 163, .24); --deep: rgba(138, 90, 59, .16); }
 .backdrop[data-world='saqiya']  { --b0: #FDF8EA; --b1: #F3E7C6; --b2: #DEC28C; --warm: rgba(255, 182, 39, .36); --cool: rgba(79, 163, 209, .18); --deep: rgba(62, 155, 79, .20); }
@@ -45,13 +31,13 @@
 .backdrop[data-world='mogran']  { --b0: #F6FAFC; --b1: #E6EFF3; --b2: #D8CBAA; --warm: rgba(255, 182, 39, .28); --cool: rgba(31, 95, 173, .22); --deep: rgba(93, 170, 90, .18); }
 .backdrop[data-world='marra']   { --b0: #F4F9F2; --b1: #E0EDDC; --b2: #C3D8B1; --warm: rgba(255, 201, 120, .28); --cool: rgba(47, 143, 191, .20); --deep: rgba(46, 125, 79, .26); }
 /* «بيتنا»: the warm sand and gold page, a faint royal light behind the family picture */
-.backdrop[data-home] { --b0: #F7EDDA; --b1: #F2E3C8; --b2: #EAD5B2; --warm: rgba(255, 182, 39, .30); --cool: rgba(123, 97, 201, .16); --deep: rgba(201, 150, 60, .22); --pat: .5; }
+.backdrop[data-home] { --b0: #F7EDDA; --b1: #F2E3C8; --b2: #EAD5B2; --warm: rgba(255, 182, 39, .30); --cool: rgba(123, 97, 201, .16); --deep: rgba(201, 150, 60, .22); --pat: .26; }
 /* rest time: night with gold icons */
 .backdrop[data-tone='night'] {
-  --b0: #232C52; --b1: #1B2340; --b2: #141A33; --warm: rgba(255, 182, 39, .14); --cool: rgba(46, 196, 196, .16); --deep: rgba(123, 97, 201, .30); --pat: .34;
+  --b0: #232C52; --b1: #1B2340; --b2: #141A33; --warm: rgba(255, 182, 39, .14); --cool: rgba(46, 196, 196, .16); --deep: rgba(123, 97, 201, .30); --pat: .22;
 }
 .backdrop[data-tone='night']::after { opacity: .1; }
-@media (prefers-reduced-transparency: reduce) { .backdrop { --pat: .4; } }
+@media (prefers-reduced-transparency: reduce) { .backdrop { --pat: .2; } }
 
 /* every screen is transparent over the backdrop (the old flat sand and the code-drawn courtyard are gone) */
 html, body { background: #EAD5B7; }
@@ -97,7 +83,7 @@ body, .sand, .screen.sand, .entry, .screen.entry, .parents:has(.our-home) { back
 
 /* "who's playing?": the rich band runs along the foot of the screen like the hem of a woven mat */
 .entry::after { content: ''; position: absolute; inset: auto 0 0 0; height: calc(var(--band-rich-h) + var(--safe-b)); z-index: 0; pointer-events: none;
-  background: var(--band-rich) repeat-x 0 0 / auto var(--band-rich-h), #5B3B26; box-shadow: 0 -6px 18px -8px rgba(91, 59, 38, .45); }
+  background: var(--band-rich) repeat-x 0 0 / auto 100%; }
 .entry .entry-who { padding-bottom: calc(28px + var(--band-rich-h) + var(--safe-b)); }
 
 /* «بيتنا»: the family picture melts into the page through a mask (no colour overlay, so the icons show around it) */

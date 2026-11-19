@@ -13,7 +13,7 @@ import { KassalaTown, TOWN_FAR, TOWN_FOG } from '../three/town/KassalaTown';
 import { Stage, stats, useTier } from '../three/Stage';
 import { IconBack, IconStar } from '../ui/Icons';
 import { back, useModalBack } from '../ui/nav';
-import { Avatar, playerName, TabBar } from '../ui/kit';
+import { Avatar, gradeLabel, playerName, TabBar } from '../ui/kit';
 import { TopBar } from '../ui/TopBar';
 import { SHORT_NAME, SUBJECT_COLOR } from './Map';
 
@@ -38,7 +38,9 @@ export function Passport() {
   const stations = WORLDS.reduce((a, w) => a + masteredIn(me, w.id), 0);
   const stars = WORLDS.reduce((a, w) => a + worldSkills(w.id).filter(k => isMastered(me?.skills[k.id])).length, 0);
   const rank = [...RANKS].reverse().find(([n]) => stations >= n)![1];
-  const name = playerName(p);
+  const name = playerName(p), grade = gradeLabel(p, num);
+  const allStations = WORLDS.reduce((a, w) => a + stationCount(w.id as WorldId), 0);
+  const sealed = WORLDS.filter(w => { const t = stationCount(w.id as WorldId); return t > 0 && masteredIn(me, w.id) >= t; }).length;
   return (
     <div className="screen sand has-rail">
       <div className="main col grow scroll">
@@ -47,11 +49,16 @@ export function Passport() {
           <Avatar profile={p} size={84} />
           <div className="explorer-text">
             <b className="t-h2">{name}</b>
-            <span className="explorer-rank">{rank}</span>
+            <span className="explorer-rank">{rank}{grade && <span className="explorer-grade"> · {grade}</span>}</span>
             <span className="explorer-stats">
               <span><IconStar size={22} style={{ color: 'var(--c-gold)' }} /> {num(stars)} {stars === 1 ? 'نجمة' : 'نجوم'}</span>
               <span>{num(stations)} {stations === 1 ? 'محطة' : 'محطات'} معمورة</span>
             </span>
+          </div>
+          <div className="explorer-progress" aria-label={`أختامك ${num(sealed)} من ${num(WORLDS.length)}`}>
+            <span className="explorer-seals"><b>{num(sealed)}</b> من {num(WORLDS.length)} أختام</span>
+            <span className="explorer-bar" aria-hidden><i style={{ width: `${Math.round(stations / Math.max(1, allStations) * 100)}%` }} /></span>
+            <span className="soft">{num(stations)} من {num(allStations)} محطة في كل السودان</span>
           </div>
         </section>
         <div className="stamps">
@@ -60,7 +67,7 @@ export function Passport() {
             const col = SUBJECT_COLOR[id];
             return (
               <button key={id} className={'stamp card' + (done ? ' done' : '')} onClick={() => setOpen(id)} aria-label={`${subjectName(id)} في ${placeName(id)}`}>
-                <span className="stamp-art" style={{ color: done ? col : 'rgba(107, 90, 72, .32)', borderColor: done ? col : 'rgba(107, 90, 72, .22)' }}>
+                <span className="stamp-art" style={{ ['--ink' as string]: col }}>
                   <svg viewBox="0 0 64 56" width="96" height="84" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{LANDMARK_ART[id]}</svg>
                 </span>
                 <b className="stamp-title">{subjectName(id)}<span className="stamp-place">{placeName(id)}</span></b>
@@ -92,10 +99,12 @@ function StampSheet({ world, name, onClose }: { world: WorldId; name: string; on
           <button className="icon-btn back-btn" aria-label="رجوع" onClick={onClose}><IconBack /></button>
           <h2 className="t-h2">{subjectName(world)} • {placeName(world)}</h2>
         </div>
-        {done && (
+        {done && p && (
           <div className="certificate">
+            <Avatar profile={p} size={72} />
             <b>شهادة إتمام</b>
-            <span>{name} عمّر كل محطات عالم {placeName(world)}</span>
+            <b className="cert-name">{name}</b>
+            <span>{p.gender === 'f' ? 'عمّرت' : 'عمّر'} كل محطات عالم {placeName(world)}{gradeLabel(p, num) && ` · ${gradeLabel(p, num)}`}</span>
             <span className="soft">{new Date().toLocaleDateString('ar-SD')}</span>
           </div>
         )}

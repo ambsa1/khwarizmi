@@ -62,11 +62,15 @@ await page.getByRole('button', { name: 'ضيف جديد' }).click();
 await page.waitForSelector('.guest');
 small = await smallText(); ok('guest: no text under 18px', small.length === 0, small.join(', '));
 await page.getByRole('button', { name: 'ولد' }).click();
-await page.locator('.age-ball').nth(5).click();          // 8 years
-await page.waitForSelector('.terrace');
-await page.locator('.terrace').nth(2).click();           // grade 3
-await page.waitForSelector('.avatar-pick');
-await page.locator('.avatar-pick').first().click();
+await page.waitForSelector('.grade-card');
+const kg = await page.locator('.kg-btn').count();
+await page.locator('.grade-card').nth(2).click();        // grade 3
+await page.waitForSelector('.pic-strip .pic');
+await page.waitForTimeout(500);
+const strip = await page.evaluate(() => ({ pics: document.querySelectorAll('.pic-strip .pic').length, srcs: [...document.querySelectorAll('.pic-strip img')].map(i => i.getAttribute('src').split('/').pop()), on: document.querySelectorAll('.pic-strip .pic.on').length }));
+small = await smallText();
+ok('new player: grade cards with a kindergarten button, then only the matching pictures (boy, grade 3) in a strip', kg === 1 && strip.pics === 3 && strip.on === 1 && strip.srcs.every(s => ['g9.webp', 'g3.webp', 'g10.webp'].includes(s)) && small.length === 0, JSON.stringify(strip) + ' ' + small.join(', '));
+await page.locator('.avatar-go').click();
 await page.waitForSelector('.path', { timeout: 10000 });
 ok('guest wizard reaches today\'s journey', true);
 await page.waitForTimeout(2500);
@@ -179,8 +183,7 @@ const levels = JSON.parse(readFileSync(join(HERE, '..', '..', 'content', 'legacy
 await p3.evaluate(([lv]) => localStorage.setItem('khwarizmi.v1', JSON.stringify({ v: 2, players: [{ id: 'old1', name: 'لاعب قديم', age: 9, gender: 'b', progress: Object.fromEntries(lv.map(k => [k, 3])) }] })), [levels]);
 await p3.reload({ waitUntil: 'load' }); await p3.waitForSelector('.entry');
 await p3.getByRole('button', { name: 'ضيف جديد' }).click();
-await p3.getByRole('button', { name: 'ولد' }).click(); await p3.locator('.age-ball').nth(5).click();
-await p3.locator('.terrace').nth(2).click(); await p3.locator('.avatar-pick').first().click();
+await p3.getByRole('button', { name: 'ولد' }).click(); await p3.locator('.grade-card').nth(2).click(); await p3.locator('.avatar-go').click();
 await p3.waitForSelector('.path');
 await openParents(p3); await p3.waitForTimeout(800);
 const parentsText = await p3.locator('.parents').innerText();
@@ -195,7 +198,7 @@ await ctx3.close();
   const cx = await browser.newContext({ viewport: { width: 1366, height: 768 }, locale: 'ar' });
   const pg = await cx.newPage();
   await pg.goto(base + '?demo=guest', { waitUntil: 'load' }); await pg.waitForSelector('.entry');
-  const bdOf = () => pg.evaluate(() => { const b = document.querySelector('.backdrop'); return { region: b?.dataset.region, tile: b ? getComputedStyle(b, '::before').backgroundImage : '' }; });
+  const bdOf = () => pg.evaluate(() => { const b = document.querySelector('.backdrop'); const ic = [...document.querySelectorAll('.backdrop .heritage i')]; const cut = ic.filter(e => { const r = e.getBoundingClientRect(); return r.left < 0 || r.top < 0 || r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5; }).length; return { region: b?.dataset.region, tile: ic[0] ? getComputedStyle(ic[0]).backgroundImage : '', icons: ic.length, cut }; });
   const entryBd = await bdOf();
   const sj = await pg.locator('.entry-siraj').boundingBox();
   await pg.mouse.move(sj.x + sj.width / 2, sj.y + sj.height / 2); await pg.mouse.down(); await pg.waitForTimeout(1200);
@@ -217,7 +220,7 @@ await ctx3.close();
   await pg.locator('.topbar .back-btn').click(); const toPathBack = await pg.waitForSelector('.path', { timeout: 5000 }).then(() => true).catch(() => false);
   ok('back buttons sit top right and match the browser back (pages and modals)', backBtn && backBtn.x > 683 && backToEntry && sheetClosed && toPathBack, `right edge ${Math.round((backBtn?.x ?? 0) + (backBtn?.width ?? 0))}, entry ${backToEntry}, sheet closed ${sheetClosed}, path ${toPathBack}`);
   const pathBd = await bdOf();
-  ok('the background carries the heritage icons: all four regions on "who is playing?", the own region of the world on the journey', entryBd.region === 'all' && entryBd.tile.includes('/art/heritage/all.webp') && !entryBd.tile.includes('/assets/art/') && pathBd.region === 'east' && pathBd.tile.includes('/art/heritage/east.webp') && !pathBd.tile.includes('/assets/art/'), JSON.stringify({ entryBd, pathBd }));
+  ok('the background carries the heritage icons (whole, none cut at an edge): all four regions on "who is playing?", the own region of the world on the journey', entryBd.region === 'all' && entryBd.tile.includes('/art/heritage/all.webp') && !entryBd.tile.includes('/assets/art/') && pathBd.region === 'east' && pathBd.tile.includes('/art/heritage/east.webp') && !pathBd.tile.includes('/assets/art/') && entryBd.icons >= 30 && entryBd.cut === 0 && pathBd.cut === 0, JSON.stringify({ entryBd, pathBd }));
   await pg.goto(base, { waitUntil: 'load' }); await pg.waitForSelector('.entry');
   const before = await pg.locator('.who-wrap').count();
   await pg.locator('.who-del').first().click(); await pg.getByRole('button', { name: 'امسح' }).click(); await pg.waitForTimeout(400);
@@ -252,8 +255,7 @@ small = await smallText(); ok('passport: no text under 18px', small.length === 0
   await pg.goto(base, { waitUntil: 'load' }); await pg.evaluate(() => navigator.serviceWorker.ready);
   await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.entry');
   await pg.getByRole('button', { name: 'ضيف جديد' }).click();
-  await pg.getByRole('button', { name: 'بنت' }).click(); await pg.locator('.age-ball').nth(5).click();
-  await pg.locator('.terrace').nth(2).click(); await pg.locator('.avatar-pick').first().click();
+  await pg.getByRole('button', { name: 'بنت' }).click(); await pg.locator('.grade-card').nth(2).click(); await pg.locator('.avatar-go').click();
   await pg.waitForSelector('.path-window canvas', { timeout: 60000 }).catch(() => {});
   const online3d = await pg.locator('.path-window canvas').count();
   await cx.setOffline(true);

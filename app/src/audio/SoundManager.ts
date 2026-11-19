@@ -5,7 +5,7 @@
 //   Sound.ambient(world | null)     - a quiet soundscape for the world on screen (wind, water, birds)
 import { useSyncExternalStore } from 'react';
 
-export type SoundEvent = 'tap' | 'fog' | 'build' | 'star' | 'celebrate' | 'open' | 'close';
+export type SoundEvent = 'tap' | 'pop' | 'fog' | 'build' | 'star' | 'celebrate' | 'open' | 'close';
 export type VoiceEvent = 'station' | 'world' | 'welcome' | 'star';
 export type SoundSettings = { effects: boolean; ambient: boolean; voice: boolean; volume: number };
 const KEY = 'khawarizmi.sound';
@@ -82,6 +82,7 @@ class SoundManager {
     if (!this.ctx || !this.settings.effects) return;
     switch (e) {
       case 'tap': this.tone(720, 560, 0.06, 'sine', 0, 0.25); break;
+      case 'pop': this.tone(520, 250, 0.08, 'sine', 0, 0.2); this.tone(1050, 760, 0.035, 'triangle', 0, 0.06); break;   // a soft bubble pop
       case 'open': this.tone(440, 660, 0.12, 'sine', 0, 0.25); break;
       case 'close': this.tone(620, 420, 0.1, 'sine', 0, 0.2); break;
       case 'fog': this.whoosh(1.1, 300, 2400, 0.35); break;

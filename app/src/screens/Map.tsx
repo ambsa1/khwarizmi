@@ -1,7 +1,7 @@
 // Map of Sudan with the five worlds (and Siraj's water wheel for the little ones). Tap a world to travel there.
 import { useEffect, useState } from 'react';
 import { TopBar } from '../ui/TopBar';
-import { SHORT_NAME, stationCount, subjectName, WORLDS } from '../lib/content';
+import { placeName, SHORT_NAME, stationCount, subjectName, WORLDS } from '../lib/content';
 import { useNum } from '../lib/num';
 import type { WorldId } from '../lib/tokens';
 import { masteredIn, useLearning } from '../data/learning';
@@ -32,7 +32,7 @@ export function MapScreen() {
     const total = Math.max(1, stationCount(w.id));
     const ages = w.ages as { min: number; max?: number };
     const locked = p.age < ages.min || (ages.max !== undefined && p.age > ages.max + 1);
-    return { id: w.id as WorldId, name: subjectName(w.id), value: masteredIn(learners[p.id], w.id) / total, locked, current: w.id === cur };
+    return { id: w.id as WorldId, name: subjectName(w.id), place: placeName(w.id), value: masteredIn(learners[p.id], w.id) / total, locked, current: w.id === cur };
   });
   const pick = (id: WorldId) => {
     setPicked(id);

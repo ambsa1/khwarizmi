@@ -14,7 +14,8 @@ const P = (lon: number, lat: number) => new THREE.Vector2(lon - C.lon, lat - C.l
 const to3 = (lon: number, lat: number, y = 0) => new THREE.Vector3(lon - C.lon, y, -(lat - C.lat));
 const LAND_TOP = 0.5;
 // Label offsets where real places sit close together (Meroe, Suakin and Kassala are all in the east).
-const LABEL_AT: Partial<Record<WorldId, [number, number, number]>> = { meroe: [0.2, 0, -1.75], suakin: [0.3, 0, -1.7] };
+// the three eastern worlds sit close together: Suakin's label goes out over the Red Sea, Meroe's to the west
+const LABEL_AT: Partial<Record<WorldId, [number, number, number]>> = { meroe: [0, 0, -1.95], suakin: [2.1, 0, -0.5] };
 
 // The real outline of Sudan and the real Red Sea (Natural Earth, public domain; simplified to ~140 and ~90 points).
 import MAPDATA from './sudan-map.json';
@@ -120,7 +121,7 @@ function Pin({ color, selected, dim }: { color: string; selected: boolean; dim: 
   );
 }
 
-export type MapSpot = { id: WorldId; name: string; value: number; locked: boolean; current: boolean };
+export type MapSpot = { id: WorldId; name: string; place: string; value: number; locked: boolean; current: boolean };
 
 /** Fits the whole country on any screen shape, tilted like looking down at a table model. */
 function Rig() {
@@ -170,7 +171,7 @@ export function SudanMapScene({ spots, onPick, labels = 'all', selected }: { spo
             <mesh position-y={1} visible={false}><cylinderGeometry args={[1.5, 1.5, 2.6, 12]} /></mesh>
             {(labels === 'all' || labels.includes(s.id)) && (
               <Html position={labels === 'all' ? LABEL_AT[s.id] ?? [0, 0, 1.6] : [0, 0, 1.6]} center zIndexRange={[10, 0]} wrapperClass="html-anchor" style={{ pointerEvents: 'none' }}>
-                <span className={'map-label' + (selected === s.id ? ' current' : '') + (s.locked ? ' locked' : '')}>{s.name}</span>
+                <span className={'map-label' + (selected === s.id ? ' current' : '') + (s.locked ? ' locked' : '')}>{s.name}<small>{s.place}</small></span>
               </Html>
             )}
           </group>

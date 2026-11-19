@@ -1,17 +1,60 @@
-// Guest mode in three short questions from Siraj, then a picture: boy or girl (needed for how Siraj speaks),
-// age as big round numbers on a gentle arc, and school grade as little terraces (or "not at school yet").
+// A new player in three short questions from Siraj, then "who's playing?":
+//   1. boy or girl (two picture cards)     2. which grade (six warm cards, and a big "kindergarten" button with toy
+//   blocks, readable without reading)      3. "pick your picture": only the pictures for that gender and age band, in a
+//   wide swipeable strip (the middle one grows in a glowing gold ring, a soft pop on every step), then the name.
+// The age is taken from the grade (kindergarten = 5, grade n = n + 6).
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Sound } from '../audio/SoundManager';
 import { useNum } from '../lib/num';
 import { useApp } from '../state/store';
-import { GUEST_AVATARS, GuestAvatar } from '../ui/GuestAvatars';
+import { artUrl, avatarsFor, bandOf, GuestAvatar } from '../ui/GuestAvatars';
 import { IconBack } from '../ui/Icons';
 import { back as navBack } from '../ui/nav';
 import { Bubble, say, useGuard } from '../ui/kit';
 import { SirajLive } from './Entry';
 
-type Step = 'gender' | 'age' | 'grade' | 'avatar';
-const AGES = [3, 4, 5, 6, 7, 8, 9, 10, 11];
+type Step = 'gender' | 'grade' | 'avatar';
+const GRADE_WORDS = ['الأول', 'التاني', 'التالت', 'الرابع', 'الخامس', 'السادس'];
+
+/** toy blocks: kindergarten at a glance */
+function IconBlocks({ size = 64 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
+      <g stroke="#5B3B26" strokeWidth="2" strokeLinejoin="round">
+        <rect x="6" y="34" width="24" height="24" rx="4" fill="#D9643A" /><circle cx="18" cy="46" r="5" fill="#FFF3D6" />
+        <rect x="34" y="34" width="24" height="24" rx="4" fill="#1F5FAD" /><path d="M46 39 52 51H40Z" fill="#FFF3D6" />
+        <rect x="20" y="8" width="24" height="24" rx="4" fill="#FFB627" transform="rotate(-6 32 20)" /><rect x="27" y="15" width="10" height="10" rx="2" fill="#3E9B4F" transform="rotate(-6 32 20)" />
+      </g>
+    </svg>
+  );
+}
+
+/** the picture strip: snaps one picture to the middle, the middle one is the choice */
+function PictureStrip({ ids, active, setActive }: { ids: string[]; active: number; setActive: (i: number) => void }) {
+  const ref = useRef<HTMLDivElement>(null), last = useRef(active);
+  const center = (i: number, smooth = true) => {
+    const el = ref.current?.children[i] as HTMLElement | undefined;
+    el?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', inline: 'center', block: 'nearest' });
+  };
+  useEffect(() => { center(active, false); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const onScroll = () => {
+    const box = ref.current; if (!box) return;
+    const mid = box.getBoundingClientRect().left + box.clientWidth / 2;
+    let best = 0, d = Infinity;
+    [...box.children].forEach((c, i) => { const r = c.getBoundingClientRect(); const dd = Math.abs(r.left + r.width / 2 - mid); if (dd < d) { d = dd; best = i; } });
+    if (best !== last.current) { last.current = best; setActive(best); Sound.unlock(); Sound.play('pop'); }
+  };
+  return (
+    <div className="pic-strip" ref={ref} onScroll={onScroll} role="listbox" aria-label="الصور">
+      {ids.map((id, i) => (
+        <button key={id} role="option" aria-selected={i === active} className={'pic' + (i === active ? ' on' : '')} onClick={() => center(i)}>
+          <GuestAvatar id={id} size={150} />
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function Guest() {
   const go = useApp(s => s.go), addGuest = useApp(s => s.addGuest);
@@ -19,26 +62,30 @@ export function Guest() {
   const guard = useGuard(350);
   const [step, setStep] = useState<Step>('gender');
   const [gender, setGender] = useState<'m' | 'f'>('m');
-  const [age, setAge] = useState(7);
   const [grade, setGrade] = useState<number | null>(null);
   const [name, setName] = useState('');
+  const [active, setActive] = useState(1);
   const who = { gender };
-  const back = () => setStep(s => (s === 'gender' ? (navBack('entry'), s) : s === 'age' ? 'gender' : s === 'grade' ? 'age' : age <= 4 ? 'age' : 'grade'));
+  const back = () => setStep(s => (s === 'gender' ? (navBack('entry'), s) : s === 'grade' ? 'gender' : 'grade'));
   const question: Record<Step, string> = {
     gender: 'إنت ولد ولا بنت؟',
-    age: say(who, 'عمرك كم سنة؟', 'عمرك كم سنة؟'),
     grade: say(who, 'في ياتو صف إنت؟', 'في ياتو صف إنتِ؟'),
     avatar: say(who, 'اختار صورتك', 'اختاري صورتك'),
   };
-  const avatars = [...GUEST_AVATARS].sort((a, b) => Number(b.gender === gender) - Number(a.gender === gender));
-  const finish = (avatar: string) => { addGuest({ gender, age, grade, avatar, name: name.trim().slice(0, 16) || undefined }); go('path'); };
-  const stepIndex = ['gender', 'age', 'grade', 'avatar'].indexOf(step);
+  const pics = avatarsFor(gender, bandOf(grade)).map(a => a.id);
+  const pickGrade = (g: number | null) => { setGrade(g); setActive(1); setStep('avatar'); };
+  const finish = () => {
+    const avatar = pics[Math.min(active, pics.length - 1)];
+    addGuest({ gender, age: grade == null ? 5 : grade + 6, grade, avatar, name: name.trim().slice(0, 16) || undefined });
+    go('path');
+  };
+  const stepIndex = ['gender', 'grade', 'avatar'].indexOf(step);
 
   return (
-    <div className="screen sand guest">
+    <div className={'screen sand guest step-' + step}>
       <header className="guest-top">
         <button className="icon-btn back-btn" aria-label="رجوع" onClick={guard(back)}><IconBack /></button>
-        <div className="dots" aria-label={`الخطوة ${stepIndex + 1} من ٤`}>{[0, 1, 2, 3].map(i => <i key={i} className={i <= stepIndex ? 'on' : ''} />)}</div>
+        <div className="dots" aria-label={`الخطوة ${stepIndex + 1} من ٣`}>{[0, 1, 2].map(i => <i key={i} className={i <= stepIndex ? 'on' : ''} />)}</div>
         <span style={{ width: 56 }} />
       </header>
       <div className="guest-siraj"><SirajLive action={step === 'avatar' ? 'cheer' : 'think'} /></div>
@@ -47,50 +94,37 @@ export function Guest() {
         <motion.div key={step} className="guest-body" initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.25 }}>
           {step === 'gender' && (
             <div className="pick-two">
-              {([['m', 'ولد', 'g1'], ['f', 'بنت', 'g5']] as const).map(([g, label, av]) => (
-                <button key={g} className="card pick-big lift" onClick={guard(() => { setGender(g); setStep('age'); })}>
-                  <GuestAvatar id={av} size={132} /><span className="t-h2">{label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {step === 'age' && (
-            <div className="age-arc">
-              {AGES.map((a, i) => (
-                <button key={a} className={'age-ball' + (a === age ? ' on' : '')} style={{ ['--lift' as string]: `${[16, 0, 16][i % 3]}px` }}
-                  onClick={guard(() => { setAge(a); if (a <= 4) { setGrade(null); setStep('avatar'); } else setStep('grade'); })}>
-                  {a === 11 ? <span>{num(10)}<small>+</small></span> : num(a)}
+              {([['m', 'ولد', 'boy'], ['f', 'بنت', 'girl']] as const).map(([g, label, img]) => (
+                <button key={g} className="gender-card lift" onClick={guard(() => { setGender(g); setStep('grade'); })}>
+                  <img src={artUrl(`avatars/${img}.webp`)} alt="" draggable={false} />
+                  <span className="gender-label">{label}</span>
                 </button>
               ))}
             </div>
           )}
           {step === 'grade' && (
             <div className="grades">
-              <div className="terraces">
+              <button className="kg-btn lift" onClick={guard(() => pickGrade(null))}>
+                <IconBlocks />
+                <span>{say(who, 'ما دخلت المدرسة', 'ما دخلت المدرسة')} <small>(روضة)</small></span>
+              </button>
+              <div className="grade-grid">
                 {[1, 2, 3, 4, 5, 6].map(g => (
-                  <button key={g} className="terrace" style={{ ['--h' as string]: `${56 + (g - 1) * 10}px` }} onClick={guard(() => { setGrade(g); setStep('avatar'); })}>
-                    <span className="t-h2">{num(g)}</span>
+                  <button key={g} className="grade-card lift" aria-label={`الصف ${GRADE_WORDS[g - 1]}`} onClick={guard(() => pickGrade(g))}>
+                    <b>{num(g)}</b><small>الصف</small>
                   </button>
                 ))}
               </div>
-              <button className="btn paper wide" onClick={guard(() => { setGrade(null); setStep('avatar'); })}>
-                {say(who, 'لسه ما دخلت المدرسة', 'لسه ما دخلت المدرسة')}
-              </button>
             </div>
           )}
           {step === 'avatar' && (
-            <div className="guest-name">
-              <label htmlFor="guest-name" className="t-body">{say(who, 'اسمك (لو داير):', 'اسمك (لو دايرة):')}</label>
-              <input id="guest-name" className="code" maxLength={16} autoComplete="off" dir="rtl" placeholder={gender === 'f' ? 'ضيفة' : 'ضيف'} value={name} onChange={e => setName(e.target.value)} />
-            </div>
-          )}
-          {step === 'avatar' && (
-            <div className="avatars">
-              {avatars.map(a => (
-                <button key={a.id} className="avatar-pick lift" onClick={guard(() => finish(a.id))} aria-label={a.gender === 'f' ? 'صورة بنت' : 'صورة ولد'}>
-                  <GuestAvatar id={a.id} size={88} />
-                </button>
-              ))}
+            <div className="pick-picture">
+              <PictureStrip ids={pics} active={active} setActive={setActive} />
+              <div className="guest-name">
+                <label htmlFor="guest-name">{say(who, 'اسمك (لو داير):', 'اسمك (لو دايرة):')}</label>
+                <input id="guest-name" className="code" maxLength={16} autoComplete="off" dir="rtl" placeholder={gender === 'f' ? 'ضيفة' : 'ضيف'} value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <button className="btn big avatar-go" onClick={guard(finish)}>يلا نبدأ</button>
             </div>
           )}
         </motion.div>
