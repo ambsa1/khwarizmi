@@ -4,16 +4,22 @@ import { useRef, useState, type PointerEvent as RPE, type ReactNode } from 'reac
 
 export function useHold(ms: number, onDone: () => void) {
   const [p, setP] = useState(0);
-  const raf = useRef(0), t0 = useRef(0), fired = useRef(false);
-  const stop = () => { cancelAnimationFrame(raf.current); setP(0); };
+  const raf = useRef(0), timer = useRef(0), t0 = useRef(0), fired = useRef(false), down = useRef(false);
+  // the hold counts by the clock, not by drawn frames: a slow phone that skips frames still opens on time
+  const fire = () => { if (!down.current || fired.current) return; fired.current = true; down.current = false; clearTimeout(timer.current); cancelAnimationFrame(raf.current); setP(0); onDone(); };
+  const stop = () => {
+    if (down.current && performance.now() - t0.current >= ms) fire();   // released after the full time: it counts
+    down.current = false; clearTimeout(timer.current); cancelAnimationFrame(raf.current); setP(0);
+  };
   const start = (e: RPE<HTMLElement>) => {
     if (e.button !== undefined && e.button > 0) return;                 // left mouse button or touch only
     e.preventDefault();                                                  // no text selection, no drag
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* not capturable: still works without */ }
-    fired.current = false; t0.current = performance.now();
+    fired.current = false; down.current = true; t0.current = performance.now();
+    timer.current = window.setTimeout(fire, ms);
     const tick = () => {
       const k = (performance.now() - t0.current) / ms;
-      if (k >= 1) { if (!fired.current) { fired.current = true; setP(0); onDone(); } return; }
+      if (k >= 1) { fire(); return; }
       setP(k); raf.current = requestAnimationFrame(tick);
     };
     raf.current = requestAnimationFrame(tick);
