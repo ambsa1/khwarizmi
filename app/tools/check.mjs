@@ -267,7 +267,7 @@ small = await smallText(); ok('passport: no text under 18px', small.length === 0
 await page.getByRole('button', { name: 'المدرسة' }).first().click(); await page.waitForSelector('.school .book', { timeout: 10000 }); await page.waitForTimeout(600);
 { const sc = await page.evaluate(() => ({ books: document.querySelectorAll('.school .book').length, board: !!document.querySelector('.chalkboard'), tabs: document.querySelectorAll('.tabbar .tab').length, title: document.querySelector('.shelf-title')?.textContent ?? '' }));
   small = await smallText();
-  ok('school: Siraj at the chalkboard and the books of the child\'s grade (grade 3: 8 books), four tabs', sc.books === 8 && sc.board && sc.tabs === 4 && sc.title.includes('التالت') && small.length === 0, JSON.stringify(sc) + ' ' + small.join(', ')); }
+  ok('school: Siraj at the chalkboard and the books of the child\'s grade (grade 3: 6 books), four tabs', sc.books === 6 && sc.board && sc.tabs === 4 && sc.title.includes('التالت') && small.length === 0, JSON.stringify(sc) + ' ' + small.join(', ')); }
 await page.getByRole('button', { name: 'جوازي' }).first().click(); await page.waitForSelector('.pp-visas');
 { // the new guest's own picture, name and grade on the passport data page and in the top bar; six real stamps; the last
   // stamp clears the bottom bar when the page is scrolled to its end (phone)
