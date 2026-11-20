@@ -33,10 +33,6 @@
   {
    "key": "english",
    "name": "اللغة الإنجليزية"
-  },
-  {
-   "key": "science",
-   "name": "العلوم"
   }
  ],
  "3": [
@@ -63,6 +59,10 @@
   {
    "key": "science",
    "name": "العلوم"
+  },
+  {
+   "key": "history",
+   "name": "التاريخ"
   },
   {
    "key": "geography",
@@ -93,10 +93,6 @@
   {
    "key": "science",
    "name": "العلوم"
-  },
-  {
-   "key": "history",
-   "name": "التاريخ"
   },
   {
    "key": "art",
@@ -163,6 +159,10 @@
    "name": "الرياضيات"
   },
   {
+   "key": "english",
+   "name": "اللغة الإنجليزية"
+  },
+  {
    "key": "science",
    "name": "العلوم"
   },
@@ -173,6 +173,10 @@
   {
    "key": "geography",
    "name": "الجغرافيا"
+  },
+  {
+   "key": "art",
+   "name": "التربية الفنية"
   },
   {
    "key": "ict",
