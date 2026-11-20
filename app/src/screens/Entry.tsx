@@ -80,7 +80,7 @@ export function Entry() {
           <motion.button className="who-card card lift who-new" onClick={guard(() => go('guest'))}
               initial={{ opacity: 0, y: 24, scale: 0.92 }} animate={{ opacity: picked ? 0.4 : 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 24 }}>
               {/* the open courtyard door (public/art/avatars/new.webp) with a small gold "+"; first, so it is always in view */}
-              <span className="who-door" style={{ width: portrait, height: portrait }}>
+              <span className="who-door" style={{ width: Math.round(portrait * 1.18), height: portrait }}>
                 <img src={artUrl('avatars/new.webp')} alt="" draggable={false} />
                 <span className="who-door-plus" aria-hidden><IconPlus size={Math.round(portrait * 0.2)} /></span>
               </span>
@@ -88,7 +88,7 @@ export function Entry() {
             </motion.button>
           )}
           {players.map((p, i) => (
-            <div key={p.id} className="who-wrap">
+            <div key={p.id} className="who-wrap" style={{ ['--p' as string]: `${portrait}px` }}>
             <motion.button className="who-card card lift" onClick={guard(() => pick(p.id))}
               initial={{ opacity: 0, y: 24, scale: 0.92 }} animate={picked === p.id ? { scale: 1.12, opacity: 1, y: -6 } : { opacity: picked ? 0.4 : 1, y: 0, scale: 1 }}
               transition={{ type: 'spring', stiffness: 380, damping: 24, delay: picked ? 0 : 0.05 * i }}>
@@ -106,7 +106,7 @@ export function Entry() {
                   <button className="btn paper" onClick={() => setAskDel(null)}>لا</button>
                 </div>
               </div>
-            ) : <button className="who-del" aria-label={`امسح ${label(p)}`} onClick={() => setAskDel(p.id)}><IconClose size={20} /></button>)}
+            ) : <button className="who-del" aria-label={`امسح ${label(p)}`} onClick={() => setAskDel(p.id)}><IconClose size={Math.max(14, Math.round(portrait * 0.15))} /></button>)}
             </div>
           ))}
         </div>

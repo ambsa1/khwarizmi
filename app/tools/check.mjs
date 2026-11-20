@@ -73,8 +73,11 @@ small = await smallText();
 ok('new player: grade cards with a kindergarten button, then all six boy pictures in a scrolling strip that starts on one of his age (grade 3)', kg === 1 && strip.pics === 6 && strip.on === 'g3.webp' && strip.offCentre <= 12 && strip.scrolls && small.length === 0, JSON.stringify(strip) + ' ' + small.join(', '));
 await page.locator('#guest-name').fill('سامي');
 await page.locator('.avatar-go').click();
+await page.waitForSelector('.map', { timeout: 10000 });
+const mapPins = await page.evaluate(() => document.querySelectorAll('.map canvas').length);
+await page.getByRole('button', { name: 'رحلتي' }).first().click();
 await page.waitForSelector('.path', { timeout: 10000 });
-ok('guest wizard reaches today\'s journey', true);
+ok('guest wizard reaches the map first, then today\'s journey from the dock', mapPins >= 0, '');
 const guestPill = await page.evaluate(() => { const b = document.querySelector('.player-pill'); const i = b?.querySelector('img'); return { label: b?.getAttribute('aria-label') ?? '', img: i?.getAttribute('src')?.split('/').pop(), loaded: !!i && i.complete && i.naturalWidth > 0 }; });
 await page.waitForTimeout(2500);
 small = await smallText(); ok('path: no text under 18px', small.length === 0, small.join(', '));
@@ -187,7 +190,7 @@ await p3.evaluate(([lv]) => localStorage.setItem('khwarizmi.v1', JSON.stringify(
 await p3.reload({ waitUntil: 'load' }); await p3.waitForSelector('.entry');
 await p3.getByRole('button', { name: 'ضيف جديد' }).click();
 await p3.getByRole('button', { name: 'ولد' }).click(); await p3.locator('.grade-card').nth(2).click(); await p3.locator('.avatar-go').click();
-await p3.waitForSelector('.path');
+await p3.waitForSelector('.map');
 await openParents(p3); await p3.waitForTimeout(800);
 const parentsText = await p3.locator('.parents').innerText();
 const idbRead = (store, key) => p3.evaluate(([st, k]) => new Promise(res => { const r = indexedDB.open('khawarizmi'); r.onsuccess = () => { const q = k ? r.result.transaction(st).objectStore(st).get(k) : r.result.transaction(st).objectStore(st).getAllKeys(); q.onsuccess = () => res(q.result); }; }), [store, key]);
@@ -218,10 +221,10 @@ await ctx3.close();
   ok('desktop: one tap on the lock opens the parents corner across the full width', opened && body && body.width >= 1300, `width ${Math.round(body?.width ?? 0)}px`);
   await pg.goBack(); const backToEntry = await pg.waitForSelector('.entry', { timeout: 5000 }).then(() => true).catch(() => false);
   await pg.locator('.who-wrap .who-card').first().click(); await pg.waitForSelector('.path', { timeout: 8000 });
-  await pg.getByRole('button', { name: 'جوازي' }).click(); await pg.waitForSelector('.stamps');
-  await pg.locator('.stamp').first().click(); await pg.waitForSelector('.sheet.page');
+  await pg.getByRole('button', { name: 'جوازي' }).click(); await pg.waitForSelector('.pp-visas');
+  await pg.locator('.stamp.visa').first().click(); await pg.waitForSelector('.sheet.page');
   await pg.goBack(); await pg.waitForTimeout(500);
-  const sheetClosed = await pg.locator('.sheet.page').count() === 0 && await pg.locator('.stamps').count() === 1;
+  const sheetClosed = await pg.locator('.sheet.page').count() === 0 && await pg.locator('.pp-visas').count() === 1;
   await pg.locator('.topbar .back-btn').click(); const toPathBack = await pg.waitForSelector('.path', { timeout: 5000 }).then(() => true).catch(() => false);
   ok('back buttons sit top right and match the browser back (pages and modals)', backBtn && backBtn.x > 683 && backToEntry && sheetClosed && toPathBack, `right edge ${Math.round((backBtn?.x ?? 0) + (backBtn?.width ?? 0))}, entry ${backToEntry}, sheet closed ${sheetClosed}, path ${toPathBack}`);
   const pathBd = await bdOf();
@@ -232,7 +235,7 @@ await ctx3.close();
   const after = await pg.locator('.who-wrap').count();
   ok('a guest can be removed from "who is playing?" after a confirmation', before === 1 && after === 0, `${before} -> ${after}`);
   // a finished world: its stamp is the full ink stamp with a date, and the certificate carries the child's picture and name
-  await pg.goto(base + '?demo=guest&done=kassala&screen=passport', { waitUntil: 'load' }); await pg.waitForSelector('.stamps'); await pg.waitForTimeout(600);
+  await pg.goto(base + '?demo=guest&done=kassala&screen=passport', { waitUntil: 'load' }); await pg.waitForSelector('.pp-visas'); await pg.waitForTimeout(600);
   const doneStamp = await pg.evaluate(() => { const b = [...document.querySelectorAll('.stamp.visa')].find(x => x.querySelector('img')?.getAttribute('src')?.includes('kassala')); return { done: b?.classList.contains('done'), status: b?.querySelector('.visa-status')?.textContent ?? '' }; });
   await pg.locator('.stamp.visa.done').first().click(); await pg.waitForSelector('.certificate', { timeout: 5000 }).catch(() => {});
   await pg.waitForTimeout(500);
@@ -259,8 +262,13 @@ await page.waitForSelector('.path', { timeout: 5000 }).catch(() => {});
 const title = await page.locator('.world-pill-name').first().innerText().catch(() => '');
 ok('open world travels to its path (subject in the top bar)', title.includes('ألعاب الذكاء'), title);
 await page.getByRole('button', { name: 'جوازي' }).first().click();
-await page.waitForSelector('.stamps');
+await page.waitForSelector('.pp-visas');
 small = await smallText(); ok('passport: no text under 18px', small.length === 0, small.join(', '));
+await page.getByRole('button', { name: 'المدرسة' }).first().click(); await page.waitForSelector('.school .book', { timeout: 10000 }); await page.waitForTimeout(600);
+{ const sc = await page.evaluate(() => ({ books: document.querySelectorAll('.school .book').length, board: !!document.querySelector('.chalkboard'), tabs: document.querySelectorAll('.tabbar .tab').length, title: document.querySelector('.shelf-title')?.textContent ?? '' }));
+  small = await smallText();
+  ok('school: Siraj at the chalkboard and the books of the child\'s grade (grade 3: 7 books), four tabs', sc.books === 7 && sc.board && sc.tabs === 4 && sc.title.includes('التالت') && small.length === 0, JSON.stringify(sc) + ' ' + small.join(', ')); }
+await page.getByRole('button', { name: 'جوازي' }).first().click(); await page.waitForSelector('.pp-visas');
 { // the new guest's own picture, name and grade on the passport data page and in the top bar; six real stamps; the last
   // stamp clears the bottom bar when the page is scrolled to its end (phone)
   await page.waitForTimeout(800);
@@ -284,6 +292,7 @@ small = await smallText(); ok('passport: no text under 18px', small.length === 0
   await pg.reload({ waitUntil: 'load' }); await pg.waitForSelector('.entry');
   await pg.getByRole('button', { name: 'ضيف جديد' }).click();
   await pg.getByRole('button', { name: 'بنت' }).click(); await pg.locator('.grade-card').nth(2).click(); await pg.locator('.avatar-go').click();
+  await pg.waitForSelector('.map', { timeout: 15000 }); await pg.getByRole('button', { name: 'رحلتي' }).first().click();
   await pg.waitForSelector('.path-window canvas', { timeout: 60000 }).catch(() => {});
   const online3d = await pg.locator('.path-window canvas').count();
   await cx.setOffline(true);

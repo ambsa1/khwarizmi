@@ -16,6 +16,9 @@ export const IconMap = (p: P) => (
 export const IconPassport = (p: P) => (
   <svg {...base(p)}><rect x="7" y="4" width="18" height="24" rx="3" /><circle cx="16" cy="14" r="4.5" /><path d="M12 22h8" /></svg>
 );
+export const IconSchoolHouse = (p: P) => (
+  <svg {...base(p)}><path d="M4 13 16 6l12 7" /><path d="M7 12v14h18V12" /><path d="M13 26v-6h6v6" /><path d="M16 6V2h5" /></svg>
+);
 export const IconLock = (p: P) => (
   <svg {...base(p)}><rect x="7" y="14" width="18" height="13" rx="3" /><path d="M11 14v-3a5 5 0 0 1 10 0v3" /><circle cx="16" cy="20.5" r="1.6" fill="currentColor" /></svg>
 );

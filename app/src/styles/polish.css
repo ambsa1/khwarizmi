@@ -372,3 +372,130 @@
 @media (max-width: 380px) { .topbar-start { gap: 4px; } .topbar-start .player-pill { width: 48px; height: 48px; min-height: 48px; } .topbar { column-gap: 6px; } }
 /* phone landscape (short screens): no room for the districts column, as before */
 @media (orientation: landscape) and (max-height: 500px) { .path .zones-wrap { display: none; } }
+
+/* ============================================================================================================
+   Round 3 (2026-11-20): embroidered rings, door card, remove button, the school, the passport (reference-led)
+   ============================================================================================================ */
+/* embroidered ring over every portrait (calm Sudanese stitch-work instead of a yellow glow) */
+.embroidery { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pic { position: relative; background: transparent !important; padding: 9% !important; box-shadow: 0 6px 16px -8px rgba(91, 59, 38, .45) !important; }
+.pic .pic-face { display: block; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; }
+.pic.on { background: transparent !important; box-shadow: 0 0 0 5px rgba(201, 168, 102, .22), 0 14px 26px -10px rgba(91, 59, 38, .55) !important; }
+
+/* "new guest": the courtyard door in a rectangular embroidered frame, the name below */
+.who-door { border-radius: 14px !important; padding: 6px !important; background:
+  repeating-linear-gradient(45deg, #B9785D 0 6px, #5E7191 6px 12px) !important; box-shadow: 0 0 0 2px #7A5B43, inset 0 0 0 2px #EFE0C2, 0 6px 14px -8px rgba(91, 59, 38, .5) !important; }
+.who-door img { border-radius: 9px !important; }
+.who-door-plus { inset-inline-start: -8px !important; bottom: -8px !important; width: 30% !important; height: auto !important; aspect-ratio: 1; }
+
+/* the remove button follows the picture: its size scales with the picture, and it sits on the picture's corner */
+.who-wrap { --pt: 16px; --d: clamp(26px, calc(var(--p, 112px) * .27), 40px); }
+.entry.has-players .who-wrap, .entry.crowd .who-wrap { --pt: 10px; }
+.who-wrap .who-card { padding-top: var(--pt) !important; }
+.who-wrap .who-del { width: var(--d) !important; height: var(--d) !important; border-radius: 50%;
+  top: calc(var(--pt) + var(--p, 112px) * .146 - var(--d) / 2) !important;
+  inset-inline-end: calc(50% - var(--p, 112px) * .354 - var(--d) / 2) !important;
+  background: rgba(255, 250, 240, .97) !important; border: 1px solid rgba(107, 90, 72, .35) !important; box-shadow: 0 2px 6px rgba(91, 59, 38, .25) !important; }
+.who-wrap .who-del::before { content: ''; position: absolute; inset: calc((var(--d) - 44px) / 2); border-radius: 50%; }   /* 44px touch area */
+
+/* four tabs in the dock */
+.tabbar { grid-template-columns: repeat(4, 1fr); }
+@media (min-width: 1024px) and (min-aspect-ratio: 4/3) { .has-rail > .tabbar { grid-template-columns: 1fr; grid-auto-rows: 88px; } }
+.tab span { white-space: nowrap; }
+@media (max-width: 420px) { .tab { font-size: 18px; padding-inline: 2px; } .tab svg { width: 26px; height: 26px; } }
+
+/* map: the school button and a finished world's label */
+.map-school { display: grid; justify-items: center; gap: 2px; padding: 6px 10px 4px; border-radius: 16px; background: rgba(255, 251, 243, .96);
+  border: 1.5px solid #C9A866; box-shadow: 0 6px 14px -6px rgba(91, 59, 38, .5); font-weight: 800; font-size: 18px; color: var(--c-ink); cursor: pointer; }
+.map-school:active { transform: scale(.95); }
+.map-label.done { background: linear-gradient(180deg, #FFF3CF, #FFE29A); border-color: #E7B54A; }
+
+/* the school: a classroom (chalkboard, Siraj the teacher, a desk) above a shelf of book covers */
+.school-main { padding-bottom: calc(28px + var(--safe-b)); }
+.classroom { position: relative; margin: 4px var(--gutter) 0; height: clamp(250px, 38vh, 380px); border-radius: 24px; overflow: hidden;
+  background: linear-gradient(180deg, #F3E3C4 0%, #EAD3A8 70%, #C89B66 70%, #B98A57 100%); border: 1px solid rgba(201, 150, 60, .45);
+  box-shadow: 0 16px 32px -18px rgba(91, 59, 38, .5); contain: paint; }
+.chalkboard { position: absolute; top: 8%; inset-inline: 34% 5%; height: 50%; border-radius: 10px; background: radial-gradient(120% 90% at 40% 30%, #3F6B52, #2F5241);
+  border: 10px solid #8A5A3B; box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .15), 0 8px 16px -8px rgba(43, 33, 24, .6); }
+.chalk { position: absolute; color: #F4F1E8; font: 400 clamp(20px, 3.2vw, 34px)/1 var(--f-display); opacity: .92; text-shadow: 0 0 1px rgba(255, 255, 255, .6); }
+.chalk.c1 { top: 16%; inset-inline-end: 10%; } .chalk.c2 { top: 52%; inset-inline-start: 10%; } .chalk.c3 { top: 18%; inset-inline-start: 12%; font-family: var(--f-read-en); }
+.chalk-tray { position: absolute; inset: auto -10px -16px -10px; height: 8px; background: #6E4A30; border-radius: 3px; }
+.teacher { position: absolute; top: 6%; bottom: 0; inset-inline-start: 1%; width: 34%; }
+.desk { position: absolute; bottom: 0; inset-inline-end: 8%; width: 34%; height: 20%; background: linear-gradient(180deg, #A9744A, #8A5A3B); border-radius: 8px 8px 0 0; box-shadow: 0 -2px 0 #C68E5E inset; }
+.school-line { position: absolute; top: 10px; inset-inline: 0; display: flex; justify-content: center; z-index: 3; }
+.bookshelf { margin: 16px var(--gutter) 0; padding: 16px; border-radius: 22px; background: rgba(255, 251, 243, .9); border: 1px solid rgba(201, 166, 118, .45); box-shadow: 0 12px 26px -16px rgba(91, 59, 38, .45); }
+.shelf-title { margin: 0 0 12px; font-size: 22px; font-weight: 800; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.shelf-title .soft { font-size: 18px; font-weight: 600; }
+.books { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 14px; }
+@media (max-width: 480px) { .books { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
+.book { display: grid; justify-items: center; gap: 8px; padding: 6px 2px; border-radius: 14px; }
+.book-cover { position: relative; width: 100%; max-width: 120px; aspect-ratio: 3 / 4; border-radius: 6px 12px 12px 6px; display: grid; place-items: center;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .18) 0 8%, rgba(255, 255, 255, .1) 8% 10%, transparent 10%), var(--cover);
+  box-shadow: 0 8px 14px -8px rgba(43, 33, 24, .6), inset -3px 0 0 rgba(255, 255, 255, .25); }
+.book-glyph { color: #FFF6E2; font: 400 clamp(22px, 5vw, 32px)/1 var(--f-display); text-shadow: 0 2px 0 rgba(0, 0, 0, .15); }
+.book-band { position: absolute; inset: auto 10% 12% 14%; height: 8px; border-radius: 3px; background: var(--band-thin) repeat-x 0 0 / auto 100%; opacity: .9; }
+.book-name { font-size: 18px; font-weight: 800; text-align: center; line-height: 1.3; }
+.book:active .book-cover { transform: translateY(2px) scale(.97); }
+@media (hover: hover) { .book:hover .book-cover { transform: translateY(-3px) rotate(-1.5deg); transition: transform 180ms var(--ease-out); } }
+
+/* ---------- the passport (layout after a real passport's data page and visa page; nothing official is copied) ---------- */
+/* smooth scrolling: no live blur inside the passport, the book is painted as one layer */
+.passport-main { will-change: scroll-position; }
+.passport-main .card, .passport-main .glass, .passport-main .pp-progress { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.passport-cover { contain: layout paint; transform: translateZ(0); }
+/* data page: pale blue-green security paper */
+.pp-id { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='44' viewBox='0 0 160 44'%3E%3Cg fill='none' stroke='%237FB3A6' stroke-opacity='.35' stroke-width='.8'%3E%3Cpath d='M0 22c20-18 60-18 80 0s60 18 80 0'/%3E%3Cpath d='M0 22c20 18 60 18 80 0s60-18 80 0'/%3E%3Cpath d='M0 11c20-9 60-9 80 0s60 9 80 0M0 33c20 9 60 9 80 0s60-9 80 0'/%3E%3C/g%3E%3C/svg%3E") repeat 0 0 / 160px 44px,
+  linear-gradient(160deg, #EEF6F1 0%, #E4EFF0 55%, #EAF0E2 100%) !important; }
+.pp-emblem-water { position: absolute; left: 50%; top: 52%; width: min(280px, 62%); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; opacity: .07;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 4l3 5h-6zM16 12h16l-3 5H19z' fill='%23266B5B'/%3E%3Ccircle cx='24' cy='28' r='11' fill='none' stroke='%23266B5B' stroke-width='2'/%3E%3Ccircle cx='24' cy='28' r='5' fill='%23266B5B'/%3E%3Cpath d='M14 42h20' stroke='%23266B5B' stroke-width='2'/%3E%3C/svg%3E") center / contain no-repeat; }
+.pp-head { position: relative; border-bottom-color: rgba(38, 107, 91, .35) !important; }
+.pp-latin { margin-inline-start: auto; font: 700 18px/1 ui-monospace, Consolas, monospace; letter-spacing: 2px; color: #266B5B; opacity: .8; }
+.pp-body { position: relative; grid-template-areas: "photo lead" "photo more" "ghost sign" !important; }
+.pp-photo-frame { background: #F6FAF7 !important; border: 1.5px solid rgba(38, 107, 91, .45) !important; border-radius: 6px !important; padding: 6px !important; }
+.pp-photo { border-radius: 3px !important; box-shadow: none !important; }
+.player-photo img { object-position: 50% 30%; }
+.pp-fields dt { color: #3E6E62 !important; }
+.pp-fields > div { border-bottom-color: rgba(38, 107, 91, .3) !important; }
+.pp-ghost { grid-area: ghost; justify-self: center; align-self: center; }
+.pp-ghost-photo { width: 46px; aspect-ratio: 3 / 4; opacity: .28; filter: grayscale(1) contrast(1.1); border-radius: 2px; }
+.pp-sign { grid-area: sign; display: grid; gap: 0; align-self: end; border-top: 1.2px solid rgba(38, 107, 91, .45); padding-top: 2px; }
+.pp-sign-name { font: italic 600 22px/1.3 var(--f-read-ar); color: #1F3F6E; transform: rotate(-3deg); transform-origin: right; }
+.pp-sign-label { font-size: 18px; color: #3E6E62; font-weight: 600; }
+.pp-progress { background: rgba(240, 247, 243, .85) !important; border-color: rgba(38, 107, 91, .3) !important; }
+.pp-mrz { border-top-color: rgba(38, 107, 91, .35) !important; } .pp-mrz text { fill: #24443C !important; }
+.pp-id::before { opacity: .85; }
+@media (max-width: 480px) {
+  .pp-body { grid-template-areas: "photo lead" "more more" "ghost sign" !important; }
+  .pp-ghost-photo { width: 40px; }
+}
+/* visa page: blank paper with faint scenery, a perforated number, earned stamps stamped inside it */
+.pp-visas { display: flex; flex-direction: column; min-height: 420px;
+  background: linear-gradient(180deg, #F7F4EA, #F1ECDC) !important; }
+.pp-perf { display: block; width: 70%; height: 26px; margin: 0 auto 4px; }
+.pp-perf text { font: 700 22px ui-monospace, Consolas, monospace; letter-spacing: 6px; fill: none; stroke: #B8AE98; stroke-width: 1.4; stroke-dasharray: .1 3.2; stroke-linecap: round; }
+.pp-page-title { color: #6B5A48; font-size: 20px !important; }
+.pp-visa-water { position: absolute; inset: 22% 6% 4% 6%; pointer-events: none; opacity: .13;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 200' fill='none' stroke='%235E7191' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 170h280'/%3E%3Cpath d='M40 170V95M40 95c-14-4-24 2-30 10M40 95c12-8 24-6 32 2M40 95c-4-12-14-18-24-16M40 95c6-10 18-14 28-10'/%3E%3Cpath d='M150 170l26-80 26 80M182 170l18-56 18 56M206 112h-14'/%3E%3Cpath d='M70 150c20-10 40-10 60 0s40 10 60 0 40-10 60 0'/%3E%3Cpath d='M232 140l8-50 4 50M240 92c10 4 18 16 22 30h-26'/%3E%3C/svg%3E") center / contain no-repeat; }
+.visa-field { position: relative; flex: 1; min-height: 340px; }
+.visa-empty { position: absolute; inset: 40% 10% auto; text-align: center; font-size: 18px; font-weight: 700; color: #8A7A66; }
+.stamp.visa.placed { position: absolute; width: 38%; max-width: 170px; padding: 0 !important; border: 0 !important; background: none !important; display: grid; justify-items: center; gap: 0; }
+.stamp.visa.placed .visa-mark { width: 100%; }
+.stamp.visa.placed .visa-status { font-size: 18px; color: color-mix(in srgb, var(--ink) 85%, #2B2118); transform: rotate(var(--tilt)); text-align: center; }
+.stamp.visa.placed .visa-status small { font-size: 18px; }
+/* the stamps still to earn, faded, under the passport */
+.stamp-tray { margin: 16px var(--gutter) 0; padding: 14px; border-radius: 20px; background: rgba(255, 251, 243, .88); border: 1px dashed rgba(201, 166, 118, .7); }
+@media (min-width: 1000px) { .stamp-tray { margin-inline: var(--side, var(--gutter)); } }
+.tray-title { margin: 0 0 10px; font-size: 20px; font-weight: 800; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.tray-title .soft { font-size: 18px; font-weight: 600; }
+.tray { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+@media (max-width: 480px) { .tray { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stamp.visa.waiting { display: grid; justify-items: center; gap: 4px; padding: 10px 6px; border-radius: 14px; background: rgba(255, 255, 255, .5); border: 1px solid rgba(201, 166, 118, .4); }
+.stamp.visa.waiting .visa-mark { width: min(96px, 70%); }
+.stamp.visa.waiting .visa-stamp { filter: grayscale(.85) opacity(.45) !important; transform: none !important; animation: none !important; }
+.tray-bar { display: block; width: 80%; height: 8px; border-radius: 999px; background: rgba(201, 166, 118, .3); overflow: hidden; }
+.tray-bar i { display: block; height: 100%; background: var(--ink); opacity: .7; border-radius: inherit; }
+
+@media (max-width: 480px) { .chalkboard { inset-inline: 38% 4%; border-width: 7px; } .teacher { width: 40%; } .chalk { font-size: 20px; } .chalk.c2 { inset-inline-start: 6%; } }
+.book-glyph svg { width: clamp(30px, 7vw, 40px); height: auto; display: block; }
+.classroom, .bookshelf, .stamp-tray, .passport-cover { flex: none; }
+@media (max-width: 480px) { .pp-latin { display: none; } }

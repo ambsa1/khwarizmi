@@ -3,11 +3,10 @@
 // a ring that fills with the child's progress. Tapping a landmark chooses that world.
 import { Html } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { WorldId } from '../lib/tokens';
 import { Landmark } from './Diorama';
-import { SUBJECT_COLOR } from '../screens/Map';
 
 const C = { lon: 30.2, lat: 15.3 };
 const P = (lon: number, lat: number) => new THREE.Vector2(lon - C.lon, lat - C.lat);
@@ -98,25 +97,22 @@ function Shadow() {
   return <mesh rotation-x={-Math.PI / 2} position={[0.4, -0.6, 0.8]} scale={[22, 20, 1]}><planeGeometry /><meshBasicMaterial map={tex} transparent depthWrite={false} /></mesh>;
 }
 
-/** a 3D map pin in the world's colour; the selected one glows with Siraj's golden aura and bobs */
-function Pin({ color, selected, dim }: { color: string; selected: boolean; dim: boolean }) {
-  const g = useRef<THREE.Group>(null!), halo = useRef<THREE.Sprite>(null!);
+/** a finished world: its landmark stays lit — a warm gold glow that breathes slowly and a bright ring on the ground */
+function DoneGlow() {
+  const halo = useRef<THREE.Sprite>(null!), ring = useRef<THREE.Mesh>(null!);
   const glow = useMemo(() => {
     const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d')!;
-    const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,226,140,1)'); gr.addColorStop(0.4, 'rgba(255,200,90,0.5)'); gr.addColorStop(1, 'rgba(255,190,80,0)');
+    const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,230,150,1)'); gr.addColorStop(0.45, 'rgba(255,200,90,0.45)'); gr.addColorStop(1, 'rgba(255,190,80,0)');
     x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c);
   }, []);
-  useFrame((s, dt) => {
-    const t = s.clock.elapsedTime;
-    g.current.position.y = THREE.MathUtils.damp(g.current.position.y, selected ? 3.3 + Math.sin(t * 2.6) * 0.15 : 2.6, 6, dt);
-    const k = THREE.MathUtils.damp(halo.current.scale.x, selected ? 3.2 + Math.sin(t * 3) * 0.3 : 0.001, 6, dt); halo.current.scale.set(k, k, 1);
+  useFrame(s => {
+    const k = 3.6 + Math.sin(s.clock.elapsedTime * 1.6) * 0.35; halo.current.scale.set(k, k, 1);
+    (ring.current.material as THREE.MeshBasicMaterial).opacity = 0.65 + Math.sin(s.clock.elapsedTime * 1.6) * 0.2;
   });
   return (
-    <group ref={g} position-y={2.6}>
-      <sprite ref={halo}><spriteMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} /></sprite>
-      <mesh><sphereGeometry args={[0.5, 20, 14]} /><meshLambertMaterial color={dim ? '#BFAE92' : color} emissive={selected ? '#FFB840' : '#000000'} emissiveIntensity={selected ? 0.35 : 0} /></mesh>
-      <mesh position-y={-0.75} rotation-x={Math.PI}><coneGeometry args={[0.32, 0.9, 16]} /><meshLambertMaterial color={dim ? '#BFAE92' : color} /></mesh>
-      <mesh position-y={0.08}><sphereGeometry args={[0.2, 12, 10]} /><meshBasicMaterial color="#FFF8E8" /></mesh>
+    <group>
+      <sprite ref={halo} position-y={1.1}><spriteMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} /></sprite>
+      <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={LAND_TOP + 0.02}><ringGeometry args={[1.05, 1.3, 40]} /><meshBasicMaterial color="#FFD27A" transparent toneMapped={false} /></mesh>
     </group>
   );
 }
@@ -139,13 +135,13 @@ function Rig() {
 }
 
 /** labels: 'all' on wide screens; on portrait phones only the listed worlds (the cards below name the rest). */
-export function SudanMapScene({ spots, onPick, labels = 'all', selected }: { spots: MapSpot[]; onPick: (id: WorldId) => void; labels?: 'all' | WorldId[]; selected?: WorldId }) {
-  const [hover, setHover] = useState<WorldId | null>(null);
+export function SudanMapScene({ spots, labels = 'all', selected, onSchool }: { spots: MapSpot[]; labels?: 'all' | WorldId[]; selected?: WorldId; onSchool?: () => void }) {
+  // worlds are chosen from the cards under the map; the map shows where they are (no pins, no tapping)
   const lift = useRef<Record<string, THREE.Group | null>>({});
   useFrame((s, dt) => {
     for (const sp of spots) {
       const g = lift.current[sp.id]; if (!g) continue;
-      const k = hover === sp.id || sp.current ? 0.62 : 0.5;
+      const k = sp.current || selected === sp.id ? 0.62 : 0.5;
       g.scale.setScalar(THREE.MathUtils.damp(g.scale.x, k, 8, dt));
       g.position.y = LAND_TOP + (sp.current ? 0.12 + Math.sin(s.clock.elapsedTime * 2.4) * 0.08 : 0);
     }
@@ -161,22 +157,26 @@ export function SudanMapScene({ spots, onPick, labels = 'all', selected }: { spo
       {spots.map(s => {
         const [lon, lat] = MAP_PLACES[s.id];
         return (
-          <group key={s.id} position={to3(lon, lat, 0)}
-            onClick={e => { e.stopPropagation(); onPick(s.id); }}
-            onPointerOver={e => { e.stopPropagation(); setHover(s.id); document.body.style.cursor = 'pointer'; }}
-            onPointerOut={() => { setHover(null); document.body.style.cursor = ''; }}>
-            <Pin color={SUBJECT_COLOR[s.id]} selected={selected === s.id} dim={s.locked} />
+          <group key={s.id} position={to3(lon, lat, 0)}>
+            {s.value >= 1 && <DoneGlow />}
             <group ref={g => (lift.current[s.id] = g)} position-y={LAND_TOP} scale={0.5}><Landmark world={s.id} /></group>
-            {/* invisible, generous tap target for small fingers */}
-            <mesh position-y={1} visible={false}><cylinderGeometry args={[1.5, 1.5, 2.6, 12]} /></mesh>
             {(labels === 'all' || labels.includes(s.id)) && (
               <Html position={labels === 'all' ? LABEL_AT[s.id] ?? [0, 0, 1.6] : [0, 0, 1.6]} center zIndexRange={[10, 0]} wrapperClass="html-anchor" style={{ pointerEvents: 'none' }}>
-                <span className={'map-label' + (selected === s.id ? ' current' : '') + (s.locked ? ' locked' : '')}>{s.name}<small>{s.place}</small></span>
+                <span className={'map-label' + (selected === s.id ? ' current' : '') + (s.locked ? ' locked' : '') + (s.value >= 1 ? ' done' : '')}>{s.name}<small>{s.place}</small></span>
               </Html>
             )}
           </group>
         );
       })}
+      {/* the school (in the open middle of the map, clear of the world labels): opens the school page */}
+      {onSchool && (
+        <Html position={to3(30.6, 13.3, LAND_TOP + 0.4)} center zIndexRange={[11, 0]} wrapperClass="html-anchor">
+          <button className="map-school" onClick={onSchool} aria-label="المدرسة">
+            <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden><path d="M24 6 4 18h40z" fill="#C0492F" /><rect x="8" y="18" width="32" height="22" rx="2" fill="#F4E3C1" stroke="#7A5B43" strokeWidth="2" /><rect x="20" y="28" width="8" height="12" fill="#7A5B43" /><rect x="11" y="23" width="6" height="6" fill="#5E7191" /><rect x="31" y="23" width="6" height="6" fill="#5E7191" /><path d="M24 2v6" stroke="#7A5B43" strokeWidth="2" /><path d="M24 2h7l-2 2 2 2h-7" fill="#3E9B4F" /></svg>
+            <span>المدرسة</span>
+          </button>
+        </Html>
+      )}
       <Rig />
     </group>
   );

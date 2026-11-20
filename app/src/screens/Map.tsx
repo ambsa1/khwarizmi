@@ -53,7 +53,7 @@ export function MapScreen() {
         <TopBar title="خريطة السودان" />
         <div className="grow" style={{ position: 'relative' }}>
           <Stage transparent camera={{ position: [0.6, 24, 16], fov: 40 }} label="خريطة السودان بالعوالم الخمسة">
-            <SudanMapScene spots={spots} onPick={pick} selected={picked ?? cur} labels={portrait ? [cur, ...(picked && picked !== cur ? [picked] : [])] : 'all'} />
+            <SudanMapScene spots={spots} onSchool={() => go('school')} selected={picked ?? cur} labels={portrait ? [cur, ...(picked && picked !== cur ? [picked] : [])] : 'all'} />
           </Stage>
           {line && <div className="window-line"><Bubble>{line}</Bubble></div>}
         </div>

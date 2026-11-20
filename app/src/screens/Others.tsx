@@ -73,7 +73,12 @@ export function Passport() {
   const name = playerName(p), grade = gradeLabel(p, num);
   const allStations = WORLDS.reduce((a, w) => a + stationCount(w.id as WorldId), 0);
   const no = passNo(p.id, me);
-  let landed = 0;
+  // where each world's stamp lands on the stamps page (percent of the page), like stamps added on different trips
+  const SLOT: Record<string, [number, number]> = { kassala: [8, 14], saqiya: [52, 8], mogran: [30, 40], suakin: [62, 44], meroe: [6, 66], marra: [48, 72] };
+  const issued = Math.min(Date.now(), ...Object.values(me?.skills ?? {}).map(s => s.first || Date.now()));
+  const sealed = WORLDS.filter(w => sealedIds.includes(w.id));
+  const waiting = WORLDS.filter(w => !sealedIds.includes(w.id));
+  const status = (id: WorldId) => { const total = stationCount(id), got = Math.min(masteredIn(me, id), total); return { total, got }; };
   return (
     <div className="screen sand has-rail">
       <div className="main col grow scroll passport-main">
@@ -81,12 +86,14 @@ export function Passport() {
         <div className="passport-cover">
           <div className="passport-book">
             <section className="pp-page pp-id" aria-label="صفحة بيانات المستكشف">
+              <i className="pp-emblem-water" aria-hidden />
               <header className="pp-head">
-                <svg className="pp-emblem" viewBox="0 0 48 48" width="40" height="40" aria-hidden>
+                <svg className="pp-emblem" viewBox="0 0 48 48" width="38" height="38" aria-hidden>
                   <path d="M24 4l3 5h-6zM16 12h16l-3 5H19z" fill="#BA7C03" /><circle cx="24" cy="28" r="11" fill="#FFB627" stroke="#BA7C03" strokeWidth="2.5" />
                   <circle cx="24" cy="28" r="5" fill="#FFF3D6" /><path d="M14 42h20" stroke="#BA7C03" strokeWidth="3" strokeLinecap="round" />
                 </svg>
                 <div className="pp-title"><b>جواز المستكشف</b><span>رحلة خوارزمي في السودان</span></div>
+                <span className="pp-latin" dir="ltr">EXPLORER PASS</span>
               </header>
               <div className="pp-body">
                 <div className="pp-photo-frame"><PlayerPhoto profile={p} className="pp-photo" /></div>
@@ -97,9 +104,12 @@ export function Passport() {
                 </dl>
                 <dl className="pp-fields more">
                   <div className="pp-no-row"><dt>رقم الجواز</dt><dd className="pp-no" dir="ltr">{no}</dd></div>
+                  <div><dt>تاريخ الإصدار</dt><dd>{dateAr(issued)}</dd></div>
                   <div><dt>الأختام</dt><dd><b className="pp-big">{num(sealedIds.length)}</b> / {num(WORLDS.length)}</dd></div>
                   <div><dt>النجوم</dt><dd><IconStar size={20} style={{ color: 'var(--c-gold)', verticalAlign: '-3px' }} /> {num(stars)}</dd></div>
                 </dl>
+                <div className="pp-ghost" aria-hidden><PlayerPhoto profile={p} className="pp-ghost-photo" /></div>
+                <div className="pp-sign"><span className="pp-sign-name">{name}</span><span className="pp-sign-label">توقيع المستكشف</span></div>
               </div>
               <div className="pp-progress" aria-label={`${num(stations)} من ${num(allStations)} محطة`}>
                 <span className="pp-progress-label">رحلتك في كل السودان <span className="soft">{num(stations)} من {num(allStations)} محطة</span></span>
@@ -109,19 +119,18 @@ export function Passport() {
             </section>
             <div className="pp-spine" aria-hidden />
             <section className="pp-page pp-visas" aria-label="صفحة الأختام">
-              <h2 className="pp-page-title">صفحة الأختام</h2>
-              <div className="stamps">
-                {WORLDS.map(w => {
-                  const id = w.id as WorldId, total = stationCount(id), got = Math.min(masteredIn(me, id), total), done = total > 0 && got >= total;
-                  const i = done ? landed++ : 0;
+              <svg className="pp-perf" viewBox="0 0 300 30" aria-hidden><text x="150" y="23" textAnchor="middle">{no.replace(/-/g, ' ')}</text></svg>
+              <h2 className="pp-page-title">التأشيرات والأختام</h2>
+              <i className="pp-visa-water" aria-hidden />
+              <div className="visa-field">
+                {!sealed.length && <p className="visa-empty">الصفحة دي لسه فاضية. كمّل عالم كامل وحيتختم هنا!</p>}
+                {sealed.map((w, i) => {
+                  const id = w.id as WorldId, [x, y] = SLOT[id] ?? [10, 10];
                   return (
-                    <button key={id} className={'stamp visa' + (done ? ' done' : '')} onClick={() => setOpen(id)} aria-label={`${placeName(id)}: ${subjectName(id)}${done ? '، مكتمل' : ''}`}
-                      style={{ ['--ink' as string]: STAMP_INK[id], ['--tilt' as string]: `${TILT[id] ?? 0}deg`, ['--i' as string]: i }}>
-                      <span className="visa-head"><b>{placeName(id)}</b><span>{subjectName(id)}</span></span>
+                    <button key={id} className="stamp visa done placed" onClick={() => setOpen(id)} aria-label={`${placeName(id)}: ${subjectName(id)}، مكتمل`}
+                      style={{ left: `${x}%`, top: `${y}%`, ['--ink' as string]: STAMP_INK[id], ['--tilt' as string]: `${TILT[id] ?? 0}deg`, ['--i' as string]: i }}>
                       <span className="visa-mark"><img className="visa-stamp" src={stampUrl(id)} alt="" draggable={false} /></span>
-                      <span className={'visa-status' + (done ? ' ok' : '')}>
-                        {done ? <>مكتمل<small>{dateAr(doneOn(me, id))}</small></> : total ? `${num(got)} من ${num(total)} ${total > 10 ? 'محطة' : 'محطات'}` : 'قريبًا'}
-                      </span>
+                      <span className="visa-status ok">مكتمل<small>{dateAr(doneOn(me, id))}</small></span>
                     </button>
                   );
                 })}
@@ -129,6 +138,24 @@ export function Passport() {
             </section>
           </div>
         </div>
+        {waiting.length > 0 && (
+          <section className="stamp-tray" aria-label="أختام تنتظرك">
+            <h2 className="tray-title">أختام تنتظرك <span className="soft">كمّل العالم عشان يتختم في جوازك</span></h2>
+            <div className="tray">
+              {waiting.map(w => {
+                const id = w.id as WorldId, { total, got } = status(id);
+                return (
+                  <button key={id} className="stamp visa waiting" onClick={() => setOpen(id)} aria-label={`${placeName(id)}: ${subjectName(id)}`} style={{ ['--ink' as string]: STAMP_INK[id] }}>
+                    <span className="visa-mark"><img className="visa-stamp" src={stampUrl(id)} alt="" draggable={false} /></span>
+                    <span className="visa-head"><b>{placeName(id)}</b><span>{subjectName(id)}</span></span>
+                    <span className="visa-status">{total ? `${num(got)} من ${num(total)}` : 'قريبًا'}</span>
+                    <span className="tray-bar" aria-hidden><i style={{ width: `${total ? Math.round(got / total * 100) : 0}%` }} /></span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </div>
       <TabBar current="passport" />
       {open && <StampSheet world={open} onClose={() => setOpen(null)} />}

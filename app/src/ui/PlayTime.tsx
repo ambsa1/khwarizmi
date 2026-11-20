@@ -18,7 +18,7 @@ const write = (v: ReturnType<typeof read>) => { try { localStorage.setItem(KEY, 
 export function PlayTime() {
   const limit = useApp(s => s.playLimit), screen = useApp(s => s.screen);
   const [over, setOver] = useState(false);
-  const playing = ['path', 'map', 'passport', 'lesson'].includes(screen);
+  const playing = ['path', 'map', 'passport', 'school', 'lesson'].includes(screen);
   useEffect(() => {
     if (!limit) { setOver(false); return; }
     const check = () => { const v = read(); setOver(v.minutes >= limit + v.extra); };

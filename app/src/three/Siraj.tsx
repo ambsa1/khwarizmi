@@ -45,6 +45,8 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
   const blob = useRef<THREE.Mesh>(null!);
   const blinkAt = useRef(2 + Math.random() * 3);
   const since = useRef({ action, t: -1 });
+  // playful tricks while he stands: step forward, step back, a jump, a spin on the spot (one every few seconds)
+  const trick = useRef<{ kind: 'fwd' | 'back' | 'jump' | 'spin' | null; t0: number; next: number }>({ kind: null, t0: 0, next: 2.5 + Math.random() * 3 });
 
   const mats = useMemo(() => ({
     copper: new THREE.MeshStandardMaterial({ color: COPPER, roughness: 0.42, metalness: 0.25 }),
@@ -85,13 +87,31 @@ export function Siraj({ action = 'idle', glow = 0.6, stamps = 0, scale = 1, movi
       case 'hop': default: break;
     }
     if (moving || movingRef?.current || action === 'hop') { const h = Math.abs(Math.sin(t * 9)); bodyY = h * 0.28; bodyRotZ = Math.sin(t * 9) * 0.06; face = 'happy'; }
-    if (action !== 'celebrate') body.current.rotation.y = THREE.MathUtils.damp(body.current.rotation.y, 0, 6, dt);
-    body.current.position.y = THREE.MathUtils.damp(body.current.position.y, bodyY, 14, dt);
+    // tricks (only while standing calmly; never while walking, sleeping, sad or already celebrating)
+    const T = trick.current, calm = !(moving || movingRef?.current) && !['sleepy', 'sad', 'celebrate', 'cheer', 'hop'].includes(action);
+    let tz = 0, ty = 0, spin = 0, squash = 0;
+    if (!calm) { T.kind = null; T.next = Math.max(T.next, t + 3); }
+    else if (!T.kind && t > T.next) { const ks = ['fwd', 'back', 'jump', 'spin'] as const; T.kind = ks[Math.floor(Math.random() * ks.length)]; T.t0 = t; }
+    if (T.kind) {
+      const D = T.kind === 'spin' ? 1.3 : T.kind === 'jump' ? 0.9 : 1.2, k = (t - T.t0) / D;
+      if (k >= 1) { T.kind = null; T.next = t + 4 + Math.random() * 5; }
+      else {
+        const bell = Math.sin(k * Math.PI), hopK = Math.abs(Math.sin(k * Math.PI * 2));
+        if (T.kind === 'fwd') { tz = bell * 0.45; ty = hopK * 0.12; face = 'happy'; }
+        if (T.kind === 'back') { tz = -bell * 0.35; ty = hopK * 0.1; headRotX = -0.1 * bell; }
+        if (T.kind === 'jump') { ty = Math.max(0, Math.sin(k * Math.PI)) * 0.6; squash = k < 0.12 ? (0.12 - k) * 2.2 : k > 0.88 ? (k - 0.88) * 2.2 : 0; ly = ry = 1.3 * bell + 0.42; lx = -0.75; rx = 0.75; face = 'happy'; }
+        if (T.kind === 'spin') { spin = THREE.MathUtils.smootherstep(k, 0, 1) * Math.PI * 2; ty = bell * 0.22; lx = -0.8; rx = 0.8; ly = ry = 0.75; face = 'happy'; }
+      }
+    }
+    if (spin) body.current.rotation.y = spin;
+    else if (action !== 'celebrate') body.current.rotation.y = THREE.MathUtils.damp(body.current.rotation.y % (Math.PI * 2), 0, 6, dt);
+    body.current.position.z = THREE.MathUtils.damp(body.current.position.z, tz, 10, dt);
+    body.current.position.y = ty ? bodyY + ty : THREE.MathUtils.damp(body.current.position.y, bodyY, 14, dt);
     body.current.rotation.z = THREE.MathUtils.damp(body.current.rotation.z, bodyRotZ, 10, dt);
     head.current.rotation.z = THREE.MathUtils.damp(head.current.rotation.z, headRotZ, 8, dt);
     head.current.rotation.x = THREE.MathUtils.damp(head.current.rotation.x, headRotX, 8, dt);
     head.current.rotation.y = THREE.MathUtils.damp(head.current.rotation.y, headRotY, 6, dt);
-    body.current.scale.set(1 + br * 0.008, 1 + br * 0.012, 1 + br * 0.008);
+    body.current.scale.set(1 + br * 0.008 + squash * 0.5, 1 + br * 0.012 - squash, 1 + br * 0.008 + squash * 0.5);
     // arms: each hand eases to its target, the arm hangs from the shoulder to the hand (never longer than its reach)
     const H = hand.current;
     H.lx = THREE.MathUtils.damp(H.lx, lx, 9, dt); H.ly = THREE.MathUtils.damp(H.ly, ly, 9, dt);

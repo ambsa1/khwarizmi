@@ -28,7 +28,7 @@ export default defineConfig({
         scope: './',
         display: 'standalone',
         orientation: 'any',
-        background_color: '#F4E3C1',
+        background_color: '#181F46',
         theme_color: '#F4E3C1',
         categories: ['education', 'kids', 'games'],
         icons: [
@@ -38,7 +38,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,woff2,svg,webmanifest,enc}', 'icons/*.png', 'family/*.bin', 'fallback/*.jpg', 'content/manifest.json', 'content/core.json'],
+        globPatterns: ['**/*.{js,css,html,woff2,svg,webmanifest,enc}', 'icons/*.png', 'art/**/*.webp', 'family/*.bin', 'fallback/*.jpg', 'content/manifest.json', 'content/core.json'],
         globIgnores: ['worlds/**'],
         runtimeCaching: [
           // a downloaded world is served from its cache (the app fills it on download; see src/data/packs.ts)

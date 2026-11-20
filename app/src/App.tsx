@@ -22,6 +22,7 @@ import { Lesson } from './screens/Lesson';
 import { SirajPreview, WorldTour } from './screens/Preview';
 import { DevPage, FamilyPage } from './screens/Gates';
 import { PlayTime } from './ui/PlayTime';
+import { School } from './screens/School';
 import { Backdrop } from './ui/Backdrop';
 
 const q = new URLSearchParams(location.search);
@@ -73,17 +74,17 @@ export function App() {
   if (view === 'perf') return <Perf />;
   if (!booted) return null;
 
-  const needsPlayer = screen === 'path' || screen === 'map' || screen === 'passport' || screen === 'lesson';
+  const needsPlayer = screen === 'path' || screen === 'map' || screen === 'passport' || screen === 'school' || screen === 'lesson';
   const shown: Screen = needsPlayer && !current ? 'entry' : screen;
   const body = {
-    entry: <Entry />, guest: <Guest />, path: <Path />, map: <MapScreen />, passport: <Passport />, parents: <Parents />, perf: <Perf />, lesson: <Lesson />, family: <FamilyPage />, dev: <DevPage />,
+    entry: <Entry />, guest: <Guest />, path: <Path />, map: <MapScreen />, passport: <Passport />, school: <School />, parents: <Parents />, perf: <Perf />, lesson: <Lesson />, family: <FamilyPage />, dev: <DevPage />,
   }[shown];
   return (
     <MotionConfig reducedMotion={reduced ? 'always' : 'never'}>
       <Backdrop />
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={shown} style={{ position: 'fixed', inset: 0 }}
-          initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
+          initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
           transition={{ duration: reduced ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}>
           {body}
         </motion.div>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { imageUrl } from '../lib/family';
 import { useApp, type Profile, type Screen } from '../state/store';
 import { artUrl, GUEST_AVATARS, GuestAvatar } from './GuestAvatars';
-import { IconMap, IconPassport, IconPath } from './Icons';
+import { IconMap, IconPassport, IconPath, IconSchoolHouse } from './Icons';
 
 /** Masculine / feminine wording (Sudanese Arabic addresses boys and girls differently). */
 /** the player's school stage: "روضة" (kindergarten) or "الصف ٣"; family children without a grade show nothing */
@@ -15,8 +15,10 @@ export const playerName = (p: { kind: 'family' | 'guest'; name?: string; gender:
 export const say = (p: { gender: 'm' | 'f' } | null | undefined, m: string, f: string) => (p?.gender === 'f' ? f : m);
 
 /** Ignores repeated taps inside `ms` (little ones double and triple tap). */
-export function useGuard(ms = 450) {
-  const last = useRef(-Infinity);
+/** blocks a second tap within `ms` (double taps); when `key` changes (a new step on screen) the next tap always counts */
+export function useGuard(ms = 450, key?: unknown) {
+  const last = useRef(-Infinity), seen = useRef(key);
+  if (seen.current !== key) { seen.current = key; last.current = -Infinity; }
   return (fn: () => void) => () => { const t = performance.now(); if (t - last.current < ms) return; last.current = t; fn(); };
 }
 
@@ -56,6 +58,22 @@ export function PlayerPhoto({ profile, className }: { profile: Profile; classNam
   return <span className={'player-photo ' + (className ?? '')}>{src && <img src={src} alt="" draggable={false} />}</span>;
 }
 
+/** An embroidered ring (Sudanese / African stitch-work in calm colours): a soft brick and indigo band, cream stitches,
+ *  thin pale-gold edges. Drawn over a picture; `accent` (a family child's colour) replaces the indigo. */
+export function Embroidery({ accent }: { accent?: string }) {
+  const b = accent ?? '#5E7191';
+  return (
+    <svg className="embroidery" viewBox="0 0 100 100" aria-hidden>
+      <circle cx="50" cy="50" r="47.6" fill="none" stroke="#7A5B43" strokeWidth="1.4" />
+      <circle cx="50" cy="50" r="44.4" fill="none" stroke="#B9785D" strokeWidth="5.6" />
+      <circle cx="50" cy="50" r="44.4" fill="none" stroke={b} strokeWidth="5.6" strokeDasharray="3.49 3.49" opacity=".9" />
+      <circle cx="50" cy="50" r="44.4" fill="none" stroke="#EFE0C2" strokeWidth="1.6" strokeDasharray="0.01 3.49" strokeDashoffset="1.745" strokeLinecap="round" />
+      <circle cx="50" cy="50" r="41.2" fill="none" stroke="#C9A866" strokeWidth="1.1" />
+      <circle cx="50" cy="50" r="47.6" fill="none" stroke="#C9A866" strokeWidth=".6" strokeDasharray=".9 1.6" />
+    </svg>
+  );
+}
+
 export function Avatar({ profile, size = 56, ring }: { profile: Profile; size?: number; ring?: string }) {
   const key = useApp(s => s.familyKey), family = useApp(s => s.family);
   const member = profile.kind === 'family' ? family?.members.find(m => m.id === profile.id) : undefined;
@@ -65,15 +83,16 @@ export function Avatar({ profile, size = 56, ring }: { profile: Profile; size?: 
     if (member && key) imageUrl(key, member.image).then(u => live && setSrc(u)).catch(() => {});
     return () => { live = false; };
   }, [member, key]);
-  const r = ring ?? member?.ring ?? '#FFB627';
-  const inner = size - Math.max(6, size * 0.08) * 2;
+  const accent = ring ?? member?.ring;
+  const inner = Math.round(size * 0.82);
   return (
-    <span style={{ width: size, height: size, borderRadius: '50%', background: r, display: 'grid', placeItems: 'center', flex: 'none',
-      boxShadow: `0 ${Math.max(3, size * 0.04)}px 0 rgba(0,0,0,.14), inset 0 2px 0 rgba(255,255,255,.35)` }}>
+    <span className="avatar" style={{ width: size, height: size, position: 'relative', display: 'grid', placeItems: 'center', flex: 'none', borderRadius: '50%',
+      boxShadow: `0 ${Math.max(2, size * 0.03)}px ${Math.max(4, size * 0.08)}px rgba(91,59,38,.25)` }}>
       <span style={{ width: inner, height: inner, borderRadius: '50%', overflow: 'hidden', background: '#FFF4DE', display: 'grid', placeItems: 'center' }}>
         {member ? (src ? <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null)
           : <GuestAvatar id={profile.avatar} size={inner} />}
       </span>
+      <Embroidery accent={accent && accent !== '#FFB627' ? accent : undefined} />
     </span>
   );
 }
@@ -132,6 +151,7 @@ export function TabBar({ current }: { current: Screen }) {
   const tabs: { id: Screen; label: string; icon: ReactNode }[] = [
     { id: 'path', label: 'رحلتي', icon: <IconPath /> },
     { id: 'map', label: 'الخريطة', icon: <IconMap /> },
+    { id: 'school', label: 'المدرسة', icon: <IconSchoolHouse /> },
     { id: 'passport', label: 'جوازي', icon: <IconPassport /> },
   ];
   return (

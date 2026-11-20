@@ -6,14 +6,14 @@
 //   the name.
 // The age is taken from the grade (kindergarten = 5, grade n = n + 6).
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Sound } from '../audio/SoundManager';
 import { useNum } from '../lib/num';
 import { useApp } from '../state/store';
 import { artUrl, GuestAvatar, picturesFor } from '../ui/GuestAvatars';
 import { IconBack } from '../ui/Icons';
 import { back as navBack } from '../ui/nav';
-import { Bubble, say, useGuard } from '../ui/kit';
+import { Bubble, Embroidery, say, useGuard } from '../ui/kit';
 import { SirajLive } from './Entry';
 
 type Step = 'gender' | 'grade' | 'avatar';
@@ -35,9 +35,12 @@ function IconBlocks({ size = 64 }: { size?: number }) {
 /** the picture strip: snaps one picture to the middle, the middle one is the choice */
 function PictureStrip({ ids, active, setActive }: { ids: string[]; active: number; setActive: (i: number) => void }) {
   const ref = useRef<HTMLDivElement>(null), last = useRef(active), raf = useRef(0);
+  // centre a picture by scrolling the strip only (scrollIntoView would also scroll the page and make it jump)
   const center = (i: number, smooth = true) => {
-    const el = ref.current?.children[i] as HTMLElement | undefined;
-    el?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', inline: 'center', block: 'nearest' });
+    const box = ref.current, el = box?.children[i] as HTMLElement | undefined;
+    if (!box || !el) return;
+    const left = el.offsetLeft + el.offsetWidth / 2 - box.clientWidth / 2;
+    box.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
   };
   // while the finger moves, every picture follows its distance from the middle: it grows smoothly as it comes to the
   // centre and shrinks and fades as it leaves (no jump when the scroll stops); the centred one is the choice
@@ -59,7 +62,7 @@ function PictureStrip({ ids, active, setActive }: { ids: string[]; active: numbe
     }
   };
   const onScroll = () => { cancelAnimationFrame(raf.current); raf.current = requestAnimationFrame(paint); };
-  useEffect(() => { center(active, false); paint(); return () => cancelAnimationFrame(raf.current); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => { center(active, false); paint(); return () => cancelAnimationFrame(raf.current); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const step = (d: number) => center(Math.max(0, Math.min(ids.length - 1, active + d)));
   return (
     <div className="pic-wrap">
@@ -67,7 +70,8 @@ function PictureStrip({ ids, active, setActive }: { ids: string[]; active: numbe
         onKeyDown={e => { if (e.key === 'ArrowLeft') step(1); if (e.key === 'ArrowRight') step(-1); }}>
         {ids.map((id, i) => (
           <button key={id} role="option" aria-selected={i === active} className={'pic' + (i === active ? ' on' : '')} onClick={() => center(i)}>
-            <GuestAvatar id={id} size={150} />
+            <span className="pic-face"><GuestAvatar id={id} size={150} /></span>
+            <Embroidery />
           </button>
         ))}
       </div>
@@ -81,8 +85,8 @@ function PictureStrip({ ids, active, setActive }: { ids: string[]; active: numbe
 export function Guest() {
   const go = useApp(s => s.go), addGuest = useApp(s => s.addGuest);
   const num = useNum();
-  const guard = useGuard(350);
   const [step, setStep] = useState<Step>('gender');
+  const guard = useGuard(350, step);
   const [gender, setGender] = useState<'m' | 'f'>('m');
   const [grade, setGrade] = useState<number | null>(null);
   const [name, setName] = useState('');
@@ -99,7 +103,7 @@ export function Guest() {
   const finish = () => {
     const avatar = pics[Math.min(active, pics.length - 1)];
     addGuest({ gender, age: grade == null ? 5 : grade + 6, grade, avatar, name: name.trim().slice(0, 16) || undefined });
-    go('path');
+    go('map');   // a new player starts on the map of Sudan and chooses a world from the cards
   };
   const stepIndex = ['gender', 'grade', 'avatar'].indexOf(step);
 
@@ -113,7 +117,7 @@ export function Guest() {
       <div className="guest-siraj"><SirajLive action={step === 'avatar' ? 'cheer' : 'think'} /></div>
       <Bubble style={{ alignSelf: 'center', marginTop: -8 }}>{question[step]}</Bubble>
       <AnimatePresence mode="wait">
-        <motion.div key={step} className="guest-body" initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.25 }}>
+        <motion.div key={step} className="guest-body" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18, ease: 'easeOut' }}>
           {step === 'gender' && (
             <div className="pick-two">
               {([['m', 'ولد', 'boy'], ['f', 'بنت', 'girl']] as const).map(([g, label, img]) => (
