@@ -1,7 +1,7 @@
-"""The school page's book list: the names of the textbooks actually present in app/المناهج, per grade (names only).
+"""The school page's book list: the names of the textbooks actually present in app/المناهج/school books, per grade (names only).
 usage: python tools/school-books.py  ->  src/data/school-books.json"""
 import json, os, re
-ROOT = os.path.join(os.path.dirname(__file__), '..', 'المناهج')
+ROOT = os.path.join(os.path.dirname(__file__), '..', 'المناهج', 'school books')   # «منهج قديم» (old curriculum) is not listed
 OUT = os.path.join(os.path.dirname(__file__), '..', 'src', 'data', 'school-books.json')
 GRADES = ['الصف الأول', 'الصف الثاني', 'الصف الثالث', 'الصف الرابع', 'الصف الخامس', 'الصف السادس']
 # subject key, shown name, keywords (first match wins)
