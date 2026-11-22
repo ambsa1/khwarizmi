@@ -15,6 +15,8 @@ mixed-text rule (no English word or number at the start/end of an Arabic line; c
 - Dev server: `npx vite --host 127.0.0.1 --port 5186 --strictPort` (in `app/`). Stop background servers at session end.
 - Screenshots: `W=<world> STOPS=3,8 node tools/town-shots.mjs http://127.0.0.1:5186/ <outDir>`; `?view=world&w=<id>&m=<n>`.
 - Bash heredocs with quotes often break: write Python/Node helper scripts to the scratchpad and run them.
+- Every text file a tool writes into `app/public` must use LF (`newline=chr(10)` in Python): `npm run deploy` compares
+  bytes and refuses CRLF files (git autocrlf rewrites them).
 - Python: `ingest/.venv/Scripts/python.exe`. Playwright: `v2/tests/node_modules/playwright`.
 
 ## Standing rules (never break)
