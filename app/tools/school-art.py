@@ -3,6 +3,7 @@ flat colour shapes from the colour network (identity/03-color-network.md), selec
 matters, one soft highlight, a soft ground shadow and the same paper grain on every drawing. No faces, no text.
 Usage: python tools/school-art.py [names...]   ->  public/art/school/<name>.svg  (+ a contact sheet for review)"""
 import os, sys
+LF = chr(10)   # write text files with LF line endings (deploy compares bytes)
 
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'public', 'art', 'school')
 INK = '#2B2118'
@@ -254,5 +255,5 @@ def sheet(names):
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     names = sys.argv[1:] or list(ART)
-    for n in names: open(os.path.join(OUT, n + '.svg'), 'w', encoding='utf8').write(ART[n])
+    for n in names: open(os.path.join(OUT, n + '.svg'), 'w', encoding='utf8', newline=LF).write(ART[n])
     sheet(list(ART)); print(len(names), 'drawings')

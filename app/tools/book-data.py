@@ -4,6 +4,7 @@ Also converts the lesson / stage icons (Fluent Emoji 3D, MIT) and the scene pict
 Only the stages listed in BUILT are playable; every other stage is shown locked and never opens (no placeholder content).
 Usage: python tools/book-data.py"""
 import json, os, re, shutil, sys
+LF = chr(10)   # write text files with LF line endings (deploy compares bytes)
 from PIL import Image
 
 APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -130,7 +131,8 @@ json.dump(book, open(os.path.join(OUT, 'book.json'), 'w', encoding='utf8', newli
 
 # 5. audio + timing (copied unchanged: the narration is never re-encoded or edited)
 shutil.copyfile(os.path.join(BOOK_DIR, 'الصوت', 'شرح1.mp3'), os.path.join(OUT, 'explain1.mp3'))
-shutil.copyfile(os.path.join(BOOK_DIR, 'الصوت', 'شرح1-توقيت.json'), os.path.join(OUT, 'explain1.json'))
+open(os.path.join(OUT, 'explain1.json'), 'w', encoding='utf8', newline=LF).write(   # same data, LF line endings
+    open(os.path.join(BOOK_DIR, 'الصوت', 'شرح1-توقيت.json'), encoding='utf8').read())
 
 # 6. the real cover (first page of the book)
 cover = os.path.join(OUT, 'cover.webp')
