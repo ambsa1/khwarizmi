@@ -126,7 +126,7 @@ book = {'id': 'g5-science', 'ui': ui, 'grade': 5, 'subject': 'science', 'name': 
         'explain': {'e1': {'audio': 'explain1.mp3', 'timing': 'explain1.json', 'motion': 'explain1.motion.json'}},   # motion: written by hand, played by src/motion
         'lessons': {f'd{n}': lesson(n) for n in (1, 2)}}
 os.makedirs(OUT, exist_ok=True)
-json.dump(book, open(os.path.join(OUT, 'book.json'), 'w', encoding='utf8'), ensure_ascii=False, indent=1)
+json.dump(book, open(os.path.join(OUT, 'book.json'), 'w', encoding='utf8', newline='\n'), ensure_ascii=False, indent=1)   # LF: deploy compares bytes
 
 # 5. audio + timing (copied unchanged: the narration is never re-encoded or edited)
 shutil.copyfile(os.path.join(BOOK_DIR, 'الصوت', 'شرح1.mp3'), os.path.join(OUT, 'explain1.mp3'))
