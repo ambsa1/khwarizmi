@@ -42,7 +42,7 @@ function Card({ children, state, onClick, disabled }: { children: ReactNode; sta
 }
 
 /** one choice among cards (اختار، علّل، توقّع، true/false, and the two steps of الشاذة) */
-export function ChoiceQ({ q, options, answer, help, onDone, art }: { q?: string; options: string[]; answer: string; help: Help; onDone: () => void; art?: string }) {
+export function ChoiceQ({ q, options, answer, help, onDone, art }: { q?: string; options: string[]; answer: string; help: Help; onDone: (wrong?: number) => void; art?: string }) {
   const opts = useMemo(() => shuffle(options), [options]);
   const t = useTries();
   const [bad, setBad] = useState<string[]>([]);
@@ -50,7 +50,7 @@ export function ChoiceQ({ q, options, answer, help, onDone, art }: { q?: string;
   const pick = (o: string) => {
     if (ok) return;
     void Sfx.play('card-touch');
-    if (o === answer) { setOk(true); void Sfx.play('correct'); setTimeout(onDone, 750); }
+    if (o === answer) { setOk(true); void Sfx.play('correct'); setTimeout(() => onDone(t.wrong), 750); }
     else { if (!bad.includes(o)) setBad([...bad, o]); t.miss(); }
   };
   return (
@@ -69,7 +69,7 @@ export function ChoiceQ({ q, options, answer, help, onDone, art }: { q?: string;
 }
 
 /** رتّب: tap the cards in order into the slots; a wrong full order sends back the cards from the first wrong place */
-export function OrderQ({ q, order, help, onDone }: { q: string; order: string[]; help: Help; onDone: () => void }) {
+export function OrderQ({ q, order, help, onDone }: { q: string; order: string[]; help: Help; onDone: (wrong?: number) => void }) {
   const pool0 = useMemo(() => shuffle(order), [order]);
   const [placed, setPlaced] = useState<string[]>([]);
   const [bad, setBad] = useState(false);
@@ -79,7 +79,7 @@ export function OrderQ({ q, order, help, onDone }: { q: string; order: string[];
     if (done) return;
     const next = [...placed, x]; setPlaced(next); void Sfx.play('card-drop');
     if (next.length === order.length) {
-      if (next.every((y, i) => y === order[i])) { void Sfx.play('snap'); setTimeout(() => { void Sfx.play('correct'); setTimeout(onDone, 750); }, 200); }
+      if (next.every((y, i) => y === order[i])) { void Sfx.play('snap'); setTimeout(() => { void Sfx.play('correct'); setTimeout(() => onDone(t.wrong), 750); }, 200); }
       else { t.miss(); setBad(true); setTimeout(() => { const k = next.findIndex((y, i) => y !== order[i]); setPlaced(next.slice(0, k)); setBad(false); }, 650); }
     }
   };
@@ -103,7 +103,7 @@ export function OrderQ({ q, order, help, onDone }: { q: string; order: string[];
 }
 
 /** وصّل: tap a card on the right, then its partner on the left */
-export function MatchQ({ q, pairs, help, onDone }: { q: string; pairs: [string, string][]; help: Help; onDone: () => void }) {
+export function MatchQ({ q, pairs, help, onDone }: { q: string; pairs: [string, string][]; help: Help; onDone: (wrong?: number) => void }) {
   const right = useMemo(() => shuffle(pairs.map(p => p[1])), [pairs]);
   const G = useG();
   const [sel, setSel] = useState<string | null>(null);
@@ -115,7 +115,7 @@ export function MatchQ({ q, pairs, help, onDone }: { q: string; pairs: [string, 
     if (!sel || made.includes(sel)) return;
     if (r === target) {
       const m = [...made, sel]; setMade(m); setSel(null); void Sfx.play('snap');
-      if (m.length === pairs.length) { void Sfx.play('correct'); setTimeout(onDone, 750); }
+      if (m.length === pairs.length) { void Sfx.play('correct'); setTimeout(() => onDone(t.wrong), 750); }
     } else { setBad(r); t.miss(); setTimeout(() => setBad(null), 500); }
   };
   return (
@@ -139,7 +139,7 @@ export function MatchQ({ q, pairs, help, onDone }: { q: string; pairs: [string, 
 }
 
 /** صنّف: tap a card, then the group it belongs to */
-export function ClassifyQ({ q, items, groups, help, onDone }: { q: string; items: string[]; groups: { name: string; items: string[] }[]; help: Help; onDone: () => void }) {
+export function ClassifyQ({ q, items, groups, help, onDone }: { q: string; items: string[]; groups: { name: string; items: string[] }[]; help: Help; onDone: (wrong?: number) => void }) {
   const pool = useMemo(() => shuffle(items), [items]);
   const G = useG();
   const [sel, setSel] = useState<string | null>(null);
@@ -151,7 +151,7 @@ export function ClassifyQ({ q, items, groups, help, onDone }: { q: string; items
     if (!sel) return;
     if (right(sel) === gi) {
       const n = { ...inG, [sel]: gi }; setInG(n); setSel(null); void Sfx.play('card-drop');
-      if (Object.keys(n).length === items.length) { void Sfx.play('correct'); setTimeout(onDone, 750); }
+      if (Object.keys(n).length === items.length) { void Sfx.play('correct'); setTimeout(() => onDone(t.wrong), 750); }
     } else { setBad(gi); t.miss(); setTimeout(() => setBad(null), 500); }
   };
   return (
@@ -176,15 +176,16 @@ export function ClassifyQ({ q, items, groups, help, onDone }: { q: string; items
 }
 
 /** الشاذة: first the odd word, then the reason */
-export function OddQ({ words, odd, reasons, reason, help, onDone }: { words: string[]; odd: string; reasons: string[]; reason: string; help: Help; onDone: () => void }) {
+export function OddQ({ words, odd, reasons, reason, help, onDone }: { words: string[]; odd: string; reasons: string[]; reason: string; help: Help; onDone: (wrong?: number) => void }) {
   const [step, setStep] = useState(0);
+  const [first, setFirst] = useState(0);
   const G = useG();
   return step === 0
-    ? <ChoiceQ key="w" q={G('odd1')} options={words} answer={odd} help={help} onDone={() => setStep(1)} />
-    : <ChoiceQ key="r" q={G('odd2', { 'الكلمة': odd })} options={reasons} answer={reason} help={help} onDone={onDone} />;
+    ? <ChoiceQ key="w" q={G('odd1')} options={words} answer={odd} help={help} onDone={w => { setFirst(w ?? 0); setStep(1); }} />
+    : <ChoiceQ key="r" q={G('odd2', { 'الكلمة': odd })} options={reasons} answer={reason} help={help} onDone={w => onDone(first + (w ?? 0))} />;
 }
 
-export function QuestionView({ q, help, onDone }: { q: Question; help: Help; onDone: () => void }) {
+export function QuestionView({ q, help, onDone }: { q: Question; help: Help; onDone: (wrong?: number) => void }) {
   switch (q.type) {
     case 'رتّب': { const x = q as Order; return <OrderQ q={x.q} order={x.order} help={help} onDone={onDone} />; }
     case 'وصّل': { const x = q as Match; return <MatchQ q={x.q} pairs={x.pairs} help={help} onDone={onDone} />; }

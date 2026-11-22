@@ -50,7 +50,7 @@ export const BOOKS: Record<string, string> = { '5:science': 'g5-science' };
 export const g = (text: string, gender: 'm' | 'f') => text.replace(/\{([^{}|]*)\|([^{}|]*)\}/g, (_, m, f) => (gender === 'f' ? f : m));
 
 // ---------------------------------------------------------------- progress (per child, per book, on this device)
-export type StageState = { done?: boolean; pos?: number };
+export type StageState = { done?: boolean; pos?: number; best?: number; stars?: string };   // best: gold stars (first-try answers) of a lesson
 type Progress = {
   p: Record<string, Record<string, Record<string, StageState>>>;     // profile -> book -> stage -> state
   dev: boolean;                                                      // developer review mode (never shown to a child)

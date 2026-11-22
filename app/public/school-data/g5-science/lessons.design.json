@@ -1,0 +1,116 @@
+{
+ "version": 1,
+ "note": "Lesson experience design (Claude Code): what the child does with their hands in «اكتشف», and the scene of «توقّع». Every text the child reads comes from the book file; cards are indexes into the lesson's explanation cards. «terms»: key words of the lesson as written in the book file, used by «تذكّر» to blank one word per summary point.",
+ "d1": {
+  "predict": {
+   "art": [
+    "kids",
+    "wind"
+   ]
+  },
+  "explore": {
+   "figure": "airway",
+   "traveller": "air",
+   "steps": [
+    {
+     "type": "trace",
+     "card": 1,
+     "path": [
+      "nasal",
+      "pharynx",
+      "larynx",
+      "trachea",
+      "lungs"
+     ]
+    },
+    {
+     "type": "tap",
+     "card": 2,
+     "part": "larynx",
+     "anim": "flap"
+    },
+    {
+     "type": "tap",
+     "card": 0,
+     "part": "lungs",
+     "anim": "exchange"
+    },
+    {
+     "type": "hold",
+     "card": 3,
+     "anim": "breathe"
+    }
+   ]
+  },
+  "terms": [
+   "الأكسجين",
+   "ثاني أكسيد الكربون",
+   "الشهيق",
+   "الزفير",
+   "لسان المزمار",
+   "الحجاب الحاجز",
+   "التطعيم",
+   "البلعوم",
+   "الحنجرة",
+   "القصبة الهوائية",
+   "الرئتان",
+   "الرئتين"
+  ]
+ },
+ "d2": {
+  "predict": {
+   "art": [
+    "plate",
+    "morsel"
+   ]
+  },
+  "explore": {
+   "figure": "digestive",
+   "steps": [
+    {
+     "type": "tap",
+     "card": 0,
+     "part": "morsel",
+     "anim": "dissolve"
+    },
+    {
+     "type": "tap",
+     "card": 1,
+     "part": "mouth",
+     "anim": "chew"
+    },
+    {
+     "type": "tap",
+     "card": 2,
+     "part": "stomach",
+     "anim": "digest",
+     "light": [
+      "stomach",
+      "liver",
+      "pancreas",
+      "small"
+     ]
+    },
+    {
+     "type": "tap",
+     "card": 3,
+     "part": "large",
+     "anim": "absorb"
+    }
+   ]
+  },
+  "terms": [
+   "الهضم",
+   "العصارة الهاضمة",
+   "الأمعاء الغليظة",
+   "الأمعاء الدقيقة",
+   "الدوسنتاريا",
+   "الصابون",
+   "الأضراس",
+   "الأنياب",
+   "القواطع",
+   "المعدة",
+   "الماء"
+  ]
+ }
+}

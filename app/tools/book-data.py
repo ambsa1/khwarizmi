@@ -117,7 +117,9 @@ def lesson(n):
             'cards': [c.strip() for c in cards], 'lab': lab, 'challenge': challenge, 'hints': hints, 'summary': summary}
 
 # short on-screen texts of section 5 (written by Claude Code, marked for review in the book file)
-UI_KEYS = {'شاشة إنجاز الدرس': 'done', 'تعليمة «وصّل»': 'match', 'تعليمة «صنّف»': 'classify', 'الخطوة الأولى في «الشاذة»': 'odd1', 'الخطوة الثانية في «الشاذة»': 'odd2'}
+UI_KEYS = {'مراحل الدرس (التصميم الجديد، ٢٢ نوفمبر)': 'stages', 'تعليمة «توقّع»': 'predict', 'تعليمة التتبّع في «اكتشف»': 'trace', 'تعليمة اللمس في «اكتشف»': 'tap',
+           'تعليمة الضغط في «اكتشف»': 'hold', 'جولة الإتقان في «تحدَّ»': 'retry', 'تعليمة «تذكّر»': 'recall', 'شاشة الإتقان': 'mastery',
+           'شاشة إنجاز الدرس': 'done', 'تعليمة «وصّل»': 'match', 'تعليمة «صنّف»': 'classify', 'الخطوة الأولى في «الشاذة»': 'odd1', 'الخطوة الثانية في «الشاذة»': 'odd2'}
 ui = {}
 for m in re.finditer(r'^>\s*-\s*(.+?):\s*«(.+)»\s*$', s5, re.M):
     if m.group(1).strip() in UI_KEYS: ui[UI_KEYS[m.group(1).strip()]] = m.group(2)

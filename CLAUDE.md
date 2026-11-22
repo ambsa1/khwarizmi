@@ -87,6 +87,11 @@ mixed-text rule (no English word or number at the start/end of an Arabic line; c
 - Motion engine (owner decision 2026-11-22): `src/motion/` (README.md) = one engine + one library of general layers;
   every explainer is only `public/school-data/<book>/explainN.motion.json`. New movement -> a general layer in the
   library (+ sample in `?view=motion`); improvements replace the old version for all books. No per-book animation code.
+- Lessons are experiences (owner decision 2026-11-22, rules in `دليل-إنتاج-كتاب.md` «قواعد تصميم الدرس كتجربة»): توقّع ->
+  اكتشف (hands-on figure; each card appears at discovery) -> جرّب (lab) -> تحدَّ (star game: gold first try, silver after
+  help, mastery round re-asks) -> تذكّر (active recall). Design data: `public/school-data/<book>/lessons.design.json`;
+  general figures/steps in `src/school/Explore.tsx`; best stars saved per child. Before shipping a lesson, judge it as
+  a child of that grade (fun? not teacher-like? sequence? proof of understanding?) and redesign if any answer is no.
 - Drawings: original identity-style SVGs from `tools/school-art.py` -> `public/art/school/` (never emoji libraries).
 - Effects: `tools/sfx/{plan,generate,select}.py` (ElevenLabs text-to-sound; key read from the grow-english generator
   .env, never printed) -> `public/sfx/<kind>/` + `index.json`. Tell the owner the count and cost before generating.
