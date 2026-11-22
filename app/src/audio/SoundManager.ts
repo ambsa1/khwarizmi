@@ -4,6 +4,7 @@
 //   Sound.onSirajCelebrate(kind)   - the celebration hook; recorded voice lines (e.g. ElevenLabs) plug in with registerVoice
 //   Sound.ambient(world | null)     - a quiet soundscape for the world on screen (wind, water, birds)
 import { useSyncExternalStore } from 'react';
+import { Sfx } from '../school/sfx';
 
 export type SoundEvent = 'tap' | 'pop' | 'stamp' | 'fog' | 'build' | 'star' | 'celebrate' | 'open' | 'close';
 export type VoiceEvent = 'station' | 'world' | 'welcome' | 'star';
@@ -140,5 +141,12 @@ export function installSound() {
   const first = () => Sound.unlock();
   addEventListener('pointerdown', first, { capture: true });
   addEventListener('keydown', first, { capture: true });
-  addEventListener('click', e => { if ((e.target as HTMLElement)?.closest?.('button, [role=button], a')) Sound.play('tap'); }, { capture: true });
+  addEventListener('pointerdown', () => Sfx.unlock(), { capture: true, once: true });
+  // every button taps: the recorded bank (public/sfx) when it is loaded, the synthesized tap otherwise; buttons that play
+  // their own effect (cards, stages, exits) carry data-own-sfx
+  addEventListener('click', e => {
+    const el = (e.target as HTMLElement)?.closest?.('button, [role=button], a');
+    if (!el || el.closest('[data-own-sfx]')) return;
+    if (Sfx.ready()) void Sfx.play('tap'); else Sound.play('tap');
+  }, { capture: true });
 }

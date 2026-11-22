@@ -38,7 +38,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,woff2,svg,webmanifest,enc}', 'icons/*.png', 'art/**/*.webp', 'family/*.bin', 'fallback/*.jpg', 'content/manifest.json', 'content/core.json'],
+        globPatterns: ['**/*.{js,css,html,woff2,svg,webmanifest,enc}', 'icons/*.png', 'art/**/*.webp', 'sfx/**/*.{mp3,json}', 'school-data/**/*.{json,mp3,webp}', 'family/*.bin', 'fallback/*.jpg', 'content/manifest.json', 'content/core.json'],
         globIgnores: ['worlds/**'],
         runtimeCaching: [
           // a downloaded world is served from its cache (the app fills it on download; see src/data/packs.ts)

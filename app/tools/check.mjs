@@ -268,6 +268,24 @@ await page.getByRole('button', { name: 'المدرسة' }).first().click(); awai
 { const sc = await page.evaluate(() => ({ books: document.querySelectorAll('.school .book').length, board: !!document.querySelector('.chalkboard'), tabs: document.querySelectorAll('.tabbar .tab').length, title: document.querySelector('.shelf-title')?.textContent ?? '' }));
   small = await smallText();
   ok('school: Siraj at the chalkboard and the books of the child\'s grade (grade 3: 6 books), four tabs', sc.books === 6 && sc.board && sc.tabs === 4 && sc.title.includes('التالت') && small.length === 0, JSON.stringify(sc) + ' ' + small.join(', ')); }
+{ // school book (grade 5 science): path states, explainer rules, a lesson, the sound bank, text size (phone + computer)
+  for (const vp of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+    const cx = await browser.newContext({ viewport: vp, locale: 'ar' }); const pg = await cx.newPage();
+    await pg.goto(base + '?demo=guest&grade=5&screen=book', { waitUntil: 'load' }); await pg.waitForSelector('.stage-card', { timeout: 10000 }); await pg.waitForTimeout(700);
+    const bk = await pg.evaluate(() => ({ n: document.querySelectorAll('.stage').length, cls: [...document.querySelectorAll('.stage')].slice(0, 3).map(e => e.className.includes('current') ? 'C' : e.className.includes('locked') ? 'L' : '?').join(''),
+      cover: document.querySelector('.book-cover-big')?.naturalWidth ?? 0, icons: [...document.querySelectorAll('.stage-icon img')].filter(i => i.complete && i.naturalWidth > 0).length }));
+    const smallB = await pg.evaluate(() => [...document.querySelectorAll('.book-page *')].filter(e => e.childNodes.length && [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) && parseFloat(getComputedStyle(e).fontSize) < 18 && !e.closest('.dev-bar')).map(e => e.textContent.trim().slice(0, 12)));
+    await pg.locator('.stage[data-stage="e1"] .stage-card').click(); await pg.waitForSelector('.explain-stage', { timeout: 10000 }); await pg.waitForTimeout(1200);
+    const ex = await pg.evaluate(async () => ({ skip: !!document.querySelector('.ex-skip'), bar: !!document.querySelector('.ex-bar'), dur: document.querySelector('audio')?.duration ?? 0,
+      sfx: (await (await fetch(new URL('sfx/index.json', document.baseURI))).json()).effects.length }));
+    await pg.goto(base + '?demo=guest&grade=5&screen=blesson&stage=d1', { waitUntil: 'load' }); await pg.waitForSelector('.lesson-panel .qcard', { timeout: 10000 });
+    const ls = await pg.evaluate(() => ({ cards: document.querySelectorAll('.lesson-panel .qcard').length, steps: document.querySelectorAll('.lesson-steps span').length }));
+    ok(`school book ${vp.width}px: 23 stages (explainer open, lessons locked), real cover, drawn icons; explainer without skip; lesson 1 with 4 cards; 61 effects; no text under 18px`,
+      bk.n === 23 && bk.cls === 'CLL' && bk.cover > 0 && bk.icons >= 20 && !ex.skip && ex.bar && ex.dur > 100 && ex.sfx === 61 && ls.cards === 4 && ls.steps === 5 && smallB.length === 0,
+      JSON.stringify({ bk, ex, ls, smallB: smallB.slice(0, 5) }));
+    await cx.close();
+  }
+}
 await page.getByRole('button', { name: 'جوازي' }).first().click(); await page.waitForSelector('.pp-visas');
 { // the new guest's own picture, name and grade on the passport data page and in the top bar; six real stamps; the last
   // stamp clears the bottom bar when the page is scrolled to its end (phone)

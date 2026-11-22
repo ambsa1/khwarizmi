@@ -1,0 +1,713 @@
+{
+ "model": "eleven_text_to_sound_v3",
+ "effects": [
+  {
+   "id": "tap",
+   "kind": "ui",
+   "ar": "ضغطة زر",
+   "prompt": "single soft wooden marimba tap, short muted wooden click, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.39,
+   "files": [
+    "ui/tap-1.mp3",
+    "ui/tap-2.mp3",
+    "ui/tap-3.mp3",
+    "ui/tap-4.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "back",
+   "kind": "ui",
+   "ar": "رجوع",
+   "prompt": "soft descending two-note soft wooden marimba blip, going back, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.42,
+   "files": [
+    "ui/back-1.mp3",
+    "ui/back-2.mp3",
+    "ui/back-3.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "page",
+   "kind": "ui",
+   "ar": "فتح صفحة",
+   "prompt": "soft paper page swoosh with a light wooden tick, opening a page, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.48,
+   "files": [
+    "ui/page-1.mp3",
+    "ui/page-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "locked",
+   "kind": "ui",
+   "ar": "ضغط على مرحلة مقفولة",
+   "prompt": "soft muted wooden double knock, gentle \"not yet\" sound, not negative, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.38,
+   "files": [
+    "ui/locked-1.mp3",
+    "ui/locked-2.mp3",
+    "ui/locked-3.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "unlock",
+   "kind": "ui",
+   "ar": "فتح مرحلة جديدة في المسار",
+   "prompt": "small wooden latch unlocking followed by a bright rising soft wooden marimba sparkle, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.92,
+   "files": [
+    "ui/unlock-1.mp3",
+    "ui/unlock-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "toggle",
+   "kind": "ui",
+   "ar": "تبديل (كتم وتشغيل)",
+   "prompt": "tiny soft wooden switch click, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.16,
+   "files": [
+    "ui/toggle-1.mp3",
+    "ui/toggle-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "card-touch",
+   "kind": "lesson",
+   "ar": "لمس بطاقة",
+   "prompt": "soft cardboard card pick up, light paper tap, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.3,
+   "files": [
+    "lesson/card-touch-1.mp3",
+    "lesson/card-touch-2.mp3",
+    "lesson/card-touch-3.mp3",
+    "lesson/card-touch-4.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "card-drop",
+   "kind": "lesson",
+   "ar": "إسقاط بطاقة",
+   "prompt": "soft cardboard card placed down on a wooden table, gentle thud, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.13,
+   "files": [
+    "lesson/card-drop-1.mp3",
+    "lesson/card-drop-2.mp3",
+    "lesson/card-drop-3.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "snap",
+   "kind": "lesson",
+   "ar": "تثبيت ترتيب أو توصيل",
+   "prompt": "satisfying soft wooden peg snapping into place, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.33,
+   "files": [
+    "lesson/snap-1.mp3",
+    "lesson/snap-2.mp3",
+    "lesson/snap-3.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "correct",
+   "kind": "lesson",
+   "ar": "إجابة صحيحة",
+   "prompt": "bright happy two-note rising soft wooden marimba chime, correct answer, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.69,
+   "files": [
+    "lesson/correct-1.mp3",
+    "lesson/correct-2.mp3",
+    "lesson/correct-3.mp3",
+    "lesson/correct-4.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "wrong",
+   "kind": "lesson",
+   "ar": "إجابة خطأ (لطيفة)",
+   "prompt": "gentle low soft soft wooden marimba two-note \"try again\" tone, kind and warm, not sad, not buzzer, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.62,
+   "files": [
+    "lesson/wrong-1.mp3",
+    "lesson/wrong-2.mp3",
+    "lesson/wrong-3.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "streak",
+   "kind": "lesson",
+   "ar": "صحيح وراء صحيح",
+   "prompt": "joyful quick ascending soft wooden marimba arpeggio with a light sparkle, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.82,
+   "files": [
+    "lesson/streak-1.mp3",
+    "lesson/streak-2.mp3",
+    "lesson/streak-3.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "flip",
+   "kind": "lesson",
+   "ar": "قلب بطاقة شرح",
+   "prompt": "soft paper card flip, quick airy flap, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.35,
+   "files": [
+    "lesson/flip-1.mp3",
+    "lesson/flip-2.mp3",
+    "lesson/flip-3.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "hint",
+   "kind": "lesson",
+   "ar": "ظهور تلميح",
+   "prompt": "soft warm glowing chime, a helpful hint appears, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.62,
+   "files": [
+    "lesson/hint-1.mp3",
+    "lesson/hint-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "lab-pull",
+   "kind": "lesson",
+   "ar": "سحب في المختبر",
+   "prompt": "rubber balloon membrane being stretched slowly, soft rubbery creak, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.74,
+   "files": [
+    "lesson/lab-pull-1.mp3",
+    "lesson/lab-pull-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "lab-release",
+   "kind": "lesson",
+   "ar": "إرخاء في المختبر",
+   "prompt": "rubber balloon membrane released, soft rubbery flap back, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.7,
+   "files": [
+    "lesson/lab-release-1.mp3",
+    "lesson/lab-release-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "lab-air-in",
+   "kind": "lesson",
+   "ar": "دخول الهواء للبالونين",
+   "prompt": "soft air flowing in and two small balloons gently inflating, airy, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 1.12,
+   "files": [
+    "lesson/lab-air-in.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "lab-air-out",
+   "kind": "lesson",
+   "ar": "خروج الهواء من البالونين",
+   "prompt": "soft air flowing out and two small balloons gently deflating, airy sigh, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.97,
+   "files": [
+    "lesson/lab-air-out.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "lab-move",
+   "kind": "lesson",
+   "ar": "تحريك قطعة في المختبر",
+   "prompt": "soft squishy slide of a small food piece moving, playful, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.61,
+   "files": [
+    "lesson/lab-move-1.mp3",
+    "lesson/lab-move-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "lab-result",
+   "kind": "lesson",
+   "ar": "نتيجة المختبر",
+   "prompt": "curious discovery chime, warm soft wooden marimba and soft bells, \"aha\" moment, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 1.15,
+   "files": [
+    "lesson/lab-result-1.mp3",
+    "lesson/lab-result-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "stage-done",
+   "kind": "lesson",
+   "ar": "خلاص مرحلة",
+   "prompt": "short cheerful soft wooden marimba flourish, stage complete, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.94,
+   "files": [
+    "lesson/stage-done-1.mp3",
+    "lesson/stage-done-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "lesson-done",
+   "kind": "celebrate",
+   "ar": "خلاص الدرس",
+   "prompt": "small group of happy children cheering \"yay\" and joyful laughter without words, with a short bright marimba fanfare, celebration, no speech",
+   "seconds": 2.71,
+   "files": [
+    "celebrate/lesson-done-1.mp3",
+    "celebrate/lesson-done-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "exam-start",
+   "kind": "celebrate",
+   "ar": "بداية الامتحان",
+   "prompt": "short encouraging soft drum roll on wooden hand drum ending with a bright chime, ready to begin",
+   "seconds": 1.48,
+   "files": [
+    "celebrate/exam-start-1.mp3",
+    "celebrate/exam-start-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "exam-pass",
+   "kind": "celebrate",
+   "ar": "النجاح في الامتحان",
+   "prompt": "excited children cheering and clapping, joyful \"woohoo\" and happy laughter without words, short triumphant marimba and bells fanfare, no speech",
+   "seconds": 3.73,
+   "files": [
+    "celebrate/exam-pass-1.mp3",
+    "celebrate/exam-pass-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "exam-retry",
+   "kind": "celebrate",
+   "ar": "ما نجح (مشجّعة ودافية)",
+   "prompt": "warm gentle encouraging short melody on marimba and soft strings, hopeful and kind, \"you can do it\" feeling, no voice",
+   "seconds": 1.54,
+   "files": [
+    "celebrate/exam-retry-1.mp3",
+    "celebrate/exam-retry-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "title-bronze",
+   "kind": "celebrate",
+   "ar": "اللقب البرونزي",
+   "prompt": "happy children cheering \"tadaa\" without words with a warm brass and marimba fanfare, celebration, no speech",
+   "seconds": 3.49,
+   "files": [
+    "celebrate/title-bronze.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "title-silver",
+   "kind": "celebrate",
+   "ar": "اللقب الفضي",
+   "prompt": "bigger crowd of happy children cheering and laughing joyfully without words, sparkling bells and marimba fanfare, celebration, no speech",
+   "seconds": 4.99,
+   "files": [
+    "celebrate/title-silver.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "title-gold",
+   "kind": "celebrate",
+   "ar": "اللقب الذهبي",
+   "prompt": "huge joyful celebration, children cheering loudly \"woohoo\" and laughing without words, applause, grand bright orchestral and marimba fanfare with sparkles, no speech",
+   "seconds": 4.94,
+   "files": [
+    "celebrate/title-gold.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "cheer-under",
+   "kind": "celebrate",
+   "ar": "تحت عبارة التحفيز",
+   "prompt": "soft happy children cheering in the background without words, light marimba bed, celebration underlay, no speech",
+   "seconds": 3.45,
+   "files": [
+    "celebrate/cheer-under-1.mp3",
+    "celebrate/cheer-under-2.mp3"
+   ],
+   "used": "ثابت (كل التطبيق)"
+  },
+  {
+   "id": "welcome-chime",
+   "kind": "motion",
+   "ar": "ترحيب: شعار خوارزمي",
+   "prompt": "warm magical welcome chime swell, soft bells and marimba, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 1.22,
+   "files": [
+    "motion/welcome-chime.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 1 «أهلًا»"
+  },
+  {
+   "id": "book-open",
+   "kind": "motion",
+   "ar": "غلاف الكتاب بيتفتح",
+   "prompt": "hardcover book opening with a soft page flutter, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.89,
+   "files": [
+    "motion/book-open.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 1 «كتاب العلوم»"
+  },
+  {
+   "id": "path-extend",
+   "kind": "motion",
+   "ar": "طريق بيتمد",
+   "prompt": "soft airy rising whoosh, something stretching out smoothly, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.91,
+   "files": [
+    "motion/path-extend.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 1 «رحلة»"
+  },
+  {
+   "id": "sparkles",
+   "kind": "motion",
+   "ar": "لمعات صغيرة",
+   "prompt": "tiny magical sparkle twinkles, gentle glitter, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 1.0,
+   "files": [
+    "motion/sparkles.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 1 «أسرار»، 7 «استمتعوا»"
+  },
+  {
+   "id": "tree-grow",
+   "kind": "motion",
+   "ar": "شجرة بتطلع",
+   "prompt": "leaves rustling as a small tree grows quickly, soft natural, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 1.16,
+   "files": [
+    "motion/tree-grow.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 2 «شجرة نيم»"
+  },
+  {
+   "id": "bird-land",
+   "kind": "motion",
+   "ar": "عصفور بيحط",
+   "prompt": "small bird wing flutter landing on a branch followed by one short cheerful chirp, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.41,
+   "files": [
+    "motion/bird-land.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 2 «عصفور»"
+  },
+  {
+   "id": "fish-splash",
+   "kind": "motion",
+   "ar": "سمكة بتقفز من الموية",
+   "prompt": "small fish jumping out of river water, light splash, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.99,
+   "files": [
+    "motion/fish-splash.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 2 «سمكة»"
+  },
+  {
+   "id": "soft-pop",
+   "kind": "motion",
+   "ar": "ظهور (ظلال الأطفال)",
+   "prompt": "soft airy bubble pop, gentle appearance, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.35,
+   "files": [
+    "motion/soft-pop.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 2 «أنتم»"
+  },
+  {
+   "id": "gather-swirl",
+   "kind": "motion",
+   "ar": "اللمّة في دايرة",
+   "prompt": "gentle circular swirl whoosh, things gathering together, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.64,
+   "files": [
+    "motion/gather-swirl.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 2 «كائنات حيّة»"
+  },
+  {
+   "id": "kalimba-pluck",
+   "kind": "motion",
+   "ar": "ظهور أيقونة (نوتة)",
+   "prompt": "single soft kalimba pluck note, warm, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.36,
+   "files": [
+    "motion/kalimba-pluck.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 2 «نأكل، ونتنفّس، ونكبر، ونحتاج»"
+  },
+  {
+   "id": "glow-shimmer",
+   "kind": "motion",
+   "ar": "لمعة صحية",
+   "prompt": "warm soft shimmer glow, gentle, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.98,
+   "files": [
+    "motion/glow-shimmer.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 3 «نعتني بأجسامنا»"
+  },
+  {
+   "id": "plate-clink",
+   "kind": "motion",
+   "ar": "صحن أكل",
+   "prompt": "ceramic plate gently set down on a wooden table, soft clink, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.45,
+   "files": [
+    "motion/plate-clink.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 3 «طعامًا مفيدًا»"
+  },
+  {
+   "id": "water-pour",
+   "kind": "motion",
+   "ar": "إبريق بيسقي",
+   "prompt": "water pouring gently from a small jug onto soil, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 1.32,
+   "files": [
+    "motion/water-pour.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 3 «نسقي الأشجار»"
+  },
+  {
+   "id": "tap-drop",
+   "kind": "motion",
+   "ar": "حنفية بتتقفل وقطرة",
+   "prompt": "small metal water tap squeak closing, then a single clear water drop, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.42,
+   "files": [
+    "motion/tap-drop.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 3 «قطرة ماء»"
+  },
+  {
+   "id": "map-unroll",
+   "kind": "motion",
+   "ar": "خريطة بتتفرد",
+   "prompt": "paper map unrolling on a table, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.94,
+   "files": [
+    "motion/map-unroll.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 4 «أربع محطّات»"
+  },
+  {
+   "id": "station-ding",
+   "kind": "motion",
+   "ar": "محطة بتنوّر",
+   "prompt": "soft bright bell ding, a light turning on, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.58,
+   "files": [
+    "motion/station-ding.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 4 «الأولى، الثانية، الثالثة، الأخيرة»، 7 «يضيء محطّةً»"
+  },
+  {
+   "id": "breath-in",
+   "kind": "motion",
+   "ar": "هوا داخل للرئتين",
+   "prompt": "soft gentle airy inhale, calm breath in, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.74,
+   "files": [
+    "motion/breath-in.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 4 «الهواء إلى الرئتين»"
+  },
+  {
+   "id": "swallow-slide",
+   "kind": "motion",
+   "ar": "لقمة ماشة لتحت",
+   "prompt": "soft playful descending slide bloop, something moving down, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.32,
+   "files": [
+    "motion/swallow-slide.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 4 «اللقمة»"
+  },
+  {
+   "id": "sprout-pop",
+   "kind": "motion",
+   "ar": "نبتة وبذرة",
+   "prompt": "small seed sprouting, soft organic pop and leaf unfurl, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.41,
+   "files": [
+    "motion/sprout-pop.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 4 «النباتات»"
+  },
+  {
+   "id": "bee-buzz",
+   "kind": "motion",
+   "ar": "حشرة",
+   "prompt": "light friendly bee buzz passing by, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.99,
+   "files": [
+    "motion/bee-buzz.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 4 «الحشرات»"
+  },
+  {
+   "id": "wing-flap",
+   "kind": "motion",
+   "ar": "طائر",
+   "prompt": "bird wings flapping as it flies past, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.62,
+   "files": [
+    "motion/wing-flap.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 4 «الطيور»"
+  },
+  {
+   "id": "drop-shine",
+   "kind": "motion",
+   "ar": "قطرة كبيرة بتلمع",
+   "prompt": "big water drop plink with a soft shimmer, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.43,
+   "files": [
+    "motion/drop-shine.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 4 «الماء… سرّ الحياة»"
+  },
+  {
+   "id": "term-thock",
+   "kind": "motion",
+   "ar": "المصطلح بيظهر",
+   "prompt": "soft deep wooden thock, a word appearing with weight, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.48,
+   "files": [
+    "motion/term-thock.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 5 «التصنيف»"
+  },
+  {
+   "id": "table-clatter",
+   "kind": "motion",
+   "ar": "أشياء مخلوطة على طاولة",
+   "prompt": "fruits and vegetables tumbling softly onto a wooden table, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.42,
+   "files": [
+    "motion/table-clatter.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 5 «تتشابه»"
+  },
+  {
+   "id": "basket-drop",
+   "kind": "motion",
+   "ar": "في السلة",
+   "prompt": "fruit dropped into a wicker basket, soft thud, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.36,
+   "files": [
+    "motion/basket-drop.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 5 «الفواكه هنا، الخضروات هناك»"
+  },
+  {
+   "id": "sort-swish",
+   "kind": "motion",
+   "ar": "المجموعات",
+   "prompt": "soft swish of things sliding into groups, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.42,
+   "files": [
+    "motion/sort-swish.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 5 «النباتات والحيوانات»"
+  },
+  {
+   "id": "bat-flight",
+   "kind": "motion",
+   "ar": "خفاش قدّام القمر",
+   "prompt": "bat wings flapping at night, soft leathery flutter, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.68,
+   "files": [
+    "motion/bat-flight.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 6 «الخفّاش»"
+  },
+  {
+   "id": "x-swipe",
+   "kind": "motion",
+   "ar": "علامة إكس",
+   "prompt": "soft marker pen swipe, quick, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.56,
+   "files": [
+    "motion/x-swipe.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 6 «ليس طائرًا»"
+  },
+  {
+   "id": "question-twirl",
+   "kind": "motion",
+   "ar": "علامة سؤال بتلف",
+   "prompt": "playful curious twirl whoosh with a light \"hmm\" bell, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.96,
+   "files": [
+    "motion/question-twirl.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 6 «فماذا يكون»"
+  },
+  {
+   "id": "exam-reveal",
+   "kind": "motion",
+   "ar": "محطة الامتحان بتظهر",
+   "prompt": "short soft drum roll ending with a warm chime, something important appears, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 1.11,
+   "files": [
+    "motion/exam-reveal.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 7 «امتحانٌ صغير»"
+  },
+  {
+   "id": "twinkle-cascade",
+   "kind": "motion",
+   "ar": "كل النقاط بتلمع",
+   "prompt": "cascade of soft twinkling chimes across, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 1.58,
+   "files": [
+    "motion/twinkle-cascade.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 7 «استمتعوا»"
+  },
+  {
+   "id": "start-pop",
+   "kind": "motion",
+   "ar": "زر «لنبدأ» بيظهر",
+   "prompt": "bright friendly pop with a cheerful ding, a button appearing, soft warm, gentle, high quality, clean start, no reverb tail, for a children learning app",
+   "seconds": 0.41,
+   "files": [
+    "motion/start-pop.mp3"
+   ],
+   "used": "شرح علوم الخامس الأول · الجزء 8 «هيّا»"
+  }
+ ]
+}

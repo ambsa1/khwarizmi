@@ -2,6 +2,7 @@
 // Query parameters exist only for design review and automated screenshots:
 //   ?view=siraj | world&w=kassala&m=14 | perf      isolated views
 //   ?demo=guest&screen=path|map|passport           seeds a demo guest and opens that screen
+//   &grade=5 &dev=1 &screen=book|explain|blesson&stage=d1   school book review (dev opens every built stage)
 //   &done=<world>                                   (with demo) the demo guest has finished that world (stamp, certificate)
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -23,7 +24,11 @@ import { SirajPreview, WorldTour } from './screens/Preview';
 import { DevPage, FamilyPage } from './screens/Gates';
 import { PlayTime } from './ui/PlayTime';
 import { School } from './screens/School';
+import { BookPage } from './screens/BookPage';
+import { Explainer } from './screens/Explainer';
+import { BookLesson } from './screens/BookLesson';
 import { Backdrop } from './ui/Backdrop';
+import { useProgress } from './school/book';
 
 const q = new URLSearchParams(location.search);
 
@@ -31,12 +36,14 @@ function bootDemo() {
   const s = useApp.getState();
   if (q.get('demo') === 'guest') {
     const gender = q.get('g') === 'f' ? 'f' : 'm';
-    const id = s.addGuest({ gender, age: +(q.get('age') ?? 8), grade: 3, avatar: gender === 'f' ? 'g7' : 'g3' });
+    const id = s.addGuest({ gender, age: +(q.get('age') ?? 8), grade: q.get('grade') ? +q.get('grade')! : 3, avatar: gender === 'f' ? 'g7' : 'g3' });
     const done = q.get('done');
     if (done) for (const k of worldSkills(done)) useLearning.getState().complete(id, k.id);
   }
+  if (q.get('dev') === '1') useProgress.getState().setDev(true);     // developer review: every built stage open
   const screen = q.get('screen') as Screen | null;
-  if (screen) s.go(screen);
+  if (screen && ['book', 'explain', 'blesson'].includes(screen)) s.openSchool(q.get('book') || 'g5-science', q.get('stage') || undefined, screen);
+  else if (screen) s.go(screen);
   else if (!['parents', 'perf'].includes(s.screen)) s.go('entry');
 }
 
@@ -74,10 +81,10 @@ export function App() {
   if (view === 'perf') return <Perf />;
   if (!booted) return null;
 
-  const needsPlayer = screen === 'path' || screen === 'map' || screen === 'passport' || screen === 'school' || screen === 'lesson';
+  const needsPlayer = screen === 'path' || screen === 'map' || screen === 'passport' || screen === 'school' || screen === 'book' || screen === 'explain' || screen === 'blesson' || screen === 'lesson';
   const shown: Screen = needsPlayer && !current ? 'entry' : screen;
   const body = {
-    entry: <Entry />, guest: <Guest />, path: <Path />, map: <MapScreen />, passport: <Passport />, school: <School />, parents: <Parents />, perf: <Perf />, lesson: <Lesson />, family: <FamilyPage />, dev: <DevPage />,
+    entry: <Entry />, guest: <Guest />, path: <Path />, map: <MapScreen />, passport: <Passport />, school: <School />, book: <BookPage />, explain: <Explainer />, blesson: <BookLesson />, parents: <Parents />, perf: <Perf />, lesson: <Lesson />, family: <FamilyPage />, dev: <DevPage />,
   }[shown];
   return (
     <MotionConfig reducedMotion={reduced ? 'always' : 'never'}>

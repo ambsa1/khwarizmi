@@ -15,7 +15,7 @@ export type Profile = {
   avatar: string;        // guest avatar id, or family member id
 };
 
-export type Screen = 'entry' | 'guest' | 'path' | 'map' | 'passport' | 'school' | 'parents' | 'perf' | 'lesson' | 'family' | 'dev';
+export type Screen = 'entry' | 'guest' | 'path' | 'map' | 'passport' | 'school' | 'book' | 'explain' | 'blesson' | 'parents' | 'perf' | 'lesson' | 'family' | 'dev';
 
 type State = {
   screen: Screen;
@@ -34,6 +34,9 @@ type State = {
   world: Record<string, string>;      // profileId -> world chosen on the map
   lesson: { world: string; skill: string } | null;   // the lesson being played (not persisted)
   celebrate: boolean;                 // a lesson just finished: the street shows its new house being built
+  /** the school book and stage open now (book page, explainer player, book lesson); not persisted */
+  school: { book: string; stage?: string };
+  openSchool: (book: string, stage?: string, screen?: Screen) => void;
   openLesson: (world: string, skill: string) => void;
   finishLesson: () => void;
   celebrated: () => void;
@@ -75,6 +78,8 @@ export const useApp = create<State>()(persist((set, get) => ({
   world: {},
   lesson: null,
   celebrate: false,
+  school: { book: 'g5-science' },
+  openSchool: (book, stage, screen = 'book') => set({ school: { book, stage }, screen }),
   openLesson: (world, skill) => set({ lesson: { world, skill }, screen: 'lesson' }),
   finishLesson: () => set({ lesson: null, celebrate: true, screen: 'path' }),
   celebrated: () => set({ celebrate: false }),

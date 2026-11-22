@@ -12,6 +12,8 @@ import { TopBar } from '../ui/TopBar';
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
 import BOOKS from '../data/school-books.json';
+import { BOOKS as BUILT_BOOKS, bookUrl } from '../school/book';
+import { useApp } from '../state/store';
 
 type Book = { key: string; name: string };
 const I = (d: string) => <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
@@ -71,11 +73,14 @@ export function School() {
           <div className="books">
             {books.map((b, i) => {
               const cv = COVER[b.key] ?? { c: '#8A5A3B', glyph: 'ك' };
+              const built = BUILT_BOOKS[`${grade}:${b.key}`];
               return (
                 <motion.button key={b.key} className="book" style={{ ['--cover' as string]: cv.c }}
                   initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 * i, type: 'spring', stiffness: 360, damping: 26 }}
-                  onClick={() => { setLine(say(p, `كتاب ${b.name}: قريب نقرأه سوا!`, `كتاب ${b.name}: قريب نقرأه سوا!`)); setTimeout(() => setLine(null), 2600); }}>
-                  <span className="book-cover" aria-hidden><span className="book-glyph">{cv.glyph}</span><span className="book-band" /></span>
+                  onClick={() => { if (built) { useApp.getState().openSchool(built); return; } setLine(say(p, `كتاب ${b.name}: قريب نقرأه سوا!`, `كتاب ${b.name}: قريب نقرأه سوا!`)); setTimeout(() => setLine(null), 2600); }}>
+                  <span className={'book-cover' + (built ? ' real' : '')} aria-hidden>
+                    {built ? <img src={bookUrl(built, 'cover.webp')} alt="" draggable={false} /> : <><span className="book-glyph">{cv.glyph}</span><span className="book-band" /></>}
+                  </span>
                   <span className="book-name">{b.name}</span>
                 </motion.button>
               );
