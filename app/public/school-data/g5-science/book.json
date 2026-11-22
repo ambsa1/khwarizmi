@@ -218,7 +218,8 @@
  "explain": {
   "e1": {
    "audio": "explain1.mp3",
-   "timing": "explain1.json"
+   "timing": "explain1.json",
+   "motion": "explain1.motion.json"
   }
  },
  "lessons": {

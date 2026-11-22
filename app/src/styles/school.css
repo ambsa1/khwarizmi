@@ -276,3 +276,30 @@
 .night .captions .now { color: var(--gold); background: rgba(255, 182, 39, .16); }
 @media (max-width: 899px) { .explain-stage { width: min(100%, calc(50vh * 1.15)); } .captions { font-size: 22px; } }
 @media (max-width: 360px) { .captions { font-size: 20px; padding: 8px 12px; } }
+/* ---------------------------------------------------------------- motion library: general teaching templates */
+.it-text { display: block; text-align: center; font: 800 clamp(18px, 3cqw, 40px)/1.3 var(--f-ui); color: var(--ink); }
+.group-label { position: absolute; top: -1.4em; left: 50%; transform: translateX(-50%); font: 900 clamp(18px, 2.6cqw, 30px) var(--f-ui); white-space: nowrap; }
+.m-title { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5cqh; text-align: center; padding: 0 6%; }
+.m-title img { width: calc(20 * min(1cqw, 1.78cqh)); }
+.m-title h3 { margin: 0; font: 900 clamp(26px, 6cqw, 64px)/1.25 var(--f-display); color: var(--nile); }
+.m-title p { margin: 0; font: 700 clamp(18px, 2.8cqw, 30px)/1.5 var(--f-ui); color: #6B5A48; }
+.m-card { position: absolute; display: flex; align-items: center; gap: 3%; padding: 2.4cqh 2.4cqw; border-radius: 18px; background: var(--cream); box-shadow: var(--lift); border-top: 6px solid var(--nile); transform-style: preserve-3d; }
+.m-card img { width: 28%; flex: none; }
+.m-card b { display: block; font: 900 clamp(20px, 3.4cqw, 38px) var(--f-ui); color: var(--nile); }
+.m-card p { margin: .2em 0 0; font: 700 clamp(18px, 2.4cqw, 28px)/1.55 var(--f-ui); }
+.m-steps { position: absolute; left: 8%; right: 8%; margin: 0; padding: 0; list-style: none; display: grid; gap: 2cqh; }
+.m-steps li { display: flex; align-items: center; gap: 2cqw; background: rgba(255, 251, 243, .92); border-radius: 14px; padding: 1.4cqh 2cqw; box-shadow: var(--lift); }
+.m-step-n { flex: none; width: 2.2em; height: 2.2em; border-radius: 50%; display: grid; place-items: center; background: var(--gold); font: 900 clamp(18px, 2.4cqw, 26px) var(--f-ui); }
+.m-steps img { width: calc(7 * min(1cqw, 1.78cqh)); flex: none; }
+.m-steps em { font: 800 clamp(18px, 2.6cqw, 30px)/1.4 var(--f-ui); font-style: normal; }
+.m-compare { position: absolute; inset: 8% 5%; display: grid; grid-template-columns: 1fr 1fr; gap: 4%; }
+.m-side { border: 4px solid; border-radius: 22px; background: rgba(255, 251, 243, .85); padding: 2cqh 2cqw; display: flex; flex-direction: column; align-items: center; gap: 1.6cqh; }
+.m-side b { font: 900 clamp(20px, 3.4cqw, 38px) var(--f-ui); }
+.m-side span { display: flex; align-items: center; gap: 1cqw; font: 700 clamp(18px, 2.4cqw, 28px) var(--f-ui); }
+.m-side img { width: calc(8 * min(1cqw, 1.78cqh)); }
+.m-label { position: absolute; padding: .2em .7em; border-radius: 10px; background: var(--ink); color: var(--cream); font: 800 clamp(18px, 2.2cqw, 26px) var(--f-ui); white-space: nowrap; }
+.motion-gallery { position: fixed; inset: 0; overflow-y: auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 18px; background: #F4E8D1; }
+.motion-gallery figure { margin: 0; }
+.motion-gallery figcaption { font: 800 18px var(--f-ui); margin: 0 0 6px; }
+.motion-gallery .explain-stage { width: 100%; aspect-ratio: 16 / 9; max-height: none; }
+.ob-page { background: repeating-linear-gradient(180deg, transparent 0 13%, rgba(43, 33, 24, .10) 13% 14.5%) 0 18% / 70% 64% no-repeat, linear-gradient(90deg, #E6DACA, #FFFBF3 30%); background-position: 60% 30%, 0 0; }

@@ -123,7 +123,7 @@ for m in re.finditer(r'^>\s*-\s*(.+?):\s*«(.+)»\s*$', s5, re.M):
 
 book = {'id': 'g5-science', 'ui': ui, 'grade': 5, 'subject': 'science', 'name': 'العلوم', 'title': title, 'cover': 'cover.webp',
         'journeys': [j['name'] for j in journeys], 'stages': stages,
-        'explain': {'e1': {'audio': 'explain1.mp3', 'timing': 'explain1.json'}},
+        'explain': {'e1': {'audio': 'explain1.mp3', 'timing': 'explain1.json', 'motion': 'explain1.motion.json'}},   # motion: written by hand, played by src/motion
         'lessons': {f'd{n}': lesson(n) for n in (1, 2)}}
 os.makedirs(OUT, exist_ok=True)
 json.dump(book, open(os.path.join(OUT, 'book.json'), 'w', encoding='utf8'), ensure_ascii=False, indent=1)

@@ -5,11 +5,11 @@ Arabic (Sudanese) learning app for children: Vite + React + TypeScript, three.js
 mixed-text rule (no English word or number at the start/end of an Arabic line; commands/paths on their own line).
 
 - Branch: `rebuild/phase1` (pushed). Live: https://ambsa1.github.io/khwarizmi/ (deployed from `main` by `npm run deploy`).
-- Last shipped: 2026-11-20, guest pictures + 3-step new player + layout polish (see below). Checks 49/49 locally and
-  on the live site.
+- Last shipped: 2026-11-22, «المدرسة» grade 5 science phase 1 (book page, first explainer, lessons 1-2) + the motion
+  engine. Checks 55/55. Waiting on the owner's review before building the rest of the book.
 
 ## How to work
-- `cd app && npm run release` = validate, packs, build, preview, `tools/check.mjs` (49 checks). Must print `49/49 passed`.
+- `cd app && npm run release` = validate, packs, build, preview, `tools/check.mjs` (55 checks). Must print `55/55 passed`.
 - Commit and deploy ONLY when every check passes: `grep -q "N/N passed" log && git commit ...`, then `npm run deploy`
   (refuses a dirty tree), then `node tools/check.mjs https://ambsa1.github.io/khwarizmi/` on the live site.
 - Dev server: `npx vite --host 127.0.0.1 --port 5186 --strictPort` (in `app/`). Stop background servers at session end.
@@ -73,9 +73,26 @@ mixed-text rule (no English word or number at the start/end of an Arabic line; c
   pop sound, light vibration; arrows on desktop) + optional name. Grade label shows in the top bar, passport,
   certificate (`gradeLabel` in `ui/kit.tsx`). Layout polish: `styles/polish.css` (loaded last).
 
+## School books («المدرسة», grade 5 science first)
+- Content source: the book file `app/المناهج/<grade>/<book>/<book>.md` (local only). Rules: `app/المناهج/ملاحظات-صاحب-التطبيق.md`
+  (section ٧: decision limits; item ٨: ALWAYS re-read a file from disk and edit only the needed part, several parties edit them),
+  `مسار-الطفل-والتنفيذ.md`, `دليل-إنتاج-كتاب.md`, `الصوت/خريطة-المؤثرات.md`.
+- `python tools/book-data.py` (ingest venv) builds `public/school-data/<book>/` (book.json, narration copy, timing, real cover)
+  from the book file. NOTE: `.gitignore` has `books/`, so app data lives in `school-data/`, never `books/`.
+- Code: `src/school/` (book data, progress + the ONE unlock rule, sfx bank player, questions, labs), screens `BookPage`,
+  `Explainer`, `BookLesson`; styles `styles/school.css`. Review: `?demo=guest&grade=5&screen=book&dev=1` (dev opens every
+  built stage and allows seeking); `&screen=explain|blesson&stage=e1|d1`.
+- Motion engine (owner decision 2026-11-22): `src/motion/` (README.md) = one engine + one library of general layers;
+  every explainer is only `public/school-data/<book>/explainN.motion.json`. New movement -> a general layer in the
+  library (+ sample in `?view=motion`); improvements replace the old version for all books. No per-book animation code.
+- Drawings: original identity-style SVGs from `tools/school-art.py` -> `public/art/school/` (never emoji libraries).
+- Effects: `tools/sfx/{plan,generate,select}.py` (ElevenLabs text-to-sound; key read from the grow-english generator
+  .env, never printed) -> `public/sfx/<kind>/` + `index.json`. Tell the owner the count and cost before generating.
+- On-screen text >= 18px also in the school screens; «خطأ» is forbidden in child text (true/false cards: «صحيح» / «ليس كذلك»).
+
 ## NEXT TASK
-None pending. Still to come from the user's generated images: map world cards, world entry paintings, passport
-stamps, certificate frame, reward cards (spec given 2026-11-20). Never send «بيتنا» material to an outside tool.
+Owner reviews grade 5 science phase 1 (deliverables in `Claude outputs/مراجعة-علوم-الخامس/`). After approval: lessons 3-18
+(once converted to Fusha in the book file), the two exams, the second explainer, the title. Never send «بيتنا» material to an outside tool.
 
 ## Waiting on the user
 - Darfur outfit for Marra (Siraj wears the Nile outfit there until the user sends Darfur reference photos).

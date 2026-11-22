@@ -22,7 +22,7 @@ export type LessonData = {
 };
 export type Book = {
   id: string; grade: number; subject: string; name: string; title: string; cover: string; journeys: string[]; stages: Stage[];
-  explain: Record<string, { audio: string; timing: string }>; lessons: Record<string, LessonData>; ui?: Record<string, string>;
+  explain: Record<string, { audio: string; timing: string; motion?: string }>; lessons: Record<string, LessonData>; ui?: Record<string, string>;
 };
 export type Timing = {
   duration: number;
@@ -40,6 +40,8 @@ const getJson = <T,>(url: string) => {
 };
 export const loadBook = (id: string) => getJson<Book>(bookUrl(id, 'book.json'));
 export const loadTiming = (book: Book, stage: string) => getJson<Timing>(bookUrl(book.id, book.explain[stage].timing));
+/** the explainer's motion data (one light JSON per explainer, played by the motion engine in src/motion) */
+export const loadMotion = (book: Book, stage: string) => getJson<import('../motion/types').MotionDoc>(bookUrl(book.id, book.explain[stage].motion ?? book.explain[stage].audio.replace(/\.mp3$/, '.motion.json')));
 
 /** the books that exist in the app, by grade and subject key of school-books.json */
 export const BOOKS: Record<string, string> = { '5:science': 'g5-science' };

@@ -9,28 +9,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp, useProfile } from '../state/store';
 import { back } from '../ui/nav';
-import { bookUrl, loadTiming, useProgress, type Book, type Timing } from '../school/book';
-import { EXPLAIN1, SCENE_SFX } from '../school/ExplainScenes';
+import { bookUrl, loadMotion, loadTiming, useProgress, type Book, type Timing } from '../school/book';
+import { effectIds, effectTimes, resolveCues } from '../motion/cues';
+import { SceneView, type Ctx } from '../motion/library';
+import type { MotionDoc } from '../motion/types';
+import { artUrl } from '../school/book';
 import { Sfx, useSfxMuted } from '../school/sfx';
 import { useBook } from './BookPage';
 
-const norm = (s: string) => s.replace(/[ً-ْٰـ]/g, '').replace(/[^ء-ي ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').trim();
 const plain = (s: string) => s.replace(/[ً-ْٰـ]/g, '');
-
-/** cue times for every scene: each cue word is searched in its part, in order */
-function resolve(t: Timing) {
-  return EXPLAIN1.map((sc, i) => {
-    const words = t.segments[i]?.words ?? [];
-    const out: Record<string, number> = {}; let from = 0;
-    for (const c of sc.cues) {
-      const w = norm(c.word); let hit = -1;
-      for (let j = from; j < words.length; j++) { const x = norm(words[j].w); if (x === w || x.endsWith(w) || x.includes(w)) { hit = j; break; } }
-      out[c.key] = hit >= 0 ? words[hit].start : (t.segments[i]?.start ?? 0);
-      if (hit >= 0) from = hit;
-    }
-    return out;
-  });
-}
 
 const IconPlay = () => <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" /></svg>;
 const IconPause = () => <svg viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /></svg>;
@@ -44,12 +31,13 @@ export function Explainer() {
   const [{ book: bookId, stage = 'e1' }] = useState(() => useApp.getState().school);
   const book = useBook(bookId);
   const [timing, setTiming] = useState<Timing | null>(null);
-  useEffect(() => { if (book) loadTiming(book, stage).then(setTiming); }, [book, stage]);
-  if (!p || !book || !timing) return <div className="screen explain-screen"><div className="book-loading" /></div>;
-  return <Player book={book} stage={stage} timing={timing} pid={p.id} />;
+  const [doc, setDoc] = useState<MotionDoc | null>(null);
+  useEffect(() => { if (book) { loadTiming(book, stage).then(setTiming); loadMotion(book, stage).then(setDoc); } }, [book, stage]);
+  if (!p || !book || !timing || !doc) return <div className="screen explain-screen"><div className="book-loading" /></div>;
+  return <Player book={book} stage={stage} timing={timing} doc={doc} pid={p.id} />;
 }
 
-function Player({ book, stage, timing, pid }: { book: Book; stage: string; timing: Timing; pid: string }) {
+function Player({ book, stage, timing, doc, pid }: { book: Book; stage: string; timing: Timing; doc: MotionDoc; pid: string }) {
   const prog = useProgress();
   const saved = useProgress(s => s.p[pid]?.[book.id]?.[stage]);
   const firstTime = !saved?.done;
@@ -60,17 +48,18 @@ function Player({ book, stage, timing, pid }: { book: Book; stage: string; timin
   const reach = useRef(Math.max(0, (saved?.pos ?? 0) - 2));
   const lastT = useRef(-1);
   const muted = useSfxMuted();
-  const cues = useMemo(() => resolve(timing), [timing]);
+  const cues = useMemo(() => resolveCues(doc, timing, m => console.warn('[motion]', m)), [doc, timing]);
+  const fx = useMemo(() => effectTimes(doc, cues), [doc, cues]);
   useEffect(() => {   // developer review only: the effect cue times, used to mix the review video's sound
-    if (useProgress.getState().dev) (window as unknown as { __khwCues: unknown }).__khwCues = EXPLAIN1.flatMap((sc, i) => sc.sfx.map(([k, id, rate]) => ({ t: cues[i][k], id, rate: rate ?? 1 })));
-  }, [cues]);
+    if (useProgress.getState().dev) (window as unknown as { __khwCues: unknown }).__khwCues = fx;
+  }, [fx]);
   const dur = timing.duration;
   const seg = timing.segments.reduce((k, s, i) => (t >= s.start - 0.3 ? i : k), 0);   // the part being spoken
   const segment = timing.segments[seg];
 
   // start: resume 2 s before the saved point (first time) or from the start (after completion)
   useEffect(() => {
-    void Sfx.preload([...SCENE_SFX, 'tap', 'back']);
+    void Sfx.preload([...effectIds(doc), 'tap', 'back']);
     const a = audio.current!; const start = firstTime ? Math.max(0, (saved?.pos ?? 0) - 2) : 0;
     const go = () => { a.currentTime = start; lastT.current = start; setT(start); void a.play().then(() => setPlaying(true)).catch(() => setPlaying(false)); };
     if (a.readyState >= 1) go(); else a.addEventListener('loadedmetadata', go, { once: true });
@@ -90,14 +79,14 @@ function Player({ book, stage, timing, pid }: { book: Book; stage: string; timin
       const now = a.currentTime, prev = lastT.current;
       if (now - prev > 0 && now - prev < 1) {            // continuous play: fire the effects whose cue just passed
         if (now <= reach.current + 1.2) reach.current = Math.max(reach.current, now);
-        EXPLAIN1.forEach((sc, i) => sc.sfx.forEach(([k, id, rate]) => { const ct = cues[i][k]; if (ct > prev && ct <= now) void Sfx.play(id, { rate }); }));
+        for (const f of fx) if (f.t > prev && f.t <= now) void Sfx.play(f.id, { rate: f.rate });
       }
       lastT.current = now; setT(now);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [cues]);
+  }, [fx]);
 
   const toggle = () => {
     const a = audio.current!;
@@ -117,8 +106,10 @@ function Player({ book, stage, timing, pid }: { book: Book; stage: string; timin
   };
   useEffect(() => { Sfx.duck(playing); }, [playing]);
 
-  const sc = EXPLAIN1[seg] ?? EXPLAIN1[0];
-  const on = (k: string) => t >= (cues[seg]?.[k] ?? Infinity) - 0.05 || (seg === 7 && ended);
+  const si = Math.max(0, doc.scenes.findIndex(x => x.part === seg)), sc = doc.scenes[si];
+  const last = si === doc.scenes.length - 1;
+  const ctx: Ctx = { on: (k?: string) => !k || t >= (cues[si]?.[k] ?? Infinity) - 0.05 || (last && ended), cover: bookUrl(book.id, book.cover),
+    logo: artUrl('icons/icon-512.png'), art: n => artUrl(`art/school/${n}.svg`) };
   const cur = segment?.words.findIndex(w => t >= w.start && t < w.end + 0.08) ?? -1;
   // the caption shows the sentence being spoken (sentences end with . ! ? ؟ …)
   const words = segment?.words ?? [];
@@ -141,7 +132,7 @@ function Player({ book, stage, timing, pid }: { book: Book; stage: string; timin
         <div className={'explain-stage' + (sc.night ? ' night' : '')}>
           <AnimatePresence mode="sync" initial={false}>
             <motion.div key={seg} className="scene" initial={{ opacity: 0, x: '-6%' }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: '6%' }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
-              <sc.View on={on} cover={bookUrl(book.id, book.cover)} />
+              <SceneView scene={sc} c={ctx} />
             </motion.div>
           </AnimatePresence>
           {ended && (

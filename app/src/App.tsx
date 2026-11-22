@@ -1,6 +1,6 @@
 // Screen router. Plain state (no URL routing) so the installed app always opens on "who's playing?".
 // Query parameters exist only for design review and automated screenshots:
-//   ?view=siraj | world&w=kassala&m=14 | perf      isolated views
+//   ?view=siraj | world&w=kassala&m=14 | perf | motion   isolated views (motion = the motion library gallery)
 //   ?demo=guest&screen=path|map|passport           seeds a demo guest and opens that screen
 //   &grade=5 &dev=1 &screen=book|explain|blesson&stage=d1   school book review (dev opens every built stage)
 //   &done=<world>                                   (with demo) the demo guest has finished that world (stamp, certificate)
@@ -29,6 +29,7 @@ import { Explainer } from './screens/Explainer';
 import { BookLesson } from './screens/BookLesson';
 import { Backdrop } from './ui/Backdrop';
 import { useProgress } from './school/book';
+import { MotionGallery } from './motion/Gallery';
 
 const q = new URLSearchParams(location.search);
 
@@ -79,6 +80,7 @@ export function App() {
     return <div className="screen"><WorldWindow world={(q.get('w') || 'kassala') as WorldId} mastered={+(q.get('m') ?? 14)} total={37} /></div>;
   }
   if (view === 'perf') return <Perf />;
+  if (view === 'motion') return <MotionGallery />;
   if (!booted) return null;
 
   const needsPlayer = screen === 'path' || screen === 'map' || screen === 'passport' || screen === 'school' || screen === 'book' || screen === 'explain' || screen === 'blesson' || screen === 'lesson';
