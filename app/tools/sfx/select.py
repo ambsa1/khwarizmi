@@ -76,5 +76,5 @@ for sid, kind, ar, prompt, sec, variants, _ in ALL:
     index.append({'id': sid, 'kind': kind, 'ar': ar, 'prompt': prompt, 'seconds': max(lens), 'files': files,
                   'used': f'شرح علوم الخامس الأول · الجزء {USED[sid]}' if kind == 'motion' else 'ثابت (كل التطبيق)'})
     report.append(f'{sid:16s} {kind:9s} {len(files)} file(s)  {", ".join(f"{x:.2f}s" for x in lens)}')
-json.dump({'model': 'eleven_text_to_sound_v3', 'effects': index}, open(os.path.join(APP, 'index.json'), 'w', encoding='utf8'), ensure_ascii=False, indent=1)
+json.dump({'model': 'eleven_text_to_sound_v3', 'effects': index}, open(os.path.join(APP, 'index.json'), 'w', encoding='utf8', newline=chr(10)), ensure_ascii=False, indent=1)
 print('\n'.join(report)); print(len(index), 'effects,', sum(len(e['files']) for e in index), 'files')
